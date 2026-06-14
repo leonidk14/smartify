@@ -5,6 +5,7 @@ import { useFetcher } from "react-router";
 
 export const WordSearch = () => {
   const [isEditMode, setIsEditMode] = useState(true);
+
   const fetcher = useFetcher();
   const theme = useMantineTheme();
 
