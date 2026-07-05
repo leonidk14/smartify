@@ -16,10 +16,10 @@ export interface TokenUsage {
   totalCost: number;
 }
 
-export interface LookupResult {
+export type LookupResult = {
   dictionary: DictionaryResult;
   usage: TokenUsage;
-}
+};
 
 // ── Pricing (USD per token) ────────────────────────────────────────────────────
 // Claude Haiku 4.5: $1.00 / 1M input tokens, $5.00 / 1M output tokens
