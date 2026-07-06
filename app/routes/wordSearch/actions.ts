@@ -19,6 +19,7 @@ export interface TokenUsage {
 export type LookupResult = {
   dictionary: DictionaryResult;
   usage: TokenUsage;
+  originalSearchItem?: string;
 };
 
 // ── Pricing (USD per token) ────────────────────────────────────────────────────

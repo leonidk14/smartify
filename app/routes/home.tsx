@@ -15,7 +15,7 @@ export async function action({ request }: Route.ActionArgs) {
 
   const result = await lookupWord(searchItem);
 
-  return result;
+  return { ...result, originalSearchItem: searchItem };
 }
 
 export default function Home() {
