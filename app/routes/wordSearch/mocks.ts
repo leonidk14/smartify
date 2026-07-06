@@ -1,112 +1,298 @@
-import type { LookupResult } from "./actions";
-
-const HAIKU_INPUT_PRICE_PER_TOKEN = 1.0 / 1_000_000;
-const HAIKU_OUTPUT_PRICE_PER_TOKEN = 5.0 / 1_000_000;
+import type { LookupResult, MeaningGroup } from "./actions";
+import { buildTokenUsage } from "./usage";
 
 function entry(
-  meanings: string[],
+  groups: MeaningGroup[],
   inputTokens: number,
   outputTokens: number,
 ): LookupResult {
-  const inputCost = inputTokens * HAIKU_INPUT_PRICE_PER_TOKEN;
-  const outputCost = outputTokens * HAIKU_OUTPUT_PRICE_PER_TOKEN;
   return {
-    dictionary: { meaning: meanings },
-    usage: {
-      inputTokens,
-      outputTokens,
-      totalTokens: inputTokens + outputTokens,
-      inputCost,
-      outputCost,
-      totalCost: inputCost + outputCost,
-    },
+    dictionary: { groups },
+    usage: buildTokenUsage(inputTokens, outputTokens),
   };
 }
 
 export const MOCK_RESPONSES: Record<string, LookupResult> = {
   oblivious: entry(
     [
-      "(adjective) Not aware of or not noticing something; lacking knowledge or consciousness of.",
-      "(adjective) Lacking memory or recollection; forgetful.",
+      {
+        part_of_speech: "adjective",
+        meanings: [
+          {
+            definition:
+              "Not aware of or concerned about what is happening around one; lacking knowledge or consciousness of something.",
+            example:
+              "'He was oblivious to the commotion around him, lost in thought.' — Jane Austen, Emma",
+          },
+          {
+            definition:
+              "Characterized by or showing lack of attention or awareness; inattentive.",
+            example:
+              "'She walked on, oblivious to the stares of passersby.' — Virginia Woolf, Mrs Dalloway",
+          },
+        ],
+      },
     ],
-    239,
-    48,
+    367,
+    134,
   ),
 
   impudence: entry(
     [
-      "(noun) Disrespectful or impertinent behaviour or speech; lack of proper respect or courtesy.",
-      "(noun) Boldness or audacity that is considered inappropriate or offensive.",
+      {
+        part_of_speech: "noun",
+        meanings: [
+          {
+            definition:
+              "Lack of respect; disrespectful or impertinent behavior or speech.",
+            example:
+              "'His impudence in contradicting his elders was remarkable.' — Jane Austen, Pride and Prejudice",
+          },
+          {
+            definition:
+              "Bold or audacious disregard for convention or propriety.",
+            example:
+              "'She had the impudence to suggest that the committee had been negligent.' — George Orwell, Politics and the English Language",
+          },
+        ],
+      },
     ],
-    239,
-    52,
+    367,
+    129,
   ),
 
   precarious: entry(
     [
-      "(adjective) Not safely held or in a secure position; liable to fall or give way.",
-      "(adjective) Dependent on chance or uncertain circumstances; not securely established.",
-      "(adjective) Uncertain or unstable in tenure or position, especially of employment or livelihood.",
+      {
+        part_of_speech: "adjective",
+        meanings: [
+          {
+            definition:
+              "Dependent on chance or circumstances beyond one's control; uncertain or unpredictable in outcome.",
+            example:
+              "'The precarious state of the negotiations meant that peace could collapse at any moment.' — David McCullough, Truman",
+          },
+          {
+            definition:
+              "Dangerously lacking in stability or security; insecure or unstable in position or condition.",
+            example:
+              "'He balanced precariously on the narrow ledge, one slip away from disaster.' — Cormac McCarthy, The Road",
+          },
+        ],
+      },
     ],
-    238,
-    71,
+    366,
+    140,
   ),
 
   perilously: entry(
     [
-      "(adverb) In a manner that is exposed to or involving danger; dangerously.",
-      "(adverb) In a precarious or unstable manner; precariously.",
+      {
+        part_of_speech: "adverb",
+        meanings: [
+          {
+            definition:
+              "In a manner involving serious and immediate danger or risk; dangerously.",
+            example:
+              "'The ship was perilously close to the rocks.' — Patrick O'Brian, Master and Commander",
+          },
+          {
+            definition:
+              "To a degree or extent that is alarmingly high or precarious.",
+            example:
+              "'His health had become perilously fragile after months of illness.' — Hilary Mantel, Wolf Hall",
+          },
+        ],
+      },
     ],
-    239,
-    51,
+    367,
+    123,
   ),
 
   stridency: entry(
     [
-      "(noun) The quality of being loud, harsh, or shrill in sound.",
-      "(noun) The quality of being loud, emphatic, or forceful in manner or expression, especially in a way regarded as unpleasantly aggressive or insistent.",
+      {
+        part_of_speech: "noun",
+        meanings: [
+          {
+            definition:
+              "The quality of being strident; harshness or shrillness of sound.",
+            example:
+              "'The stridency of the alarm cut through the morning silence.' — Stephen King, The Shining",
+          },
+          {
+            definition:
+              "The quality of being loud, emphatic, or forceful in expression, often in a way that is grating or unpleasant.",
+            example:
+              "'The stridency of his political rhetoric alienated moderate voters.' — David McCullough, Truman",
+          },
+        ],
+      },
     ],
-    239,
-    65,
+    562,
+    174,
   ),
 
   apoplectic: entry(
     [
-      "(adjective) Relating to or characteristic of apoplexy; affected by or liable to apoplexy.",
-      "(adjective) Furiously angry; enraged to the point of loss of self-control.",
+      {
+        part_of_speech: "adjective",
+        meanings: [
+          {
+            definition:
+              "Relating to or affected by apoplexy; of or pertaining to sudden loss of consciousness or paralysis caused by cerebral hemorrhage or thrombosis.",
+            example:
+              "'He fell in an apoplectic fit, his face darkening with blood.' — Charles Dickens, Our Mutual Friend",
+          },
+          {
+            definition:
+              "Extremely angry; furious or enraged to an intense degree.",
+            example:
+              "'The coach was apoplectic when his team conceded the penalty.' — Sports reporting, The Guardian",
+          },
+        ],
+      },
     ],
-    239,
-    57,
+    367,
+    141,
   ),
 
   swell: entry(
     [
-      "(verb) To increase in size, volume, or extent; to become larger or distended.",
-      "(verb) To rise and roll in undulating motions, as waves or water.",
-      "(verb) To grow or increase in intensity, amount, or degree.",
-      "(verb) To cause to increase in size or volume; to make larger or distended.",
-      "(noun) A long undulating wave or succession of waves on the ocean surface, typically following a storm or strong wind.",
-      "(noun) A gradual increase in intensity, volume, or loudness, particularly of music or sound.",
-      "(noun) The act or process of swelling; the state of being swollen.",
-      "(adjective) Fashionable, stylish, or elegant; of high social status or distinction.",
-      "(adjective) Excellent or admirable; fine or splendid.",
+      {
+        part_of_speech: "verb",
+        meanings: [
+          {
+            definition:
+              "To increase in size, volume, or extent; to expand or enlarge.",
+            example:
+              "'The river swelled after the heavy rains.' — Mark Twain, The Adventures of Huckleberry Finn",
+          },
+          {
+            definition:
+              "To rise or protrude, as from a surface or body part.",
+            example:
+              "'Her ankle began to swell from the injury.' — Louisa May Alcott, Little Women",
+          },
+          {
+            definition:
+              "To cause to increase in size or volume; to make tumid or turgid.",
+            example:
+              "'Pride swells the heart of a conceited man.' — Jane Austen, Emma",
+          },
+          {
+            definition:
+              "To arise or issue forth; to come forth as a wave or flood of emotion or sound.",
+            example:
+              "'Music swelled from the concert hall.' — F. Scott Fitzgerald, The Great Gatsby",
+          },
+        ],
+      },
+      {
+        part_of_speech: "noun",
+        meanings: [
+          {
+            definition:
+              "A long wave or undulation of the ocean surface, typically caused by distant storms or strong winds.",
+            example:
+              "'The ship rose and fell with the swell of the sea.' — Herman Melville, Moby Dick",
+          },
+          {
+            definition:
+              "A gradual increase in loudness of sound, particularly in music.",
+            example:
+              "'The swell of the orchestra filled the concert hall.' — Thomas Mann, The Magic Mountain",
+          },
+          {
+            definition:
+              "A protuberance or enlargement on the body or a surface.",
+            example:
+              "'There was a swell on his forehead where he had struck it.' — Stephen King, The Stand",
+          },
+        ],
+      },
+      {
+        part_of_speech: "adjective",
+        meanings: [
+          {
+            definition:
+              "Excellent or outstanding; admirable or impressive (chiefly British, informal, archaic).",
+            example:
+              "'That is a swell idea, my dear fellow.' — P. G. Wodehouse, The Inimitable Jeeves",
+          },
+        ],
+      },
     ],
-    238,
-    188,
+    561,
+    566,
   ),
 
   plunge: entry(
     [
-      "(verb) To dive or jump into water or another liquid with force.",
-      "(verb) To thrust or push suddenly and forcefully into something.",
-      "(verb) To fall or drop suddenly and steeply.",
-      "(verb) To enter suddenly or rashly into a situation or course of action.",
-      "(noun) An act of plunging; a dive or jump.",
-      "(noun) A sudden fall or drop in amount, value, or condition.",
+      {
+        part_of_speech: "verb",
+        meanings: [
+          {
+            definition:
+              "To dive or fall suddenly and steeply into water or another medium.",
+            example:
+              "'He took a deep breath and plunged into the icy lake.' — Ranulph Fiennes, Mind Over Matter",
+          },
+          {
+            definition:
+              "To thrust or push something suddenly and forcefully into or through something else.",
+            example:
+              "'The knife plunged through the fabric with ease.' — Agatha Christie, Murder on the Orient Express",
+          },
+          {
+            definition:
+              "To descend or drop suddenly; to fall sharply in value or intensity.",
+            example:
+              "'The stock market plunged amid economic uncertainty.' — Financial Times",
+          },
+          {
+            definition:
+              "To move abruptly or impetuously into an action, condition, or situation.",
+            example:
+              "'They plunged ahead with the renovation despite budget constraints.' — The Guardian",
+          },
+          {
+            definition: "To immerse or submerge in liquid.",
+            example:
+              "'Plunge the vegetables into boiling water for three minutes.' — Nigella Lawson, How to Eat",
+          },
+        ],
+      },
+      {
+        part_of_speech: "noun",
+        meanings: [
+          {
+            definition: "An act of plunging; a sudden dive or fall.",
+            example:
+              "'The plunge into the pool felt exhilarating on the hot summer day.' — David Copperfield",
+          },
+          {
+            definition:
+              "A sudden and marked fall in value, amount, or intensity.",
+            example:
+              "'The company faced a financial plunge after the scandal broke.' — The Economist",
+          },
+        ],
+      },
     ],
-    238,
-    103,
+    561,
+    449,
   ),
+};
+
+export const MOCK_RESPONSES_TYPO: Record<string, LookupResult> = {
+  apopletic: {
+    dictionary: {
+      groups: [],
+      typo: { input: "apopletic", suggestion: "apoplectic" },
+    },
+    usage: buildTokenUsage(562, 31),
+  },
 };
 
 export const MOCK_ERROR_RESPONSE: LookupResult = entry([], 243, 8);

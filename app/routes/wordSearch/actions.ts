@@ -1,19 +1,33 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { MOCK_ERROR_RESPONSE, MOCK_RESPONSES } from "./mocks";
+import {
+  MOCK_ERROR_RESPONSE,
+  MOCK_RESPONSES,
+  MOCK_RESPONSES_TYPO,
+} from "./mocks";
+import { buildTokenUsage, logTokenUsage, type TokenUsage } from "./usage";
+
+export type { TokenUsage } from "./usage";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
-export interface DictionaryResult {
-  meaning: string[];
+export interface Meaning {
+  definition: string;
+  example: string;
 }
 
-export interface TokenUsage {
-  inputTokens: number;
-  outputTokens: number;
-  totalTokens: number;
-  inputCost: number;
-  outputCost: number;
-  totalCost: number;
+export interface MeaningGroup {
+  part_of_speech: string;
+  meanings: Meaning[];
+}
+
+export interface Typo {
+  input: string;
+  suggestion: string;
+}
+
+export interface DictionaryResult {
+  groups: MeaningGroup[];
+  typo?: Typo;
 }
 
 export type LookupResult = {
@@ -22,33 +36,98 @@ export type LookupResult = {
   originalSearchItem?: string;
 };
 
-// ── Pricing (USD per token) ────────────────────────────────────────────────────
-// Claude Haiku 4.5: $1.00 / 1M input tokens, $5.00 / 1M output tokens
-// Source: https://www.anthropic.com/pricing — verify if prices change.
+const DICTIONARY_SYSTEM_PROMPT = `You are a strict dictionary lookup service. When given a word or phrase, provide its meanings in the style and substance of the Oxford English Dictionary — concise, precise, and ordered by most common usage first.
+ 
+CRITICAL — Typo detection:
+- You must ONLY define words that are spelled correctly and exist as real dictionary entries.
+- NEVER silently correct, autocorrect, or interpret a misspelled word. If the input contains a spelling error — even a single transposed, missing, or extra letter — do NOT return definitions. Instead return the typo error response shown below.
+- For example: "apopleptic" is NOT a word. Do not treat it as "apoplectic". Return the typo error.
+ 
+Typo error response shape:
+{"error": "typo", "input": "apopleptic", "suggestion": "apoplectic"}
+ 
+Rules for valid words:
+1. Group meanings by part of speech (e.g. noun, verb, adjective, phrase, idiom). Each group contains one or more definitions that share that grammatical role.
+2. For each individual meaning, provide exactly one real-world example of the word or phrase used in published literature, journalism, or a famous speech. Format the example as a short quote wrapped in single quotation marks followed by an em dash and the author and work title, e.g. 'The light was ephemeral, vanishing before dawn.' — Kazuo Ishiguro, The Remains of the Day. Never use double quotes inside the example string — they break JSON. The quote must be a plausible, representative usage — do not fabricate absurd sentences.
+3. Use formal, dictionary-register language for definitions. Do not add etymologies or commentary.
+4. If the input is a well-known phrase or idiom, treat it as a single unit under the part of speech "phrase" or "idiom".
+5. If the word is spelled correctly but has no recognized meaning, return an empty groups array.
+ 
+Respond with ONLY a JSON object — no markdown, no backticks, no preamble, no explanation.
+ 
+Success shape:
+{"groups": [{"part_of_speech": "noun", "meanings": [{"definition": "...", "example": "'...' — Author, Title"}]}]}
+ 
+Typo shape:
+{"error": "typo", "input": "the misspelled input", "suggestion": "the closest correct word"}`;
 
-const HAIKU_INPUT_PRICE_PER_TOKEN = 1.0 / 1_000_000;
-const HAIKU_OUTPUT_PRICE_PER_TOKEN = 5.0 / 1_000_000;
+// ── Response parsing ───────────────────────────────────────────────────────────
 
-const DICTIONARY_SYSTEM_PROMPT = `You are a dictionary lookup service. When given a word or phrase, provide its meanings in the style and substance of the Oxford English Dictionary — concise, precise, and ordered by most common usage first.
+function parseDictionaryResponse(text: string): DictionaryResult {
+  const cleaned = text
+    .trim()
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/\s*```$/i, "")
+    .trim();
 
-Rules:
-1. Each meaning must be a single, self-contained definition string.
-2. Include the part of speech at the start of each meaning in parentheses, e.g. "(noun)", "(verb)", "(adjective)", "(phrase)", "(idiom)".
-3. Cover all major senses of the word or phrase across different parts of speech.
-4. Use formal, dictionary-register language. Do not add examples, etymologies, or commentary.
-5. If the input is a well-known phrase or idiom, define it as a whole unit.
-6. If the word or phrase has no recognized meaning, return an empty array.
+  const parsed = JSON.parse(cleaned);
 
-Respond with ONLY a JSON object in this exact shape — no markdown, no backticks, no preamble, no explanation:
-{"meaning": ["...", "..."]}`;
+  if (typeof parsed !== "object" || parsed === null) {
+    throw new Error("Response is not a JSON object");
+  }
+
+  // Typo response shape: {"error": "typo", "input": "...", "suggestion": "..."}
+  if ((parsed as { error?: unknown }).error === "typo") {
+    const { input, suggestion } = parsed as {
+      input?: unknown;
+      suggestion?: unknown;
+    };
+    if (typeof input !== "string" || typeof suggestion !== "string") {
+      throw new Error('Typo response missing "input" or "suggestion" string');
+    }
+    return { groups: [], typo: { input, suggestion } };
+  }
+
+  if (!Array.isArray((parsed as DictionaryResult).groups)) {
+    throw new Error('Response missing "groups" array');
+  }
+
+  const groups = (parsed as DictionaryResult).groups.map((group) => {
+    if (typeof group?.part_of_speech !== "string") {
+      throw new Error('Group missing "part_of_speech" string');
+    }
+    if (!Array.isArray(group.meanings)) {
+      throw new Error('Group missing "meanings" array');
+    }
+    return {
+      part_of_speech: group.part_of_speech,
+      meanings: group.meanings.map((meaning) => {
+        if (
+          typeof meaning?.definition !== "string" ||
+          typeof meaning?.example !== "string"
+        ) {
+          throw new Error('Meaning missing "definition" or "example" string');
+        }
+        return { definition: meaning.definition, example: meaning.example };
+      }),
+    };
+  });
+
+  return { groups };
+}
+
+// ── Lookup ─────────────────────────────────────────────────────────────────────
 
 export async function lookupWord(word: string): Promise<LookupResult> {
   // ── Mock mode (uncomment below and comment out mock logic for real API) ──
   const delay = 500 + Math.random() * 1000;
   await new Promise((resolve) => setTimeout(resolve, delay));
 
-  const mock = MOCK_RESPONSES[word.toLowerCase()];
-  return mock ?? MOCK_ERROR_RESPONSE;
+  const key = word.toLowerCase();
+  const result =
+    MOCK_RESPONSES[key] ?? MOCK_RESPONSES_TYPO[key] ?? MOCK_ERROR_RESPONSE;
+  logTokenUsage(result.usage, word);
+  return result;
 
   // ── Real API call ───────────────────────────────────────────────────────
   // const client = new Anthropic();
@@ -60,43 +139,19 @@ export async function lookupWord(word: string): Promise<LookupResult> {
   //   messages: [{ role: "user", content: `Define: ${word}` }],
   // });
 
+  // console.log("raw", response);
+
   // const raw = response.content[0];
   // if (raw.type !== "text") {
   //   throw new Error("Unexpected response type from API");
   // }
 
-  // const cleaned = raw.text
-  //   .trim()
-  //   .replace(/^```(?:json)?\s*/i, "")
-  //   .replace(/\s*```$/i, "")
-  //   .trim();
+  // const dictionary = parseDictionaryResponse(raw.text);
+  // const usage = buildTokenUsage(
+  //   response.usage.input_tokens,
+  //   response.usage.output_tokens,
+  // );
+  // logTokenUsage(usage, word);
 
-  // const parsed: DictionaryResult = JSON.parse(cleaned);
-
-  // if (!Array.isArray(parsed.meaning)) {
-  //   throw new Error('Response missing "meaning" array');
-  // }
-
-  // const inputTokens = response.usage.input_tokens;
-  // const outputTokens = response.usage.output_tokens;
-  // const inputCost = inputTokens * HAIKU_INPUT_PRICE_PER_TOKEN;
-  // const outputCost = outputTokens * HAIKU_OUTPUT_PRICE_PER_TOKEN;
-
-  // return {
-  //   dictionary: parsed,
-  //   usage: {
-  //     inputTokens,
-  //     outputTokens,
-  //     totalTokens: inputTokens + outputTokens,
-  //     inputCost,
-  //     outputCost,
-  //     totalCost: inputCost + outputCost,
-  //   },
-  // };
-}
-
-// ── Pretty-print helper ────────────────────────────────────────────────────────
-
-export function formatUSD(amount: number): string {
-  return amount < 0.01 ? `$${amount.toFixed(6)}` : `$${amount.toFixed(4)}`;
+  // return { dictionary, usage };
 }
