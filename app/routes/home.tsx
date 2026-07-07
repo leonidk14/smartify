@@ -1,5 +1,6 @@
-import type { Route } from "../+types/root";
+import type { Route } from "./+types/home";
 import { lookupWord } from "./wordSearch/actions";
+import { normalize } from "./wordSearch/normalize";
 import {
   markForPractice,
   readVocabulary,
@@ -13,7 +14,7 @@ export async function action({ request }: Route.ActionArgs) {
 
   if (intent === "practice") {
     const word = String(formData.get("word"));
-    await markForPractice(word);
+    await markForPractice(normalize(word));
     return { success: true };
   }
 
@@ -24,7 +25,7 @@ export async function action({ request }: Route.ActionArgs) {
     return null;
   }
 
-  const key = searchItem.trim().toLowerCase();
+  const key = normalize(searchItem);
   const store = await readVocabulary();
   const cached = store[key];
 
@@ -37,7 +38,7 @@ export async function action({ request }: Route.ActionArgs) {
   }
 
   const result = await lookupWord(searchItem);
-  await saveWord(searchItem, result.dictionary.groups);
+  await saveWord(key, result.dictionary.groups);
 
   return {
     ...result,

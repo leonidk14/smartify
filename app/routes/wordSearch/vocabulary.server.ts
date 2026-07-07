@@ -10,11 +10,7 @@ export interface VocabularyEntry {
 
 export type VocabularyStore = Record<string, VocabularyEntry>;
 
-const VOCABULARY_PATH = path.resolve(
-  process.cwd(),
-  "data",
-  "vocabulary.json",
-);
+const VOCABULARY_PATH = path.resolve(process.cwd(), "data", "vocabulary.json");
 
 export async function readVocabulary(): Promise<VocabularyStore> {
   try {

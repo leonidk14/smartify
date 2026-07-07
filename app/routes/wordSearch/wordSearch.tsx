@@ -78,7 +78,9 @@ export const WordSearch = () => {
   };
 
   return (
-    <searchFetcher.Form method="post">
+    <searchFetcher.Form
+      method="post"
+      style={{ display: "flex", flexDirection: "column", flex: 1 }}>
       <Flex direction="column" p={16} flex={1} gap={16}>
         <Textarea
           name="search-item"
