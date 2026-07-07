@@ -34,6 +34,7 @@ export type LookupResult = {
   dictionary: DictionaryResult;
   usage: TokenUsage;
   originalSearchItem?: string;
+  shouldPracticeLater?: boolean;
 };
 
 const DICTIONARY_SYSTEM_PROMPT = `You are a strict dictionary lookup service. When given a word or phrase, provide its meanings in the style and substance of the Oxford English Dictionary — concise, precise, and ordered by most common usage first.

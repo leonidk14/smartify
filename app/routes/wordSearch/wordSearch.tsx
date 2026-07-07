@@ -11,45 +11,74 @@ import {
   Transition,
 } from "@mantine/core";
 import { IconBook } from "@tabler/icons-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useFetcher } from "react-router";
 import type { LookupResult } from "./actions";
 
 export const WordSearch = () => {
-  const fetcher = useFetcher<LookupResult>();
+  const searchFetcher = useFetcher<LookupResult>();
+  const practiceFetcher = useFetcher<{ success: boolean }>();
   const [value, setValue] = useState("");
+  const [markedForPractice, setMarkedForPractice] = useState(false);
 
   const isLoading =
-    fetcher.state === "loading" || fetcher.state === "submitting";
-  const isFirstSearch = fetcher.state === "idle" && !fetcher.data;
-  const typo = !isLoading ? fetcher.data?.dictionary?.typo : undefined;
+    searchFetcher.state === "loading" || searchFetcher.state === "submitting";
+  const isFirstSearch = searchFetcher.state === "idle" && !searchFetcher.data;
+  const typo = !isLoading ? searchFetcher.data?.dictionary?.typo : undefined;
   const isNothingFound =
     !isLoading &&
-    fetcher.data &&
-    fetcher.data.dictionary.groups &&
-    fetcher.data.dictionary.groups.length === 0 &&
+    searchFetcher.data &&
+    searchFetcher.data.dictionary.groups &&
+    searchFetcher.data.dictionary.groups.length === 0 &&
     !typo;
   const isError =
     !isLoading &&
-    fetcher.data &&
-    (!fetcher.data.dictionary || !fetcher.data.dictionary.groups);
+    searchFetcher.data &&
+    (!searchFetcher.data.dictionary || !searchFetcher.data.dictionary.groups);
 
   const groups =
-    fetcher.data && fetcher.data.dictionary && fetcher.data.dictionary.groups
-      ? fetcher.data.dictionary.groups
+    searchFetcher.data &&
+    searchFetcher.data.dictionary &&
+    searchFetcher.data.dictionary.groups
+      ? searchFetcher.data.dictionary.groups
       : null;
 
-  const originalSearchItem = fetcher.data?.originalSearchItem;
+  const originalSearchItem = searchFetcher.data?.originalSearchItem;
   const isDirty =
     !!groups &&
     originalSearchItem !== undefined &&
     value.trim().toLowerCase() !== originalSearchItem.trim().toLowerCase();
-  const showFloatingButton = isDirty && !isLoading;
+  const showSearchButton = isDirty && !isLoading;
 
+  const isMarkingForPractice =
+    practiceFetcher.state === "submitting" ||
+    practiceFetcher.state === "loading";
   const hasData = !isLoading && groups && groups.length > 0;
+  const shouldPracticeLater = searchFetcher.data?.shouldPracticeLater;
+  const isAddedForPractice = shouldPracticeLater || markedForPractice;
+
+  useEffect(() => {
+    if (isLoading) {
+      setMarkedForPractice(false);
+    }
+  }, [isLoading]);
+
+  useEffect(() => {
+    if (practiceFetcher.data?.success) {
+      setMarkedForPractice(true);
+    }
+  }, [practiceFetcher.data]);
+
+  const handlePracticeLater = () => {
+    if (!originalSearchItem) return;
+    practiceFetcher.submit(
+      { intent: "practice", word: originalSearchItem },
+      { method: "post" },
+    );
+  };
 
   return (
-    <fetcher.Form method="post">
+    <searchFetcher.Form method="post">
       <Flex direction="column" p={16} flex={1} gap={16}>
         <Textarea
           name="search-item"
@@ -61,6 +90,12 @@ export const WordSearch = () => {
           size="xl"
           value={value}
           onChange={(event) => setValue(event.currentTarget.value)}
+          disabled={isMarkingForPractice}
+          styles={
+            isMarkingForPractice
+              ? { input: { opacity: 1, cursor: "text", color: "inherit" } }
+              : undefined
+          }
         />
         <Divider />
         <Flex flex={1} mt={8} align="center" direction="column" gap={16}>
@@ -144,10 +179,7 @@ export const WordSearch = () => {
           ) : null}
         </Flex>
       </Flex>
-      <Transition
-        mounted={!!hasData && showFloatingButton}
-        transition="slide-up"
-        duration={250}>
+      <Transition mounted={!!hasData} transition="slide-up" duration={250}>
         {(transitionStyles) => (
           <Box
             style={{
@@ -162,13 +194,27 @@ export const WordSearch = () => {
               paddingBottom: 16,
               display: "flex",
               justifyContent: "center",
+              gap: 16,
             }}>
-            <Button variant="filled" size="lg" color="black" type="submit">
-              Search
-            </Button>
+            {showSearchButton ? (
+              <Button variant="filled" size="lg" color="black" type="submit">
+                Search
+              </Button>
+            ) : (
+              <Button
+                variant="filled"
+                size="lg"
+                color="black"
+                type="button"
+                onClick={handlePracticeLater}
+                disabled={isMarkingForPractice || isAddedForPractice}
+                loading={isMarkingForPractice}>
+                {isAddedForPractice ? "Added for practice" : "Practice Later"}
+              </Button>
+            )}
           </Box>
         )}
       </Transition>
-    </fetcher.Form>
+    </searchFetcher.Form>
   );
 };

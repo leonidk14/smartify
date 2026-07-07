@@ -7,3 +7,6 @@
 /build/
 
 .vscode/
+
+# Vocabulary data
+data/vocabulary.json
