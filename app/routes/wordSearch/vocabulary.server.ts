@@ -21,7 +21,7 @@ export async function readVocabulary(): Promise<VocabularyStore> {
   }
 }
 
-async function writeVocabulary(store: VocabularyStore): Promise<void> {
+export async function writeVocabulary(store: VocabularyStore): Promise<void> {
   await fs.mkdir(path.dirname(VOCABULARY_PATH), { recursive: true });
   await fs.writeFile(VOCABULARY_PATH, JSON.stringify(store, null, 2));
 }

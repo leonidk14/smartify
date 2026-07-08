@@ -3,8 +3,8 @@ import { PracticeSentence } from "./practice/practiceSentence";
 import {
   evaluateSentence,
   generateSentence,
-  type SentenceEvaluation,
-} from "./practice/sentenceActions";
+} from "./practice/sentenceActions.server";
+import type { SentenceEvaluation } from "./practice/sentenceTypes";
 import type { Route } from "./+types/practiceSentence";
 
 export const shouldRevalidate = () => {

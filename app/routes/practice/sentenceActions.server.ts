@@ -4,7 +4,6 @@ import {
   logTokenUsage,
   sumTokenUsage,
   type PricingModel,
-  type TokenUsage,
 } from "../wordSearch/usage";
 import {
   DEFAULT_MOCK_EVALUATION,
@@ -12,43 +11,22 @@ import {
   MOCK_EVALUATIONS,
   MOCK_GENERATIONS,
 } from "./mocks";
+import {
+  readVocabulary,
+  writeVocabulary,
+} from "../wordSearch/vocabulary.server";
+import type {
+  CachedSentence,
+  EvaluationResult,
+  GeneratedSentence,
+  SentenceEvaluation,
+  SentenceGeneration,
+  TokenUsage,
+} from "./sentenceTypes";
 
-export type { TokenUsage } from "../wordSearch/usage";
+const SENTENCES_IN_CACHE_SIZE = 3;
 
-export interface GeneratedSentence {
-  original: string;
-  source: string;
-  simplified: string;
-  /** Set only when the meaning used differs from the requested one. */
-  meaning?: string;
-  /** True when the sentence was written by the model, not a real quotation. */
-  generated?: boolean;
-  /** Set only when no sentence at all could be produced. */
-  error?: string;
-}
-
-export interface SentenceGeneration {
-  sentence: GeneratedSentence;
-  usage: TokenUsage;
-}
-
-export interface CorrectionSegment {
-  text: string;
-  changed: boolean;
-}
-
-export interface SentenceEvaluation {
-  score: number;
-  correctedSentence?: string;
-  segments?: CorrectionSegment[];
-}
-
-export interface EvaluationResult {
-  evaluation: SentenceEvaluation;
-  usage: TokenUsage;
-}
-
-export const NEAR_PERFECT_THRESHOLD = 9.5;
+const USE_MOCK = true;
 
 const GENERATION_SYSTEM_PROMPT = `You help English learners practice a target word. You are given a WORD, a REQUESTED meaning to practice, and a list of all MEANINGS available for that word.
 
@@ -270,44 +248,111 @@ async function runGeneration(
   return { sentence, usage };
 }
 
-export async function generateSentence(
+// Produce a brand-new sentence from the model (real API path). Kept separate
+// from the cache orchestration in `generateSentence`.
+async function generateFresh(
   word: string,
   meaning: string,
   meanings: string[],
 ): Promise<SentenceGeneration> {
-  // ── Real API call (commented out; using mocks from ./mocks) ──────────────
   // const client = new Anthropic();
-  //
+
   // const meaningsList = meanings.map((m) => `- ${m}`).join("\n");
   // const userContent = `Word: ${word}\nRequested meaning: ${meaning}\nMeanings:\n${meaningsList}`;
-  //
+
   // // First attempt with Haiku (cheaper/faster). Escalate to Sonnet only if
   // // Haiku gives up (returns the "error" field).
   // const haiku = await runGeneration(client, "haiku", userContent);
-  //
+
   // if (!haiku.sentence.error) {
   //   logTokenUsage(haiku.usage, `generate (haiku): ${word}`);
   //   return haiku;
   // }
-  //
+
   // console.warn(
   //   `Haiku could not generate for "${word}", retrying with Sonnet:`,
   //   haiku.sentence.error,
   // );
-  //
+
   // const sonnet = await runGeneration(client, "sonnet", userContent);
   // const usage = sumTokenUsage(haiku.usage, sonnet.usage);
   // logTokenUsage(usage, `generate (haiku+sonnet): ${word}`);
-  //
-  // return { sentence: sonnet.sentence, usage };
 
-  // ── Mock mode ────────────────────────────────────────────────────────────
+  // return { sentence: sonnet.sentence, usage };
+  return {
+    sentence: [] as unknown as GeneratedSentence,
+    usage: {} as unknown as TokenUsage,
+  };
+}
+
+async function generateMock(word: string): Promise<SentenceGeneration> {
   const delay = 500 + Math.random() * 1000;
   await new Promise((resolve) => setTimeout(resolve, delay));
 
   const result = MOCK_GENERATIONS[word] ?? DEFAULT_MOCK_GENERATION;
   logTokenUsage(result.usage, `generate (mock): ${word}`);
   return result;
+}
+
+function findSentenceCache(
+  store: Awaited<ReturnType<typeof readVocabulary>>,
+  word: string,
+  meaning: string,
+): CachedSentence[] | undefined {
+  const entry = store[word];
+  if (!entry) return undefined;
+
+  for (const group of entry.groups) {
+    const target = group.meanings.find((m) => m.definition === meaning);
+    if (target) {
+      target.sentences ??= [];
+      return target.sentences;
+    }
+  }
+  return undefined;
+}
+
+export async function generateSentence(
+  word: string,
+  meaning: string,
+  meanings: string[],
+): Promise<SentenceGeneration> {
+  // Mock output is never persisted — return it directly.
+  if (USE_MOCK) {
+    return generateMock(word);
+  }
+
+  const store = await readVocabulary();
+  const cachedSentences = findSentenceCache(store, word, meaning);
+
+  if (!cachedSentences) {
+    return generateFresh(word, meaning, meanings);
+  }
+
+  if (cachedSentences.length < SENTENCES_IN_CACHE_SIZE) {
+    const fresh = await generateFresh(word, meaning, meanings);
+
+    if (fresh.sentence.error) {
+      return fresh;
+    }
+
+    cachedSentences.push({ sentence: fresh.sentence, usageCount: 1 });
+    await writeVocabulary(store);
+    return fresh;
+  }
+
+  let chosen = cachedSentences[0];
+  for (const candidate of cachedSentences) {
+    if (candidate.usageCount < chosen.usageCount) {
+      chosen = candidate;
+    }
+  }
+  chosen.usageCount += 1;
+  await writeVocabulary(store);
+
+  const usage = buildTokenUsage(0, 0);
+  logTokenUsage(usage, `generate (cache): ${word}`);
+  return { sentence: chosen.sentence, usage };
 }
 
 export async function evaluateSentence(

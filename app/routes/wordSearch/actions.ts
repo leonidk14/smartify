@@ -5,6 +5,7 @@ import {
   MOCK_RESPONSES_TYPO,
 } from "./mocks";
 import { buildTokenUsage, logTokenUsage, type TokenUsage } from "./usage";
+import type { CachedSentence } from "../practice/sentenceTypes";
 
 export type { TokenUsage } from "./usage";
 
@@ -13,6 +14,7 @@ export type { TokenUsage } from "./usage";
 export interface Meaning {
   definition: string;
   example: string;
+  sentences?: CachedSentence[];
 }
 
 export interface MeaningGroup {

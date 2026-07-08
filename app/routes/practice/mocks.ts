@@ -3,7 +3,7 @@ import type {
   GeneratedSentence,
   SentenceEvaluation,
   SentenceGeneration,
-} from "./sentenceActions";
+} from "./sentenceTypes";
 import { buildTokenUsage } from "../wordSearch/usage";
 
 function generation(

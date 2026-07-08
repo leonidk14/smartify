@@ -1,0 +1,1 @@
+export const NEAR_PERFECT_THRESHOLD = 9.5;

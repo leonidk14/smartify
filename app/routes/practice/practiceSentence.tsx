@@ -2,10 +2,8 @@ import { Badge, Box, Button, Flex, Text, Textarea } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useEffect, useState } from "react";
 import { useFetcher } from "react-router";
-import {
-  NEAR_PERFECT_THRESHOLD,
-  type SentenceEvaluation,
-} from "./sentenceActions";
+import { NEAR_PERFECT_THRESHOLD } from "./constants";
+import type { SentenceEvaluation } from "./sentenceTypes";
 
 interface PracticeSentenceProps {
   word: string;
