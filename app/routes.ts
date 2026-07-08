@@ -5,5 +5,6 @@ export default [
     index("routes/home.tsx"),
     route("practice", "routes/practice.tsx"),
     route("practice/:word", "routes/practiceWord.tsx"),
+    route("practice/:word/sentence", "routes/practiceSentence.tsx"),
   ]),
 ] satisfies RouteConfig;

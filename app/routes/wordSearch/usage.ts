@@ -10,18 +10,25 @@ export interface TokenUsage {
 }
 
 // ── Pricing (USD per token) ────────────────────────────────────────────────────
-// Claude Haiku 4.5: $1.00 / 1M input tokens, $5.00 / 1M output tokens
+// Claude Haiku 4.5: $1.00 / 1M input, $5.00 / 1M output
+// Claude Sonnet 5:  $3.00 / 1M input, $15.00 / 1M output
 // Source: https://www.anthropic.com/pricing — verify if prices change.
 
-const HAIKU_INPUT_PRICE_PER_TOKEN = 1.0 / 1_000_000;
-const HAIKU_OUTPUT_PRICE_PER_TOKEN = 5.0 / 1_000_000;
+export type PricingModel = "haiku" | "sonnet";
+
+const PRICING: Record<PricingModel, { input: number; output: number }> = {
+  haiku: { input: 1.0 / 1_000_000, output: 5.0 / 1_000_000 },
+  sonnet: { input: 3.0 / 1_000_000, output: 15.0 / 1_000_000 },
+};
 
 export function buildTokenUsage(
   inputTokens: number,
   outputTokens: number,
+  model: PricingModel = "haiku",
 ): TokenUsage {
-  const inputCost = inputTokens * HAIKU_INPUT_PRICE_PER_TOKEN;
-  const outputCost = outputTokens * HAIKU_OUTPUT_PRICE_PER_TOKEN;
+  const price = PRICING[model];
+  const inputCost = inputTokens * price.input;
+  const outputCost = outputTokens * price.output;
   return {
     inputTokens,
     outputTokens,
@@ -30,6 +37,28 @@ export function buildTokenUsage(
     outputCost,
     totalCost: inputCost + outputCost,
   };
+}
+
+// Combine usage from multiple model calls (each already priced per its model).
+export function sumTokenUsage(...usages: TokenUsage[]): TokenUsage {
+  return usages.reduce(
+    (acc, u) => ({
+      inputTokens: acc.inputTokens + u.inputTokens,
+      outputTokens: acc.outputTokens + u.outputTokens,
+      totalTokens: acc.totalTokens + u.totalTokens,
+      inputCost: acc.inputCost + u.inputCost,
+      outputCost: acc.outputCost + u.outputCost,
+      totalCost: acc.totalCost + u.totalCost,
+    }),
+    {
+      inputTokens: 0,
+      outputTokens: 0,
+      totalTokens: 0,
+      inputCost: 0,
+      outputCost: 0,
+      totalCost: 0,
+    },
+  );
 }
 
 export function formatUSD(amount: number): string {

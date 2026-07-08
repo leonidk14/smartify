@@ -1,6 +1,7 @@
 import { Box, Button, Flex, Text, TextInput, Tooltip } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useEffect, useState } from "react";
+import { Link, useNavigation } from "react-router";
 import { normalize } from "../wordSearch/normalize";
 
 interface PracticeWordProps {
@@ -26,6 +27,8 @@ export const PracticeWord = ({
   const [triedOnce, setTriedOnce] = useState(false);
   const [showHintButton, setShowHintButton] = useState(false);
   const [tooltipOpen, setTooltipOpen] = useState(false);
+  const [solved, setSolved] = useState(false);
+  const navigation = useNavigation();
 
   useEffect(() => {
     const timer = setTimeout(() => setShowHintButton(true), 5000);
@@ -38,7 +41,8 @@ export const PracticeWord = ({
     const isCorrectAnswer = normalize(answer) === normalize(word);
 
     if (isCorrectAnswer) {
-      notify("green", "Correct!");
+      setSolved(true);
+      notify("green", "Correct! On to the next step");
       return;
     }
 
@@ -120,22 +124,34 @@ export const PracticeWord = ({
             type="button"
             onClick={handleHint}
             style={{
-              opacity: showHintButton ? 1 : 0,
-              pointerEvents: showHintButton ? "auto" : "none",
+              opacity: showHintButton && !solved ? 1 : 0,
+              pointerEvents: showHintButton && !solved ? "auto" : "none",
               transition: "opacity 400ms ease",
             }}>
             Give a hint
           </Button>
         </Tooltip>
-        <Button
-          variant="filled"
-          size="lg"
-          color="black"
-          type="button"
-          onClick={handleSubmit}
-          disabled={!answer.trim()}>
-          Submit answer
-        </Button>
+        {solved ? (
+          <Button
+            component={Link}
+            to={`sentence?m=${encodeURIComponent(definition)}`}
+            variant="filled"
+            size="lg"
+            color="black"
+            loading={navigation.state === "loading"}>
+            Next step
+          </Button>
+        ) : (
+          <Button
+            variant="filled"
+            size="lg"
+            color="black"
+            type="button"
+            onClick={handleSubmit}
+            disabled={!answer.trim()}>
+            Submit answer
+          </Button>
+        )}
       </Box>
     </Flex>
   );

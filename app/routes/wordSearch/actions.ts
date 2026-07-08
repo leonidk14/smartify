@@ -54,13 +54,53 @@ Rules for valid words:
 4. If the input is a well-known phrase or idiom, treat it as a single unit under the part of speech "phrase" or "idiom".
 5. If the word is spelled correctly but has no recognized meaning, return an empty groups array.
  
-Respond with ONLY a JSON object — no markdown, no backticks, no preamble, no explanation.
- 
+Always return a JSON object with ALL of "error", "input", "suggestion", and "groups" present.
+- Valid word: set "error", "input", and "suggestion" to empty strings and fill "groups".
+- Typo: set "error" to "typo", "input" to the misspelled input, "suggestion" to the closest correct word, and "groups" to an empty array.
+- Correctly spelled but no recognized meaning: empty strings for "error"/"input"/"suggestion" and an empty "groups" array.
+
 Success shape:
-{"groups": [{"part_of_speech": "noun", "meanings": [{"definition": "...", "example": "'...' — Author, Title"}]}]}
- 
+{"error": "", "input": "", "suggestion": "", "groups": [{"part_of_speech": "noun", "meanings": [{"definition": "...", "example": "'...' — Author, Title"}]}]}
+
 Typo shape:
-{"error": "typo", "input": "the misspelled input", "suggestion": "the closest correct word"}`;
+{"error": "typo", "input": "the misspelled input", "suggestion": "the closest correct word", "groups": []}`;
+
+const DICTIONARY_OUTPUT_FORMAT = {
+  type: "json_schema",
+  schema: {
+    type: "object",
+    additionalProperties: false,
+    properties: {
+      error: { type: "string" },
+      input: { type: "string" },
+      suggestion: { type: "string" },
+      groups: {
+        type: "array",
+        items: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            part_of_speech: { type: "string" },
+            meanings: {
+              type: "array",
+              items: {
+                type: "object",
+                additionalProperties: false,
+                properties: {
+                  definition: { type: "string" },
+                  example: { type: "string" },
+                },
+                required: ["definition", "example"],
+              },
+            },
+          },
+          required: ["part_of_speech", "meanings"],
+        },
+      },
+    },
+    required: ["error", "input", "suggestion", "groups"],
+  },
+} as const;
 
 // ── Response parsing ───────────────────────────────────────────────────────────
 
@@ -137,6 +177,7 @@ export async function lookupWord(word: string): Promise<LookupResult> {
   //   model: "claude-haiku-4-5-20251001",
   //   max_tokens: 1024,
   //   system: DICTIONARY_SYSTEM_PROMPT,
+  //   output_config: { format: DICTIONARY_OUTPUT_FORMAT },
   //   messages: [{ role: "user", content: `Define: ${word}` }],
   // });
 
