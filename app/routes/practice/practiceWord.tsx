@@ -1,8 +1,9 @@
 import { Box, Button, Flex, Text, TextInput, Tooltip } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useEffect, useState } from "react";
-import { Link, useNavigation } from "react-router";
+import { useNavigate, useNavigation } from "react-router";
 import { normalize } from "../wordSearch/normalize";
+import { nextWord, useSessionStore } from "../../store/session";
 
 interface PracticeWordProps {
   word: string;
@@ -31,11 +32,43 @@ export const PracticeWord = ({
   const [tooltipOpen, setTooltipOpen] = useState(false);
   const [solved, setSolved] = useState(false);
   const navigation = useNavigation();
+  const navigate = useNavigate();
+
+  const queue = useSessionStore((s) => s.queue);
+  const meaningIds = useSessionStore((s) => s.meaningIds);
+  const startSession = useSessionStore((s) => s.startSession);
+  const setMeaning = useSessionStore((s) => s.setMeaning);
+  const setPhase = useSessionStore((s) => s.setPhase);
 
   useEffect(() => {
     const timer = setTimeout(() => setShowHintButton(true), 5000);
     return () => clearTimeout(timer);
   }, []);
+
+  // Direct-URL / refresh entry: make this a coherent single-word session.
+  useEffect(() => {
+    if (!queue.includes(word)) {
+      startSession([word]);
+    }
+  }, [word]);
+
+  const handleNext = () => {
+    setMeaning(word, meaningId);
+    const next = nextWord(queue, word);
+    if (next) {
+      navigate(`/practice/${encodeURIComponent(next)}`);
+      return;
+    }
+
+    setPhase("sentence");
+    const first = queue[0] ?? word;
+    const firstMeaningId = first === word ? meaningId : meaningIds[first];
+    navigate(
+      `/practice/${encodeURIComponent(first)}/sentence?m=${encodeURIComponent(
+        firstMeaningId,
+      )}`,
+    );
+  };
 
   const handleSubmit = () => {
     if (!answer.trim()) return;
@@ -135,11 +168,11 @@ export const PracticeWord = ({
         </Tooltip>
         {solved ? (
           <Button
-            component={Link}
-            to={`sentence?m=${encodeURIComponent(meaningId)}`}
             variant="filled"
             size="lg"
             color="black"
+            type="button"
+            onClick={handleNext}
             loading={navigation.state === "loading"}>
             Next step
           </Button>

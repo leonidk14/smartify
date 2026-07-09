@@ -1,9 +1,10 @@
 import { Badge, Box, Button, Flex, Text, Textarea } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useEffect, useState } from "react";
-import { useFetcher } from "react-router";
+import { useFetcher, useNavigate } from "react-router";
 import { NEAR_PERFECT_THRESHOLD } from "./constants";
 import type { SentenceEvaluation } from "./sentenceTypes";
+import { nextWord, useSessionStore } from "../../store/session";
 
 interface PracticeSentenceProps {
   word: string;
@@ -41,6 +42,7 @@ const Comparison = ({
 );
 
 export const PracticeSentence = ({
+  word,
   meaning,
   original,
   source,
@@ -50,6 +52,10 @@ export const PracticeSentence = ({
 }: PracticeSentenceProps) => {
   const evalFetcher = useFetcher<ActionData>();
   const [value, setValue] = useState("");
+  const navigate = useNavigate();
+  const queue = useSessionStore((s) => s.queue);
+  const meaningIds = useSessionStore((s) => s.meaningIds);
+  const recordScore = useSessionStore((s) => s.recordScore);
 
   const isSubmitting = evalFetcher.state !== "idle";
   const data = evalFetcher.data;
@@ -66,6 +72,21 @@ export const PracticeSentence = ({
     const sentence = value.trim();
     if (!sentence || isSubmitting) return;
     evalFetcher.submit({ sentence, meaning, original }, { method: "post" });
+  };
+
+  const handleNext = () => {
+    if (!evaluation) return;
+    recordScore(word, evaluation.score);
+    const next = nextWord(queue, word);
+    if (next) {
+      navigate(
+        `/practice/${encodeURIComponent(next)}/sentence?m=${encodeURIComponent(
+          meaningIds[next] ?? "",
+        )}`,
+      );
+    } else {
+      navigate("/practice/summary");
+    }
   };
 
   if (generationFailed) {
@@ -139,7 +160,10 @@ export const PracticeSentence = ({
                 span
                 c="dimmed"
                 fs="italic"
-                style={{ display: "block", fontSize: "var(--mantine-font-size-sm)" }}
+                style={{
+                  display: "block",
+                  fontSize: "var(--mantine-font-size-sm)",
+                }}
                 mt={4}>
                 — {source}
               </Text>
@@ -149,7 +173,10 @@ export const PracticeSentence = ({
                 span
                 c="dimmed"
                 fs="italic"
-                style={{ display: "block", fontSize: "var(--mantine-font-size-sm)" }}
+                style={{
+                  display: "block",
+                  fontSize: "var(--mantine-font-size-sm)",
+                }}
                 mt={4}>
                 Generated example — not from a published source.
               </Text>
@@ -205,6 +232,32 @@ export const PracticeSentence = ({
           </Button>
         </Box>
       )}
+
+      {evaluation ? (
+        <Box
+          style={{
+            position: "fixed",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            background:
+              "linear-gradient(to bottom, rgba(255, 255, 255, 0), #fff 16px)",
+            paddingTop: 32,
+            paddingBottom: 16,
+            display: "flex",
+            justifyContent: "center",
+            gap: 16,
+          }}>
+          <Button
+            variant="filled"
+            size="lg"
+            color="black"
+            type="button"
+            onClick={handleNext}>
+            {nextWord(queue, word) ? "Next sentence" : "Finish"}
+          </Button>
+        </Box>
+      ) : null}
     </Flex>
   );
 };

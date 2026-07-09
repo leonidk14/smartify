@@ -7,8 +7,18 @@ import {
 import type { SentenceEvaluation } from "./practice/sentenceTypes";
 import type { Route } from "./+types/practiceSentence";
 
-export const shouldRevalidate = () => {
-  return false;
+export const shouldRevalidate = ({
+  currentUrl,
+  nextUrl,
+}: {
+  currentUrl: URL;
+  nextUrl: URL;
+}) => {
+  const isNavigatingToDifferentSentence =
+    currentUrl.pathname !== nextUrl.pathname ||
+    currentUrl.search !== nextUrl.search;
+
+  return isNavigatingToDifferentSentence;
 };
 
 export async function loader({ params, request }: Route.LoaderArgs) {
@@ -105,6 +115,7 @@ export default function PracticeSentenceRoute({
 }: Route.ComponentProps) {
   return (
     <PracticeSentence
+      key={loaderData.word}
       word={loaderData.word}
       meaning={loaderData.meaning}
       original={loaderData.original}

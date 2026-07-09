@@ -4,6 +4,7 @@ export default [
   layout("routes/layout.tsx", [
     index("routes/home.tsx"),
     route("practice", "routes/practice.tsx"),
+    route("practice/summary", "routes/practiceSummary.tsx"),
     route("practice/:word", "routes/practiceWord.tsx"),
     route("practice/:word/sentence", "routes/practiceSentence.tsx"),
   ]),

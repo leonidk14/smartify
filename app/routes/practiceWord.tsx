@@ -59,6 +59,7 @@ export default function PracticeWordRoute({
 }: Route.ComponentProps) {
   return (
     <PracticeWord
+      key={loaderData.word}
       word={loaderData.word}
       definition={loaderData.definition}
       meaningId={loaderData.meaningId}
