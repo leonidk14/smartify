@@ -7,6 +7,7 @@ import { normalize } from "../wordSearch/normalize";
 interface PracticeWordProps {
   word: string;
   definition: string;
+  meaningId: string;
   hints: string[];
 }
 
@@ -21,6 +22,7 @@ const notify = (color: string, message: string) =>
 export const PracticeWord = ({
   word,
   definition,
+  meaningId,
   hints,
 }: PracticeWordProps) => {
   const [answer, setAnswer] = useState("");
@@ -134,7 +136,7 @@ export const PracticeWord = ({
         {solved ? (
           <Button
             component={Link}
-            to={`sentence?m=${encodeURIComponent(definition)}`}
+            to={`sentence?m=${encodeURIComponent(meaningId)}`}
             variant="filled"
             size="lg"
             color="black"

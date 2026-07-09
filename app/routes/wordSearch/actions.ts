@@ -169,7 +169,7 @@ export async function lookupWord(word: string): Promise<LookupResult> {
   const key = word.toLowerCase();
   const result =
     MOCK_RESPONSES[key] ?? MOCK_RESPONSES_TYPO[key] ?? MOCK_ERROR_RESPONSE;
-  logTokenUsage(result.usage, word);
+  logTokenUsage({ usage: result.usage, label: word });
   return result;
 
   // ── Real API call ───────────────────────────────────────────────────────
@@ -191,11 +191,11 @@ export async function lookupWord(word: string): Promise<LookupResult> {
   // }
 
   // const dictionary = parseDictionaryResponse(raw.text);
-  // const usage = buildTokenUsage(
-  //   response.usage.input_tokens,
-  //   response.usage.output_tokens,
-  // );
-  // logTokenUsage(usage, word);
+  // const usage = buildTokenUsage({
+  //   inputTokens: response.usage.input_tokens,
+  //   outputTokens: response.usage.output_tokens,
+  // });
+  // logTokenUsage({ usage, label: word });
 
   // return { dictionary, usage };
 }

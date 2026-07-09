@@ -11,7 +11,8 @@ export async function loader({ params }: Route.LoaderArgs) {
   }
 
   const allMeanings = entry.groups.flatMap((g) =>
-    g.meanings.map((m) => ({
+    Object.entries(g.meanings).map(([id, m]) => ({
+      id,
       definition: m.definition,
       partOfSpeech: g.part_of_speech,
     })),
@@ -30,12 +31,23 @@ export async function loader({ params }: Route.LoaderArgs) {
 
   const shuffled = pool.sort(() => Math.random() - 0.5);
   const decoys = shuffled.slice(0, 2).map(([key]) => key);
-  const hints = buildHints(params.word, decoys);
+  const hints = buildHints({ correct: params.word, decoys });
 
-  return { word: params.word, definition: selected.definition, hints };
+  return {
+    word: params.word,
+    definition: selected.definition,
+    meaningId: selected.id,
+    hints,
+  };
 }
 
-function buildHints(correct: string, decoys: string[]): string[] {
+function buildHints({
+  correct,
+  decoys,
+}: {
+  correct: string;
+  decoys: string[];
+}): string[] {
   const result = [...decoys.slice(0, 2)];
   const index = Math.floor(Math.random() * 3);
   result.splice(index, 0, correct);
@@ -49,6 +61,7 @@ export default function PracticeWordRoute({
     <PracticeWord
       word={loaderData.word}
       definition={loaderData.definition}
+      meaningId={loaderData.meaningId}
       hints={loaderData.hints}
     />
   );

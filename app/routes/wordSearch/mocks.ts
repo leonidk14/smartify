@@ -1,20 +1,24 @@
 import type { LookupResult, MeaningGroup } from "./actions";
 import { buildTokenUsage } from "./usage";
 
-function entry(
-  groups: MeaningGroup[],
-  inputTokens: number,
-  outputTokens: number,
-): LookupResult {
+function entry({
+  groups,
+  inputTokens,
+  outputTokens,
+}: {
+  groups: MeaningGroup[];
+  inputTokens: number;
+  outputTokens: number;
+}): LookupResult {
   return {
     dictionary: { groups },
-    usage: buildTokenUsage(inputTokens, outputTokens),
+    usage: buildTokenUsage({ inputTokens, outputTokens }),
   };
 }
 
 export const MOCK_RESPONSES: Record<string, LookupResult> = {
-  oblivious: entry(
-    [
+  oblivious: entry({
+    groups: [
       {
         part_of_speech: "adjective",
         meanings: [
@@ -33,12 +37,12 @@ export const MOCK_RESPONSES: Record<string, LookupResult> = {
         ],
       },
     ],
-    367,
-    134,
-  ),
+    inputTokens: 367,
+    outputTokens: 134,
+  }),
 
-  impudence: entry(
-    [
+  impudence: entry({
+    groups: [
       {
         part_of_speech: "noun",
         meanings: [
@@ -57,12 +61,12 @@ export const MOCK_RESPONSES: Record<string, LookupResult> = {
         ],
       },
     ],
-    367,
-    129,
-  ),
+    inputTokens: 367,
+    outputTokens: 129,
+  }),
 
-  precarious: entry(
-    [
+  precarious: entry({
+    groups: [
       {
         part_of_speech: "adjective",
         meanings: [
@@ -81,12 +85,12 @@ export const MOCK_RESPONSES: Record<string, LookupResult> = {
         ],
       },
     ],
-    366,
-    140,
-  ),
+    inputTokens: 366,
+    outputTokens: 140,
+  }),
 
-  perilously: entry(
-    [
+  perilously: entry({
+    groups: [
       {
         part_of_speech: "adverb",
         meanings: [
@@ -105,12 +109,12 @@ export const MOCK_RESPONSES: Record<string, LookupResult> = {
         ],
       },
     ],
-    367,
-    123,
-  ),
+    inputTokens: 367,
+    outputTokens: 123,
+  }),
 
-  stridency: entry(
-    [
+  stridency: entry({
+    groups: [
       {
         part_of_speech: "noun",
         meanings: [
@@ -129,12 +133,12 @@ export const MOCK_RESPONSES: Record<string, LookupResult> = {
         ],
       },
     ],
-    562,
-    174,
-  ),
+    inputTokens: 562,
+    outputTokens: 174,
+  }),
 
-  apoplectic: entry(
-    [
+  apoplectic: entry({
+    groups: [
       {
         part_of_speech: "adjective",
         meanings: [
@@ -153,12 +157,12 @@ export const MOCK_RESPONSES: Record<string, LookupResult> = {
         ],
       },
     ],
-    367,
-    141,
-  ),
+    inputTokens: 367,
+    outputTokens: 141,
+  }),
 
-  swell: entry(
-    [
+  swell: entry({
+    groups: [
       {
         part_of_speech: "verb",
         meanings: [
@@ -223,12 +227,12 @@ export const MOCK_RESPONSES: Record<string, LookupResult> = {
         ],
       },
     ],
-    561,
-    566,
-  ),
+    inputTokens: 561,
+    outputTokens: 566,
+  }),
 
-  plunge: entry(
-    [
+  plunge: entry({
+    groups: [
       {
         part_of_speech: "verb",
         meanings: [
@@ -280,9 +284,9 @@ export const MOCK_RESPONSES: Record<string, LookupResult> = {
         ],
       },
     ],
-    561,
-    449,
-  ),
+    inputTokens: 561,
+    outputTokens: 449,
+  }),
 };
 
 export const MOCK_RESPONSES_TYPO: Record<string, LookupResult> = {
@@ -291,8 +295,12 @@ export const MOCK_RESPONSES_TYPO: Record<string, LookupResult> = {
       groups: [],
       typo: { input: "apopletic", suggestion: "apoplectic" },
     },
-    usage: buildTokenUsage(562, 31),
+    usage: buildTokenUsage({ inputTokens: 562, outputTokens: 31 }),
   },
 };
 
-export const MOCK_ERROR_RESPONSE: LookupResult = entry([], 243, 8);
+export const MOCK_ERROR_RESPONSE: LookupResult = entry({
+  groups: [],
+  inputTokens: 243,
+  outputTokens: 8,
+});

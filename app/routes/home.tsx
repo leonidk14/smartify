@@ -29,7 +29,7 @@ export async function action({ request }: Route.ActionArgs) {
   const store = await readVocabulary();
   const cached = store[key];
 
-  if (cached) {
+  if (cached && cached.groups.length > 0) {
     return {
       dictionary: { groups: cached.groups },
       originalSearchItem: searchItem,
@@ -38,10 +38,11 @@ export async function action({ request }: Route.ActionArgs) {
   }
 
   const result = await lookupWord(searchItem);
-  await saveWord(key, result.dictionary.groups);
+  const saved = await saveWord({ word: key, groups: result.dictionary.groups });
 
   return {
     ...result,
+    dictionary: { ...result.dictionary, groups: saved.groups },
     originalSearchItem: searchItem,
     shouldPracticeLater: false,
   };

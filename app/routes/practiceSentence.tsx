@@ -19,18 +19,27 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     throw new Response("Word not found", { status: 404 });
   }
 
-  const meanings = entry.groups.flatMap((g) =>
-    g.meanings.map((m) => m.definition),
+  const allMeanings = entry.groups.flatMap((g) =>
+    Object.entries(g.meanings).map(([id, m]) => ({
+      id,
+      definition: m.definition,
+    })),
   );
+  const meanings = allMeanings.map((m) => m.definition);
 
-  const requestedMeaning = new URL(request.url).searchParams.get("m");
-  const meaning =
-    requestedMeaning && meanings.includes(requestedMeaning)
-      ? requestedMeaning
-      : meanings[Math.floor(Math.random() * meanings.length)];
+  const requestedId = new URL(request.url).searchParams.get("m");
+  const selected =
+    allMeanings.find((m) => m.id === requestedId) ??
+    allMeanings[Math.floor(Math.random() * allMeanings.length)];
+  const meaning = selected.definition;
 
   try {
-    const { sentence } = await generateSentence(params.word, meaning, meanings);
+    const { sentence } = await generateSentence({
+      word: params.word,
+      meaningId: selected.id,
+      meaningDefinition: meaning,
+      meanings,
+    });
 
     if (sentence.error) {
       console.error("Sentence generation failed", sentence.error);
@@ -78,12 +87,12 @@ export async function action({
   const userSentence = String(formData.get("sentence")).trim();
 
   try {
-    const { evaluation } = await evaluateSentence(
-      params.word,
+    const { evaluation } = await evaluateSentence({
+      word: params.word,
       meaning,
       original,
       userSentence,
-    );
+    });
     return evaluation;
   } catch (e) {
     console.error("Sentence evaluation failed", e);

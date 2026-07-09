@@ -13,10 +13,17 @@ import {
 import { IconBook } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { useFetcher } from "react-router";
-import type { LookupResult } from "./actions";
+import type { LookupResult, Typo } from "./actions";
+import type { StoredMeaningGroup } from "./vocabulary.server";
+
+// The search action persists lookups and returns the stored (UUID-keyed) groups,
+// so the rendered dictionary uses the stored meaning shape rather than the raw one.
+type SearchResult = Omit<LookupResult, "dictionary"> & {
+  dictionary: { groups: StoredMeaningGroup[]; typo?: Typo };
+};
 
 export const WordSearch = () => {
-  const searchFetcher = useFetcher<LookupResult>();
+  const searchFetcher = useFetcher<SearchResult>();
   const practiceFetcher = useFetcher<{ success: boolean }>();
   const [value, setValue] = useState("");
   const [markedForPractice, setMarkedForPractice] = useState(false);
@@ -166,14 +173,16 @@ export const WordSearch = () => {
                         <IconBook size={16} />
                       </ThemeIcon>
                     }>
-                    {group.meanings.map((meaning) => (
-                      <List.Item key={meaning.definition}>
-                        <Text size="xl">{meaning.definition}</Text>
-                        <Text size="md" c="dimmed" fs="italic" mt={4}>
-                          {meaning.example}
-                        </Text>
-                      </List.Item>
-                    ))}
+                    {Object.entries(group.meanings)
+                      .sort(([, a], [, b]) => a.order - b.order)
+                      .map(([id, meaning]) => (
+                        <List.Item key={id}>
+                          <Text size="xl">{meaning.definition}</Text>
+                          <Text size="md" c="dimmed" fs="italic" mt={4}>
+                            {meaning.example}
+                          </Text>
+                        </List.Item>
+                      ))}
                   </List>
                 </Box>
               ))}

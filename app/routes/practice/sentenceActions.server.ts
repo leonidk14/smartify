@@ -224,11 +224,15 @@ const GENERATION_MODELS: Record<
   sonnet: { id: "claude-sonnet-5", maxTokens: 1536 },
 };
 
-async function runGeneration(
-  client: Anthropic,
-  pricing: PricingModel,
-  userContent: string,
-): Promise<SentenceGeneration> {
+async function runGeneration({
+  client,
+  pricing,
+  userContent,
+}: {
+  client: Anthropic;
+  pricing: PricingModel;
+  userContent: string;
+}): Promise<SentenceGeneration> {
   const { id, maxTokens } = GENERATION_MODELS[pricing];
   const response = await client.messages.create({
     model: id,
@@ -239,22 +243,26 @@ async function runGeneration(
   });
 
   const sentence = parseGenerationResponse(extractText(response.content));
-  const usage = buildTokenUsage(
-    response.usage.input_tokens,
-    response.usage.output_tokens,
-    pricing,
-  );
+  const usage = buildTokenUsage({
+    inputTokens: response.usage.input_tokens,
+    outputTokens: response.usage.output_tokens,
+    model: pricing,
+  });
 
   return { sentence, usage };
 }
 
 // Produce a brand-new sentence from the model (real API path). Kept separate
 // from the cache orchestration in `generateSentence`.
-async function generateFresh(
-  word: string,
-  meaning: string,
-  meanings: string[],
-): Promise<SentenceGeneration> {
+async function generateFresh({
+  word,
+  meaning,
+  meanings,
+}: {
+  word: string;
+  meaning: string;
+  meanings: string[];
+}): Promise<SentenceGeneration> {
   // const client = new Anthropic();
 
   // const meaningsList = meanings.map((m) => `- ${m}`).join("\n");
@@ -262,10 +270,10 @@ async function generateFresh(
 
   // // First attempt with Haiku (cheaper/faster). Escalate to Sonnet only if
   // // Haiku gives up (returns the "error" field).
-  // const haiku = await runGeneration(client, "haiku", userContent);
+  // const haiku = await runGeneration({ client, pricing: "haiku", userContent });
 
   // if (!haiku.sentence.error) {
-  //   logTokenUsage(haiku.usage, `generate (haiku): ${word}`);
+  //   logTokenUsage({ usage: haiku.usage, label: `generate (haiku): ${word}` });
   //   return haiku;
   // }
 
@@ -274,9 +282,9 @@ async function generateFresh(
   //   haiku.sentence.error,
   // );
 
-  // const sonnet = await runGeneration(client, "sonnet", userContent);
+  // const sonnet = await runGeneration({ client, pricing: "sonnet", userContent });
   // const usage = sumTokenUsage(haiku.usage, sonnet.usage);
-  // logTokenUsage(usage, `generate (haiku+sonnet): ${word}`);
+  // logTokenUsage({ usage, label: `generate (haiku+sonnet): ${word}` });
 
   // return { sentence: sonnet.sentence, usage };
   return {
@@ -290,20 +298,24 @@ async function generateMock(word: string): Promise<SentenceGeneration> {
   await new Promise((resolve) => setTimeout(resolve, delay));
 
   const result = MOCK_GENERATIONS[word] ?? DEFAULT_MOCK_GENERATION;
-  logTokenUsage(result.usage, `generate (mock): ${word}`);
+  logTokenUsage({ usage: result.usage, label: `generate (mock): ${word}` });
   return result;
 }
 
-function findSentenceCache(
-  store: Awaited<ReturnType<typeof readVocabulary>>,
-  word: string,
-  meaning: string,
-): CachedSentence[] | undefined {
+function findSentenceCache({
+  store,
+  word,
+  meaningId,
+}: {
+  store: Awaited<ReturnType<typeof readVocabulary>>;
+  word: string;
+  meaningId: string;
+}): CachedSentence[] | undefined {
   const entry = store[word];
   if (!entry) return undefined;
 
   for (const group of entry.groups) {
-    const target = group.meanings.find((m) => m.definition === meaning);
+    const target = group.meanings[meaningId];
     if (target) {
       target.sentences ??= [];
       return target.sentences;
@@ -312,25 +324,35 @@ function findSentenceCache(
   return undefined;
 }
 
-export async function generateSentence(
-  word: string,
-  meaning: string,
-  meanings: string[],
-): Promise<SentenceGeneration> {
+export async function generateSentence({
+  word,
+  meaningId,
+  meaningDefinition,
+  meanings,
+}: {
+  word: string;
+  meaningId: string;
+  meaningDefinition: string;
+  meanings: string[];
+}): Promise<SentenceGeneration> {
   // Mock output is never persisted — return it directly.
   if (USE_MOCK) {
     return generateMock(word);
   }
 
   const store = await readVocabulary();
-  const cachedSentences = findSentenceCache(store, word, meaning);
+  const cachedSentences = findSentenceCache({ store, word, meaningId });
 
   if (!cachedSentences) {
-    return generateFresh(word, meaning, meanings);
+    return generateFresh({ word, meaning: meaningDefinition, meanings });
   }
 
   if (cachedSentences.length < SENTENCES_IN_CACHE_SIZE) {
-    const fresh = await generateFresh(word, meaning, meanings);
+    const fresh = await generateFresh({
+      word,
+      meaning: meaningDefinition,
+      meanings,
+    });
 
     if (fresh.sentence.error) {
       return fresh;
@@ -350,17 +372,22 @@ export async function generateSentence(
   chosen.usageCount += 1;
   await writeVocabulary(store);
 
-  const usage = buildTokenUsage(0, 0);
-  logTokenUsage(usage, `generate (cache): ${word}`);
+  const usage = buildTokenUsage({ inputTokens: 0, outputTokens: 0 });
+  logTokenUsage({ usage, label: `generate (cache): ${word}` });
   return { sentence: chosen.sentence, usage };
 }
 
-export async function evaluateSentence(
-  word: string,
-  meaning: string,
-  original: string,
-  userSentence: string,
-): Promise<EvaluationResult> {
+export async function evaluateSentence({
+  word,
+  meaning,
+  original,
+  userSentence,
+}: {
+  word: string;
+  meaning: string;
+  original: string;
+  userSentence: string;
+}): Promise<EvaluationResult> {
   // ── Real API call (commented out; using mocks from ./mocks) ──────────────
   // const client = new Anthropic();
 
@@ -378,11 +405,11 @@ export async function evaluateSentence(
   // });
 
   // const evaluation = parseEvaluationResponse(extractText(response.content));
-  // const usage = buildTokenUsage(
-  //   response.usage.input_tokens,
-  //   response.usage.output_tokens,
-  // );
-  // logTokenUsage(usage, `evaluate: ${word}`);
+  // const usage = buildTokenUsage({
+  //   inputTokens: response.usage.input_tokens,
+  //   outputTokens: response.usage.output_tokens,
+  // });
+  // logTokenUsage({ usage, label: `evaluate: ${word}` });
 
   // return { evaluation, usage };
 
@@ -394,6 +421,6 @@ export async function evaluateSentence(
   const result = candidates?.length
     ? candidates[Math.floor(Math.random() * candidates.length)]
     : DEFAULT_MOCK_EVALUATION;
-  logTokenUsage(result.usage, `evaluate (mock): ${word}`);
+  logTokenUsage({ usage: result.usage, label: `evaluate (mock): ${word}` });
   return result;
 }

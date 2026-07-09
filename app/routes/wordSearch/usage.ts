@@ -21,11 +21,15 @@ const PRICING: Record<PricingModel, { input: number; output: number }> = {
   sonnet: { input: 3.0 / 1_000_000, output: 15.0 / 1_000_000 },
 };
 
-export function buildTokenUsage(
-  inputTokens: number,
-  outputTokens: number,
-  model: PricingModel = "haiku",
-): TokenUsage {
+export function buildTokenUsage({
+  inputTokens,
+  outputTokens,
+  model = "haiku",
+}: {
+  inputTokens: number;
+  outputTokens: number;
+  model?: PricingModel;
+}): TokenUsage {
   const price = PRICING[model];
   const inputCost = inputTokens * price.input;
   const outputCost = outputTokens * price.output;
@@ -65,7 +69,13 @@ export function formatUSD(amount: number): string {
   return amount < 0.01 ? `$${amount.toFixed(6)}` : `$${amount.toFixed(4)}`;
 }
 
-export function logTokenUsage(usage: TokenUsage, label?: string): void {
+export function logTokenUsage({
+  usage,
+  label,
+}: {
+  usage: TokenUsage;
+  label?: string;
+}): void {
   const rows: [string, number, number][] = [
     ["Input", usage.inputTokens, usage.inputCost],
     ["Output", usage.outputTokens, usage.outputCost],

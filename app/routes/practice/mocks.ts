@@ -6,43 +6,51 @@ import type {
 } from "./sentenceTypes";
 import { buildTokenUsage } from "../wordSearch/usage";
 
-function generation(
-  sentence: GeneratedSentence,
-  inputTokens: number,
-  outputTokens: number,
-): SentenceGeneration {
+function generation({
+  sentence,
+  inputTokens,
+  outputTokens,
+}: {
+  sentence: GeneratedSentence;
+  inputTokens: number;
+  outputTokens: number;
+}): SentenceGeneration {
   return {
     sentence,
-    usage: buildTokenUsage(inputTokens, outputTokens),
+    usage: buildTokenUsage({ inputTokens, outputTokens }),
   };
 }
 
-function evaluation(
-  result: SentenceEvaluation,
-  inputTokens: number,
-  outputTokens: number,
-): EvaluationResult {
+function evaluation({
+  result,
+  inputTokens,
+  outputTokens,
+}: {
+  result: SentenceEvaluation;
+  inputTokens: number;
+  outputTokens: number;
+}): EvaluationResult {
   return {
     evaluation: result,
-    usage: buildTokenUsage(inputTokens, outputTokens),
+    usage: buildTokenUsage({ inputTokens, outputTokens }),
   };
 }
 
 export const MOCK_GENERATIONS: Record<string, SentenceGeneration> = {
-  crikey: generation(
-    {
+  crikey: generation({
+    sentence: {
       original: "Crikey, mate, that's a big croc!",
       source:
         "Steve Irwin, The Crocodile Hunter (television series and associated media)",
       simplified: "Wow, friend, that's a huge crocodile!",
       meaning: "An exclamation of surprise, alarm, or astonishment.",
     },
-    878,
-    82,
-  ),
+    inputTokens: 878,
+    outputTokens: 82,
+  }),
 
-  stridency: generation(
-    {
+  stridency: generation({
+    sentence: {
       original: "The stridency of the alarm jolted him awake.",
       source: "",
       simplified:
@@ -51,20 +59,22 @@ export const MOCK_GENERATIONS: Record<string, SentenceGeneration> = {
         "The quality of being strident; harshness or shrillness of sound.",
       generated: true,
     },
-    1102,
-    69,
-  ),
+    inputTokens: 1102,
+    outputTokens: 69,
+  }),
 };
 
 // Each word can have several mock evaluations; the action picks one at random.
 export const MOCK_EVALUATIONS: Record<string, EvaluationResult[]> = {
   // Near-perfect: no correction, empty segments.
-  crikey: [evaluation({ score: 9.8 }, 1062, 24)],
+  crikey: [
+    evaluation({ result: { score: 9.8 }, inputTokens: 1062, outputTokens: 24 }),
+  ],
 
   stridency: [
     // Below threshold: minimally corrected with changed segments flagged.
-    evaluation(
-      {
+    evaluation({
+      result: {
         score: 9.2,
         correctedSentence: "The stridency of the alarm woke him up suddenly.",
         segments: [
@@ -73,24 +83,24 @@ export const MOCK_EVALUATIONS: Record<string, EvaluationResult[]> = {
           { text: "woke him up suddenly.", changed: false },
         ],
       },
-      1065,
-      79,
-    ),
+      inputTokens: 1065,
+      outputTokens: 79,
+    }),
   ],
 };
 
-export const DEFAULT_MOCK_GENERATION: SentenceGeneration = generation(
-  {
+export const DEFAULT_MOCK_GENERATION: SentenceGeneration = generation({
+  sentence: {
     original: "The light was ephemeral.",
     source: "Kazuo Ishiguro, The Remains of the Day",
     simplified: "The light lasted only a very short time.",
   },
-  280,
-  90,
-);
+  inputTokens: 280,
+  outputTokens: 90,
+});
 
-export const DEFAULT_MOCK_EVALUATION: EvaluationResult = evaluation(
-  {
+export const DEFAULT_MOCK_EVALUATION: EvaluationResult = evaluation({
+  result: {
     score: 7.5,
     correctedSentence: "Her ephemeral joy faded by morning.",
     segments: [
@@ -99,6 +109,6 @@ export const DEFAULT_MOCK_EVALUATION: EvaluationResult = evaluation(
       { text: " joy faded by morning.", changed: false },
     ],
   },
-  320,
-  70,
-);
+  inputTokens: 320,
+  outputTokens: 70,
+});
