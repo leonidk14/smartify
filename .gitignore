@@ -13,3 +13,7 @@ data/vocabulary.json
 
 TODO.md
 FINDINGS.md
+PWA_NOTES.md
+
+dev-dist/
+dist/

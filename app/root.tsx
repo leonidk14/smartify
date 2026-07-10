@@ -16,6 +16,17 @@ import { Notifications } from "@mantine/notifications";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
+  { rel: "icon", href: "/favicon.ico" },
+  { rel: "mask-icon", href: "/favicon.ico" },
+  { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
+  // use-credentials makes the manifest fetch send cookies — needed so the
+  // ngrok free-tier interstitial-bypass cookie is included (otherwise ngrok
+  // returns its warning HTML instead of the manifest). Harmless same-origin.
+  {
+    rel: "manifest",
+    href: "/manifest.webmanifest",
+    crossOrigin: "use-credentials",
+  },
   {
     rel: "preconnect",
     href: "https://fonts.gstatic.com",
@@ -26,6 +37,23 @@ export const links: Route.LinksFunction = () => [
     href: "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
   },
 ];
+
+export function meta() {
+  return [
+    { title: "dgw" },
+    {
+      name: "description",
+      content: "Your language sparring partner in your phone.",
+    },
+    { name: "theme-color", content: "#ffffff" },
+    // iOS Safari ignores the manifest; these let the app launch fullscreen from
+    // the Home Screen.
+    { name: "mobile-web-app-capable", content: "yes" },
+    { name: "apple-mobile-web-app-capable", content: "yes" },
+    { name: "apple-mobile-web-app-status-bar-style", content: "default" },
+    { name: "apple-mobile-web-app-title", content: "dgw" },
+  ];
+}
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
