@@ -5,10 +5,10 @@ import {
   markForPractice,
   readVocabulary,
   saveWord,
-} from "./wordSearch/vocabulary.server";
+} from "./wordSearch/vocabulary";
 import { WordSearch } from "./wordSearch/wordSearch";
 
-export async function action({ request }: Route.ActionArgs) {
+export async function clientAction({ request }: Route.ClientActionArgs) {
   let formData = await request.formData();
   const intent = formData.get("intent");
 

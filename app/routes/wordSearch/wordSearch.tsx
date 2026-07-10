@@ -14,7 +14,7 @@ import { IconBook } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { useFetcher } from "react-router";
 import type { LookupResult, Typo } from "./actions";
-import type { StoredMeaningGroup } from "./vocabulary.server";
+import type { StoredMeaningGroup } from "./vocabulary";
 
 // The search action persists lookups and returns the stored (UUID-keyed) groups,
 // so the rendered dictionary uses the stored meaning shape rather than the raw one.

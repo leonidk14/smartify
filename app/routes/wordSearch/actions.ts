@@ -173,6 +173,9 @@ export async function lookupWord(word: string): Promise<LookupResult> {
   return result;
 
   // ── Real API call ───────────────────────────────────────────────────────
+  // TODO(anthropic-proxy): in SPA mode there is no server at runtime. Call the
+  // Supabase Edge Function (POST .../functions/v1/lookup) via fetch instead of
+  // the Anthropic SDK, so ANTHROPIC_API_KEY stays server-side.
   // const client = new Anthropic();
 
   // const response = await client.messages.create({

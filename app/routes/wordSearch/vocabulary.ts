@@ -1,5 +1,4 @@
-import * as fs from "node:fs/promises";
-import * as path from "node:path";
+import Dexie, { type Table } from "dexie";
 import { v4 as uuidv4 } from "uuid";
 import type { MeaningGroup } from "./actions";
 import type { CachedSentence } from "../practice/sentenceTypes";
@@ -24,7 +23,23 @@ export interface VocabularyEntry {
 
 export type VocabularyStore = Record<string, VocabularyEntry>;
 
-const VOCABULARY_PATH = path.resolve(process.cwd(), "data", "vocabulary.json");
+// One IndexedDB row per word. The word is the primary key; the rest of the row
+// is a plain VocabularyEntry, so the store is easy to assemble back into the
+// VocabularyStore Record the rest of the app expects.
+interface VocabularyRow extends VocabularyEntry {
+  word: string;
+}
+
+class VocabularyDatabase extends Dexie {
+  words!: Table<VocabularyRow, string>;
+
+  constructor() {
+    super("dgw-vocabulary");
+    this.version(1).stores({ words: "word" });
+  }
+}
+
+const db = new VocabularyDatabase();
 
 function toStoredGroups(groups: MeaningGroup[]): StoredMeaningGroup[] {
   return groups.map((group) => {
@@ -56,21 +71,23 @@ function migrateStore(store: VocabularyStore): boolean {
 }
 
 export async function readVocabulary(): Promise<VocabularyStore> {
-  try {
-    const raw = await fs.readFile(VOCABULARY_PATH, "utf-8");
-    const store = JSON.parse(raw) as VocabularyStore;
-    if (migrateStore(store)) {
-      await writeVocabulary(store);
-    }
-    return store;
-  } catch {
-    return {};
+  const rows = await db.words.toArray();
+  const store: VocabularyStore = {};
+  for (const { word, ...entry } of rows) {
+    store[word] = entry;
   }
+  if (migrateStore(store)) {
+    await writeVocabulary(store);
+  }
+  return store;
 }
 
 export async function writeVocabulary(store: VocabularyStore): Promise<void> {
-  await fs.mkdir(path.dirname(VOCABULARY_PATH), { recursive: true });
-  await fs.writeFile(VOCABULARY_PATH, JSON.stringify(store, null, 2));
+  const rows: VocabularyRow[] = Object.entries(store).map(([word, entry]) => ({
+    word,
+    ...entry,
+  }));
+  await db.words.bulkPut(rows);
 }
 
 export async function saveWord({
@@ -80,25 +97,21 @@ export async function saveWord({
   word: string;
   groups: MeaningGroup[];
 }): Promise<VocabularyEntry> {
-  const store = await readVocabulary();
-
   const entry: VocabularyEntry = {
     groups: toStoredGroups(groups),
     shouldPracticeLater: false,
     savedAt: new Date().toISOString(),
   };
-  store[word.trim().toLowerCase()] = entry;
-
-  await writeVocabulary(store);
+  await db.words.put({ word: word.trim().toLowerCase(), ...entry });
   return entry;
 }
 
 export async function markForPractice(word: string): Promise<void> {
-  const store = await readVocabulary();
   const key = word.trim().toLowerCase();
+  const row = await db.words.get(key);
 
-  if (store[key]) {
-    store[key].shouldPracticeLater = true;
-    await writeVocabulary(store);
+  if (row) {
+    row.shouldPracticeLater = true;
+    await db.words.put(row);
   }
 }

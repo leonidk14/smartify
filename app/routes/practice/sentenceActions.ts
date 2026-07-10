@@ -11,10 +11,7 @@ import {
   MOCK_EVALUATIONS,
   MOCK_GENERATIONS,
 } from "./mocks";
-import {
-  readVocabulary,
-  writeVocabulary,
-} from "../wordSearch/vocabulary.server";
+import { readVocabulary, writeVocabulary } from "../wordSearch/vocabulary";
 import type {
   CachedSentence,
   EvaluationResult,
@@ -263,6 +260,9 @@ async function generateFresh({
   meaning: string;
   meanings: string[];
 }): Promise<SentenceGeneration> {
+  // TODO(anthropic-proxy): in SPA mode there is no server at runtime. Call the
+  // Supabase Edge Function (POST .../functions/v1/generate) via fetch instead of
+  // the Anthropic SDK, so ANTHROPIC_API_KEY stays server-side.
   // const client = new Anthropic();
 
   // const meaningsList = meanings.map((m) => `- ${m}`).join("\n");
@@ -389,6 +389,9 @@ export async function evaluateSentence({
   userSentence: string;
 }): Promise<EvaluationResult> {
   // ── Real API call (commented out; using mocks from ./mocks) ──────────────
+  // TODO(anthropic-proxy): call the Supabase Edge Function
+  // (POST .../functions/v1/evaluate) via fetch instead of the Anthropic SDK,
+  // so ANTHROPIC_API_KEY stays server-side.
   // const client = new Anthropic();
 
   // const response = await client.messages.create({

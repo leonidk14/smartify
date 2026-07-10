@@ -1,9 +1,9 @@
-import { readVocabulary } from "./wordSearch/vocabulary.server";
+import { readVocabulary } from "./wordSearch/vocabulary";
 import { PracticeSentence } from "./practice/practiceSentence";
 import {
   evaluateSentence,
   generateSentence,
-} from "./practice/sentenceActions.server";
+} from "./practice/sentenceActions";
 import type { SentenceEvaluation } from "./practice/sentenceTypes";
 import type { Route } from "./+types/practiceSentence";
 
@@ -21,7 +21,10 @@ export const shouldRevalidate = ({
   return isNavigatingToDifferentSentence;
 };
 
-export async function loader({ params, request }: Route.LoaderArgs) {
+export async function clientLoader({
+  params,
+  request,
+}: Route.ClientLoaderArgs) {
   const vocabulary = await readVocabulary();
   const entry = vocabulary[params.word];
 
@@ -87,10 +90,10 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   }
 }
 
-export async function action({
+export async function clientAction({
   request,
   params,
-}: Route.ActionArgs): Promise<SentenceEvaluation | { error: true }> {
+}: Route.ClientActionArgs): Promise<SentenceEvaluation | { error: true }> {
   const formData = await request.formData();
   const meaning = String(formData.get("meaning"));
   const original = String(formData.get("original"));

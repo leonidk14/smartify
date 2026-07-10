@@ -1,8 +1,8 @@
-import { readVocabulary } from "./wordSearch/vocabulary.server";
+import { readVocabulary } from "./wordSearch/vocabulary";
 import { PracticeWord } from "./practice/practiceWord";
 import type { Route } from "./+types/practiceWord";
 
-export async function loader({ params }: Route.LoaderArgs) {
+export async function clientLoader({ params }: Route.ClientLoaderArgs) {
   const vocabulary = await readVocabulary();
   const entry = vocabulary[params.word];
 

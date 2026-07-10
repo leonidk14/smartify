@@ -12,7 +12,7 @@ import {
   ThemeIcon,
 } from "@mantine/core";
 import { IconCheck } from "@tabler/icons-react";
-import type { VocabularyEntry } from "../wordSearch/vocabulary.server";
+import type { VocabularyEntry } from "../wordSearch/vocabulary";
 import { useSessionStore } from "../../store/session";
 
 interface PracticeListProps {
