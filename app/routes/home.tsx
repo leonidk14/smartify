@@ -8,6 +8,18 @@ import {
 } from "./wordSearch/vocabulary";
 import { WordSearch } from "./wordSearch/wordSearch";
 
+export async function clientLoader() {
+  const store = await readVocabulary();
+  const words = Object.entries(store)
+    .filter(([, entry]) => entry.groups.length > 0)
+    .sort(
+      ([, a], [, b]) =>
+        new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime(),
+    );
+  const dueCount = words.filter(([, entry]) => entry.shouldPracticeLater).length;
+  return { words, total: words.length, dueCount };
+}
+
 export async function clientAction({ request }: Route.ClientActionArgs) {
   let formData = await request.formData();
   const intent = formData.get("intent");
@@ -48,6 +60,12 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
   };
 }
 
-export default function Home() {
-  return <WordSearch />;
+export default function Home({ loaderData }: Route.ComponentProps) {
+  return (
+    <WordSearch
+      words={loaderData.words}
+      total={loaderData.total}
+      dueCount={loaderData.dueCount}
+    />
+  );
 }

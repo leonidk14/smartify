@@ -6,6 +6,15 @@
     "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 }
 
+:root {
+  --surface-warm: #f4f2ee;
+  --font-serif: Georgia, "Times New Roman", serif;
+}
+
+.serif {
+  font-family: var(--font-serif);
+}
+
 html {
   @apply h-full;
 }

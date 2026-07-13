@@ -5,12 +5,20 @@ import {
   useNavigation,
   Link,
 } from "react-router";
-import { Box, Button, Flex, Group, Loader, Text } from "@mantine/core";
+import {
+  Box,
+  Button,
+  Flex,
+  Group,
+  Loader,
+  SegmentedControl,
+  Text,
+} from "@mantine/core";
 import {
   IconArrowLeft,
+  IconBook,
   IconBrain,
   IconPencil,
-  IconSearch,
 } from "@tabler/icons-react";
 import { useSessionStore } from "../store/session";
 
@@ -23,9 +31,11 @@ export default function Layout() {
   const meaningIds = useSessionStore((s) => s.meaningIds);
   const setPhase = useSessionStore((s) => s.setPhase);
 
-  const isSearch = location.pathname === "/";
-  const isPracticeWord = /^\/practice\/.+/.test(location.pathname);
+  const isHome = location.pathname === "/";
+  const isPracticeLanding = location.pathname === "/practice";
+  const isTopLevelScreen = isHome || isPracticeLanding;
 
+  const isPracticeWord = /^\/practice\/.+/.test(location.pathname);
   const isWordScreen =
     /^\/practice\/[^/]+$/.test(location.pathname) &&
     location.pathname !== "/practice/summary";
@@ -34,9 +44,7 @@ export default function Layout() {
   const sentenceMatch = location.pathname.match(
     /^\/practice\/([^/]+)\/sentence$/,
   );
-  const backTo = sentenceMatch
-    ? `/practice/${sentenceMatch[1]}`
-    : "/practice";
+  const backTo = sentenceMatch ? `/practice/${sentenceMatch[1]}` : "/practice";
 
   const isLoadingSentence =
     navigation.state === "loading" &&
@@ -55,54 +63,40 @@ export default function Layout() {
 
   return (
     <Flex direction="column" style={{ minHeight: "100vh" }}>
-      <Box
-        style={{
-          borderBottom: "1px solid var(--mantine-color-gray-3)",
-        }}>
-        <Group
-          justify={isPracticeWord ? "space-between" : "flex-end"}
-          px={16}
-          h={48}>
-          {isPracticeWord && (
-            <Button
-              component={Link}
-              to={backTo}
-              variant="subtle"
-              color="dark"
-              leftSection={<IconArrowLeft size={18} />}>
-              Back
-            </Button>
-          )}
-          {isSearch ? (
-            <Button
-              component={Link}
-              to="/practice"
-              variant="subtle"
-              color="dark"
-              leftSection={<IconBrain size={18} />}>
-              Practice
-            </Button>
-          ) : showSkip ? (
-            <Button
-              variant="subtle"
-              color="dark"
-              onClick={skipToSentences}
-              leftSection={<IconPencil size={18} />}>
-              To sentences
-            </Button>
-          ) : (
-            <Button
-              component={Link}
-              to="/"
-              variant="subtle"
-              color="dark"
-              leftSection={<IconSearch size={18} />}>
-              Vocabulary
-            </Button>
-          )}
-        </Group>
-      </Box>
-      <Flex direction="column" flex={1} style={{ position: "relative" }}>
+      {!isTopLevelScreen && (
+        <Box style={{ borderBottom: "1px solid var(--mantine-color-gray-3)" }}>
+          <Group
+            justify={isPracticeWord ? "space-between" : "flex-end"}
+            px={16}
+            h={48}>
+            {isPracticeWord && (
+              <Button
+                component={Link}
+                to={backTo}
+                variant="subtle"
+                color="dark"
+                leftSection={<IconArrowLeft size={18} />}>
+                Back
+              </Button>
+            )}
+            {showSkip && (
+              <Button
+                variant="subtle"
+                color="dark"
+                onClick={skipToSentences}
+                leftSection={<IconPencil size={18} />}>
+                To sentences
+              </Button>
+            )}
+          </Group>
+        </Box>
+      )}
+
+      <Flex
+        direction="column"
+        flex={1}
+        style={{ position: "relative" }}
+        pb={isTopLevelScreen ? 80 : undefined}>
         <Outlet />
         {isLoadingSentence && (
           <Flex
@@ -124,6 +118,48 @@ export default function Layout() {
           </Flex>
         )}
       </Flex>
+
+      {isTopLevelScreen && (
+        <Box
+          style={{
+            position: "fixed",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            padding: "8px 16px 16px",
+            background:
+              "linear-gradient(to bottom, rgba(255,255,255,0), #fff 12px)",
+          }}>
+          <SegmentedControl
+            fullWidth
+            radius={12}
+            color="ink"
+            value={isHome ? "/" : "/practice"}
+            onChange={(value) => navigate(value)}
+            styles={{ root: { background: "var(--surface-warm)" } }}
+            data={[
+              {
+                value: "/",
+                label: (
+                  <Group gap={7} justify="center" wrap="nowrap">
+                    <IconBook size={16} />
+                    <span>Words</span>
+                  </Group>
+                ),
+              },
+              {
+                value: "/practice",
+                label: (
+                  <Group gap={7} justify="center" wrap="nowrap">
+                    <IconBrain size={16} />
+                    <span>Practice</span>
+                  </Group>
+                ),
+              },
+            ]}
+          />
+        </Box>
+      )}
     </Flex>
   );
 }
