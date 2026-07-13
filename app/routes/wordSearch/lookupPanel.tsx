@@ -138,7 +138,7 @@ export const LookupPanel = ({
             size="md"
             radius="md"
             leftSection={<IconSearch size={16} />}
-            style={{ flex: 1 }}
+            flex={1}
           />
           <Button
             type="submit"
@@ -264,7 +264,7 @@ const WordResult = ({
                 }}>
                 {group.part_of_speech}
               </Badge>
-              <Divider style={{ flex: 1 }} />
+              <Divider flex={1} />
               <Text ff="monospace" size="xs" c="dimmed">
                 {senses.length} {senses.length === 1 ? "sense" : "senses"}
               </Text>
@@ -274,7 +274,7 @@ const WordResult = ({
                 <Text ff="monospace" size="sm" c="dimmed" pt={1}>
                   {index + 1}
                 </Text>
-                <Stack gap={6} style={{ flex: 1 }}>
+                <Stack gap={6} flex={1}>
                   <Text size="md">{sense.definition}</Text>
                   {sense.example ? (
                     <Text

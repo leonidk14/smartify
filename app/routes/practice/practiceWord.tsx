@@ -35,6 +35,7 @@ export const PracticeWord = ({
   const navigate = useNavigate();
 
   const queue = useSessionStore((s) => s.queue);
+  const mode = useSessionStore((s) => s.mode);
   const meaningIds = useSessionStore((s) => s.meaningIds);
   const startSession = useSessionStore((s) => s.startSession);
   const setMeaning = useSessionStore((s) => s.setMeaning);
@@ -57,6 +58,11 @@ export const PracticeWord = ({
     const next = nextWord(queue, word);
     if (next) {
       navigate(`/practice/${encodeURIComponent(next)}`);
+      return;
+    }
+
+    if (mode === "word") {
+      navigate("/practice/summary");
       return;
     }
 

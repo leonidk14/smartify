@@ -130,7 +130,7 @@ export const VocabularyHome = ({
                           : "rgba(0,0,0,.2)",
                       }}
                     />
-                    <Box style={{ flex: 1, minWidth: 0 }}>
+                    <Box flex={1} miw={0}>
                       <Text className="serif" style={{ fontSize: 17 }}>
                         {word}
                         {entry.groups[0] ? (

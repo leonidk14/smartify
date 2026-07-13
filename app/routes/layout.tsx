@@ -6,6 +6,7 @@ import {
   Link,
 } from "react-router";
 import {
+  ActionIcon,
   Box,
   Button,
   Flex,
@@ -17,16 +18,25 @@ import {
 import {
   IconArrowLeft,
   IconBook,
-  IconBrain,
+  IconChevronLeft,
   IconPencil,
+  IconPlayerPlay,
 } from "@tabler/icons-react";
 import { useSessionStore } from "../store/session";
+import { monoLabel } from "./wordSearch/typography";
+
+const MODE_LABELS: Record<string, string> = {
+  word: "Guess the word",
+  sentence: "Rebuild the sentence",
+  both: "Guess & rebuild",
+};
 
 export default function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
   const navigation = useNavigation();
   const phase = useSessionStore((s) => s.phase);
+  const mode = useSessionStore((s) => s.mode);
   const queue = useSessionStore((s) => s.queue);
   const meaningIds = useSessionStore((s) => s.meaningIds);
   const setPhase = useSessionStore((s) => s.setPhase);
@@ -35,11 +45,16 @@ export default function Layout() {
   const isPracticeLanding = location.pathname === "/practice";
   const isTopLevelScreen = isHome || isPracticeLanding;
 
+  const isSelectScreen = location.pathname === "/practice/select";
+  const selectMode =
+    new URLSearchParams(location.search).get("mode") ?? "both";
+
   const isPracticeWord = /^\/practice\/.+/.test(location.pathname);
   const isWordScreen =
     /^\/practice\/[^/]+$/.test(location.pathname) &&
-    location.pathname !== "/practice/summary";
-  const showSkip = isWordScreen && phase === "word";
+    location.pathname !== "/practice/summary" &&
+    location.pathname !== "/practice/select";
+  const showSkip = isWordScreen && phase === "word" && mode !== "word";
 
   const sentenceMatch = location.pathname.match(
     /^\/practice\/([^/]+)\/sentence$/,
@@ -63,7 +78,30 @@ export default function Layout() {
 
   return (
     <Flex direction="column" style={{ minHeight: "100vh" }}>
-      {!isTopLevelScreen && (
+      {isSelectScreen ? (
+        <Box p={16} pb={12}>
+          <Group gap={10} align="center" wrap="nowrap">
+            <ActionIcon
+              component={Link}
+              to="/practice"
+              variant="subtle"
+              color="gray"
+              size="md"
+              aria-label="Back">
+              <IconChevronLeft size={22} />
+            </ActionIcon>
+            <Box>
+              <Text {...monoLabel}>{MODE_LABELS[selectMode]}</Text>
+              <Text
+                className="serif"
+                mt={2}
+                style={{ fontSize: 20, lineHeight: 1.1 }}>
+                Which words?
+              </Text>
+            </Box>
+          </Group>
+        </Box>
+      ) : !isTopLevelScreen ? (
         <Box style={{ borderBottom: "1px solid var(--mantine-color-gray-3)" }}>
           <Group
             justify={isPracticeWord ? "space-between" : "flex-end"}
@@ -90,7 +128,7 @@ export default function Layout() {
             )}
           </Group>
         </Box>
-      )}
+      ) : null}
 
       <Flex
         direction="column"
@@ -151,7 +189,7 @@ export default function Layout() {
                 value: "/practice",
                 label: (
                   <Group gap={7} justify="center" wrap="nowrap">
-                    <IconBrain size={16} />
+                    <IconPlayerPlay size={16} />
                     <span>Practice</span>
                   </Group>
                 ),
