@@ -134,7 +134,7 @@ export const LookupPanel = ({
             placeholder="Type a word…"
             value={value}
             onChange={(e) => setValue(e.currentTarget.value)}
-            autoFocus
+            autoFocus={!initialQuery}
             size="md"
             radius="md"
             leftSection={<IconSearch size={16} />}
