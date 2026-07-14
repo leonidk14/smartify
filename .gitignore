@@ -14,6 +14,7 @@ data/vocabulary.json
 TODO.md
 FINDINGS.md
 PWA_NOTES.md
+PUSH_NOTIFICATIONS.md
 
 dev-dist/
 dist/

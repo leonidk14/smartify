@@ -7,6 +7,7 @@ import {
   IconQuestionMark,
 } from "@tabler/icons-react";
 import { monoLabel } from "../wordSearch/typography";
+import { NotificationBanner } from "./notificationBanner";
 import type { PracticeMode } from "../../store/session";
 
 interface PracticeStartProps {
@@ -56,6 +57,8 @@ export const PracticeStart = ({ total, markedCount }: PracticeStartProps) => {
           practice
         </Text>
       </Box>
+
+      <NotificationBanner />
 
       <Box>
         <Text {...monoLabel} mb={10}>
