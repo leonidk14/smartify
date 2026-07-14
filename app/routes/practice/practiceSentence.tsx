@@ -1,10 +1,22 @@
-import { Badge, Box, Button, Flex, Text, Textarea } from "@mantine/core";
-import { notifications } from "@mantine/notifications";
-import { useEffect, useState } from "react";
+import {
+  Box,
+  Button,
+  Center,
+  Flex,
+  Group,
+  Text,
+  Textarea,
+} from "@mantine/core";
+import { useState } from "react";
 import { useFetcher, useNavigate } from "react-router";
-import { NEAR_PERFECT_THRESHOLD } from "./constants";
+import { IconRefresh } from "@tabler/icons-react";
+import { CARD_BORDER, NEAR_PERFECT_THRESHOLD } from "./constants";
 import type { SentenceEvaluation } from "./sentenceTypes";
 import { nextWord, useSessionStore } from "../../store/session";
+import { monoLabel } from "../wordSearch/typography";
+import { PracticeProgress } from "./practiceProgress";
+import { ActionBar } from "./actionBar";
+import { FeedbackHeader } from "./feedbackHeader";
 
 interface PracticeSentenceProps {
   word: string;
@@ -18,26 +30,73 @@ interface PracticeSentenceProps {
 
 type ActionData = SentenceEvaluation | { error: true };
 
-const notify = (color: string, message: string) =>
-  notifications.show({
-    color,
-    message,
-    autoClose: 2500,
-    styles: { description: { fontSize: "var(--mantine-font-size-lg)" } },
-  });
+const ERROR_ACCENT = "#b4441e";
 
-const Comparison = ({
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+const UnderlineWord = ({ text, word }: { text: string; word: string }) => {
+  if (!word) {
+    return <>{text}</>;
+  }
+  const parts = text.split(new RegExp(`(${escapeRegExp(word)})`, "ig"));
+  return (
+    <>
+      {parts.map((part, i) =>
+        part.toLowerCase() === word.toLowerCase() ? (
+          <Text
+            key={i}
+            span
+            style={{
+              textDecoration: "underline",
+              textDecorationColor: "#1f8a5b",
+            }}>
+            {part}
+          </Text>
+        ) : (
+          <Text key={i} span>
+            {part}
+          </Text>
+        ),
+      )}
+    </>
+  );
+};
+
+const Section = ({
   label,
+  warm = false,
+  tint,
   children,
 }: {
   label: string;
+  warm?: boolean;
+  tint?: "red";
   children: React.ReactNode;
 }) => (
-  <Box>
-    <Text size="sm" c="dimmed" tt="uppercase" fw={600} mb={4}>
+  <Box
+    p="14px 15px"
+    bg={warm ? "var(--surface-warm)" : tint === "red" ? "#fdf3f1" : undefined}
+    bdrs={14}
+    bd={
+      tint === "red"
+        ? "1.5px solid #f0c9c3"
+        : warm
+          ? "1px solid rgba(0,0,0,.08)"
+          : CARD_BORDER
+    }>
+    <Text
+      ff="monospace"
+      fw={500}
+      fz={10}
+      c={tint === "red" ? "#c0392b" : "dimmed"}
+      mb={6}>
       {label}
     </Text>
-    <Text size="xl">{children}</Text>
+    <Text className="serif" fz={15} lh={1.5}>
+      {children}
+    </Text>
   </Box>
 );
 
@@ -55,28 +114,26 @@ export const PracticeSentence = ({
   const navigate = useNavigate();
   const queue = useSessionStore((s) => s.queue);
   const meaningIds = useSessionStore((s) => s.meaningIds);
-  const recordScore = useSessionStore((s) => s.recordScore);
+  const recordResult = useSessionStore((s) => s.recordResult);
 
   const isSubmitting = evalFetcher.state !== "idle";
   const data = evalFetcher.data;
   const evalError = !!data && "error" in data;
   const evaluation = data && !("error" in data) ? data : null;
+  const correct = !!evaluation && evaluation.score >= NEAR_PERFECT_THRESHOLD;
 
-  useEffect(() => {
-    if (evaluation && evaluation.score >= NEAR_PERFECT_THRESHOLD) {
-      notify("green", "Nicely done — that reads naturally!");
-    }
-  }, [evaluation]);
+  const tone = evaluation ? (correct ? "correct" : "wrong") : "neutral";
 
   const handleSubmit = () => {
     const sentence = value.trim();
-    if (!sentence || isSubmitting) return;
+    if (!sentence || isSubmitting) {
+      return;
+    }
     evalFetcher.submit({ sentence, meaning, original }, { method: "post" });
   };
 
-  const handleNext = () => {
-    if (!evaluation) return;
-    recordScore(word, evaluation.score);
+  const advance = (isCorrect: boolean) => {
+    recordResult(word, "sentence", isCorrect);
     const next = nextWord(queue, word);
     if (next) {
       navigate(
@@ -91,173 +148,206 @@ export const PracticeSentence = ({
 
   if (generationFailed) {
     return (
-      <Flex
-        direction="column"
-        p={16}
-        gap={16}
-        flex={1}
-        align="center"
-        justify="center">
-        <Text size="md">Something went wrong finding a sentence :(</Text>
-        <Button
-          variant="outline"
-          size="lg"
-          color="dark"
-          onClick={() => window.location.reload()}>
-          Try again
-        </Button>
+      <Flex direction="column" p={16} pb={110} gap={18} flex={1}>
+        <PracticeProgress />
+
+        <Box>
+          <Text {...monoLabel}>Rebuild the sentence</Text>
+        </Box>
+
+        <Box bg="#fbf1ee" bd={`1px solid ${ERROR_ACCENT}47`} bdrs={14} p={16}>
+          <Group gap={9} align="center" wrap="nowrap" c={ERROR_ACCENT}>
+            <Center
+              w={22}
+              h={22}
+              fz={13}
+              fw={700}
+              flex="none"
+              bd={`1.5px solid ${ERROR_ACCENT}`}
+              bdrs="50%">
+              !
+            </Center>
+            <Text fw={600} fz={13}>
+              Couldn’t build this exercise
+            </Text>
+          </Group>
+          <Text fz={13} lh={1.5} c="dimmed" mt={10}>
+            We couldn’t generate a sentence to rephrase right now. Check your
+            connection and try again.
+          </Text>
+          <Group gap={9} mt={14} wrap="nowrap">
+            <Button
+              variant="filled"
+              color="black"
+              h={42}
+              radius={11}
+              flex={1}
+              leftSection={<IconRefresh size={16} />}
+              onClick={() => window.location.reload()}>
+              Try again
+            </Button>
+            <Button
+              variant="outline"
+              color="dark"
+              h={42}
+              radius={11}
+              onClick={() => advance(false)}>
+              Skip word
+            </Button>
+          </Group>
+        </Box>
+
+        <Box
+          flex={1}
+          p="14px 15px"
+          c="dimmed"
+          fz={15}
+          lh={1.5}
+          bd="1.5px dashed rgba(0,0,0,.12)"
+          bdrs={14}>
+          Your answer field is unavailable until the exercise loads.
+        </Box>
       </Flex>
     );
   }
 
   return (
-    <Flex direction="column" p={16} gap={16} flex={1}>
-      <Text size="sm" c="dimmed">
-        Rebuild this sentence naturally — using the word you just practiced.
-      </Text>
-      <Text size="xl" fw={700}>
-        {simplified}
-      </Text>
+    <Flex direction="column" p={16} pb={110} gap={18} flex={1}>
+      <PracticeProgress tone={tone} />
 
-      <Textarea
-        variant="unstyled"
-        placeholder="Type your sentence..."
-        size="xl"
-        autosize
-        minRows={2}
-        value={value}
-        onChange={(e) => setValue(e.currentTarget.value)}
-        disabled={isSubmitting || !!evaluation}
-        style={{ borderBottom: "1px solid #dee2e6" }}
-      />
-
-      {evalError ? (
-        <Text size="md" c="red">
-          We couldn't grade that — please try again.
-        </Text>
-      ) : null}
-
-      {evaluation ? (
-        <Flex direction="column" gap={24} mt={8}>
-          <Flex align="center" gap={8}>
-            <Text size="lg" fw={700}>
-              Score
+      {!evaluation ? (
+        <>
+          <Box>
+            <Text {...monoLabel}>Rebuild the sentence</Text>
+            <Text fz={14} c="dimmed" mt={12}>
+              Rewrite this sentence.
             </Text>
-            <Badge
-              size="xl"
-              variant="filled"
-              color={
-                evaluation.score >= NEAR_PERFECT_THRESHOLD ? "green" : "dark"
-              }>
-              {evaluation.score.toFixed(1)} / 10
-            </Badge>
-          </Flex>
+          </Box>
 
-          <Comparison label={generated ? "Example" : "Original"}>
-            {original}
+          <Section label="REPHRASED" warm>
+            {simplified}
+          </Section>
+
+          <Textarea
+            variant="unstyled"
+            placeholder="Type your sentence…"
+            autosize
+            minRows={3}
+            value={value}
+            onChange={(e) => setValue(e.currentTarget.value)}
+            disabled={isSubmitting}
+            styles={{
+              input: { padding: "14px 15px", fontSize: 15, lineHeight: 1.5 },
+            }}
+            bd="1.5px dashed rgba(0,0,0,.22)"
+            bdrs={14}
+          />
+
+          {evalError ? (
+            <Text size="md" c="red">
+              We couldn't grade that — please try again.
+            </Text>
+          ) : null}
+
+          <ActionBar>
+            <Group gap={10} wrap="nowrap">
+              <Button
+                variant="outline"
+                color="dark"
+                h={48}
+                radius={12}
+                onClick={() => advance(false)}>
+                Skip
+              </Button>
+              <Button
+                variant="filled"
+                color="black"
+                h={48}
+                radius={12}
+                flex={1}
+                onClick={handleSubmit}
+                loading={isSubmitting}
+                disabled={!value.trim()}>
+                Check
+              </Button>
+            </Group>
+          </ActionBar>
+        </>
+      ) : (
+        <>
+          <FeedbackHeader
+            tone={correct ? "correct" : "wrong"}
+            note={
+              correct
+                ? "That reads naturally — nicely done"
+                : `You didn't quite nail “${word}”`
+            }
+          />
+
+          <Box p={16} bd={CARD_BORDER} bdrs={14}>
+            <Text className="serif" fz={22} tt="capitalize">
+              {word}
+            </Text>
+            <Text fz={14} lh={1.5} c="dimmed" mt={8}>
+              {meaning}
+            </Text>
+          </Box>
+
+          <Section label="REPHRASED" warm>
+            {simplified}
+          </Section>
+
+          <Section label={generated ? "EXAMPLE" : "ORIGINAL"}>
+            <UnderlineWord text={original} word={word} />
             {source ? (
-              <Text
-                span
-                c="dimmed"
-                fs="italic"
-                style={{
-                  display: "block",
-                  fontSize: "var(--mantine-font-size-sm)",
-                }}
-                mt={4}>
+              <Text span c="dimmed" fs="italic" fz={13} display="block" mt={4}>
                 — {source}
               </Text>
             ) : null}
             {generated ? (
-              <Text
-                span
-                c="dimmed"
-                fs="italic"
-                style={{
-                  display: "block",
-                  fontSize: "var(--mantine-font-size-sm)",
-                }}
-                mt={4}>
+              <Text span c="dimmed" fs="italic" fz={13} display="block" mt={4}>
                 Generated example — not from a published source.
               </Text>
             ) : null}
-          </Comparison>
-          <Comparison label="Your sentence">{value.trim()}</Comparison>
-          {evaluation.correctedSentence ? (
-            <Comparison label="Corrected">
-              {evaluation.segments ? (
-                evaluation.segments.map((segment, i) =>
-                  segment.changed ? (
-                    <Text key={i} span fw={700} bg="yellow.2" px={2}>
-                      {segment.text}
-                    </Text>
-                  ) : (
-                    <Text key={i} span>
-                      {segment.text}
-                    </Text>
-                  ),
-                )
-              ) : (
-                <>{evaluation.correctedSentence}</>
+          </Section>
+
+          <Section label="YOUR SENTENCE" tint={correct ? undefined : "red"}>
+            {value.trim()}
+          </Section>
+
+          {evaluation.segments && evaluation.segments.length > 0 ? (
+            <Section label="CORRECTIONS">
+              {evaluation.segments.map((segment, i) =>
+                segment.changed ? (
+                  <Text key={i} span fw={700} bg="yellow.2" px={2}>
+                    {segment.text}
+                  </Text>
+                ) : (
+                  <Text key={i} span>
+                    {segment.text}
+                  </Text>
+                ),
               )}
-            </Comparison>
+            </Section>
+          ) : evaluation.correctedSentence ? (
+            <Section label="CORRECTIONS">
+              {evaluation.correctedSentence}
+            </Section>
           ) : null}
-        </Flex>
-      ) : null}
 
-      {evaluation ? null : (
-        <Box
-          style={{
-            position: "fixed",
-            bottom: 0,
-            left: 0,
-            right: 0,
-            background:
-              "linear-gradient(to bottom, rgba(255, 255, 255, 0), #fff 16px)",
-            paddingTop: 32,
-            paddingBottom: 16,
-            display: "flex",
-            justifyContent: "center",
-            gap: 16,
-          }}>
-          <Button
-            variant="filled"
-            size="lg"
-            color="black"
-            type="button"
-            onClick={handleSubmit}
-            loading={isSubmitting}
-            disabled={!value.trim()}>
-            Check sentence
-          </Button>
-        </Box>
+          <ActionBar>
+            <Button
+              fullWidth
+              variant="filled"
+              color="black"
+              h={48}
+              radius={12}
+              onClick={() => advance(correct)}>
+              Next word →
+            </Button>
+          </ActionBar>
+        </>
       )}
-
-      {evaluation ? (
-        <Box
-          style={{
-            position: "fixed",
-            bottom: 0,
-            left: 0,
-            right: 0,
-            background:
-              "linear-gradient(to bottom, rgba(255, 255, 255, 0), #fff 16px)",
-            paddingTop: 32,
-            paddingBottom: 16,
-            display: "flex",
-            justifyContent: "center",
-            gap: 16,
-          }}>
-          <Button
-            variant="filled"
-            size="lg"
-            color="black"
-            type="button"
-            onClick={handleNext}>
-            {nextWord(queue, word) ? "Next sentence" : "Finish"}
-          </Button>
-        </Box>
-      ) : null}
     </Flex>
   );
 };

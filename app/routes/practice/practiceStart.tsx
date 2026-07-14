@@ -24,13 +24,13 @@ interface ModeOption {
 const OPTIONS: ModeOption[] = [
   {
     mode: "word",
-    title: "Guess the word",
+    title: "Guess a word",
     description: "from its definition",
     icon: <IconQuestionMark size={18} />,
   },
   {
     mode: "sentence",
-    title: "Rebuild the sentence",
+    title: "Rebuild a sentence",
     description: "use the word in context",
     icon: <IconPencil size={18} />,
   },

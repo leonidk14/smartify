@@ -37,6 +37,7 @@ export async function clientLoader({ params }: Route.ClientLoaderArgs) {
     word: params.word,
     definition: selected.definition,
     meaningId: selected.id,
+    partOfSpeech: selected.partOfSpeech,
     hints,
   };
 }
@@ -63,6 +64,7 @@ export default function PracticeWordRoute({
       word={loaderData.word}
       definition={loaderData.definition}
       meaningId={loaderData.meaningId}
+      partOfSpeech={loaderData.partOfSpeech}
       hints={loaderData.hints}
     />
   );

@@ -1,36 +1,51 @@
-import { Box, Button, Flex, Text, TextInput, Tooltip } from "@mantine/core";
-import { notifications } from "@mantine/notifications";
+import { Box, Button, Flex, Group, Text, TextInput } from "@mantine/core";
 import { useEffect, useState } from "react";
 import { useNavigate, useNavigation } from "react-router";
 import { normalize } from "../wordSearch/normalize";
 import { nextWord, useSessionStore } from "../../store/session";
+import { monoLabel } from "../wordSearch/typography";
+import { CARD_BORDER } from "./constants";
+import { PracticeProgress } from "./practiceProgress";
+import { ActionBar } from "./actionBar";
+import { FeedbackHeader } from "./feedbackHeader";
 
 interface PracticeWordProps {
   word: string;
   definition: string;
   meaningId: string;
+  partOfSpeech: string;
   hints: string[];
 }
 
-const notify = (color: string, message: string) =>
-  notifications.show({
-    color,
-    message,
-    autoClose: 2500,
-    styles: { description: { fontSize: "var(--mantine-font-size-lg)" } },
-  });
+type View = "input" | "correct" | "wrong";
+
+const PartOfSpeechPill = ({ children }: { children: React.ReactNode }) => (
+  <Text
+    span
+    className="serif"
+    fs="italic"
+    fz={13}
+    c="dimmed"
+    display="inline-block"
+    px={11}
+    py={4}
+    bd="1px solid rgba(0,0,0,.18)"
+    bdrs={999}>
+    {children}
+  </Text>
+);
 
 export const PracticeWord = ({
   word,
   definition,
   meaningId,
+  partOfSpeech,
   hints,
 }: PracticeWordProps) => {
   const [answer, setAnswer] = useState("");
-  const [triedOnce, setTriedOnce] = useState(false);
-  const [showHintButton, setShowHintButton] = useState(false);
-  const [tooltipOpen, setTooltipOpen] = useState(false);
-  const [solved, setSolved] = useState(false);
+  const [attempts, setAttempts] = useState(0);
+  const [showHint, setShowHint] = useState(false);
+  const [view, setView] = useState<View>("input");
   const navigation = useNavigation();
   const navigate = useNavigate();
 
@@ -40,21 +55,41 @@ export const PracticeWord = ({
   const startSession = useSessionStore((s) => s.startSession);
   const setMeaning = useSessionStore((s) => s.setMeaning);
   const setPhase = useSessionStore((s) => s.setPhase);
+  const recordResult = useSessionStore((s) => s.recordResult);
 
-  useEffect(() => {
-    const timer = setTimeout(() => setShowHintButton(true), 5000);
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Direct-URL / refresh entry: make this a coherent single-word session.
   useEffect(() => {
     if (!queue.includes(word)) {
       startSession([word]);
     }
   }, [word]);
 
+  const tone =
+    view === "correct" ? "correct" : view === "wrong" ? "wrong" : "neutral";
+
+  const canShowHint = hints && hints.length > 1;
+
+  const handleCheck = () => {
+    if (!answer.trim()) {
+      return;
+    }
+    if (normalize(answer) === normalize(word)) {
+      setView("correct");
+    } else {
+      setAttempts((a) => a + 1);
+      setShowHint(false);
+      setView("wrong");
+    }
+  };
+
+  const tryAgain = () => {
+    setAnswer("");
+    setView("input");
+  };
+
   const handleNext = () => {
     setMeaning(word, meaningId);
+    recordResult(word, "word", view === "correct");
+
     const next = nextWord(queue, word);
     if (next) {
       navigate(`/practice/${encodeURIComponent(next)}`);
@@ -67,133 +102,188 @@ export const PracticeWord = ({
     }
 
     setPhase("sentence");
-    const first = queue[0] ?? word;
-    const firstMeaningId = first === word ? meaningId : meaningIds[first];
+    const firstWord = queue[0] ?? word;
+    const firstMeaningId =
+      firstWord === word ? meaningId : meaningIds[firstWord];
     navigate(
-      `/practice/${encodeURIComponent(first)}/sentence?m=${encodeURIComponent(
-        firstMeaningId,
+      `/practice/${encodeURIComponent(firstWord)}/sentence?m=${encodeURIComponent(
+        firstMeaningId ?? "",
       )}`,
     );
   };
 
-  const handleSubmit = () => {
-    if (!answer.trim()) return;
-
-    const isCorrectAnswer = normalize(answer) === normalize(word);
-
-    if (isCorrectAnswer) {
-      setSolved(true);
-      notify("green", "Correct! On to the next step");
-      return;
-    }
-
-    if (!triedOnce) {
-      setTriedOnce(true);
-      setAnswer("");
-      notify("red", "Not quite, try again");
-      return;
-    }
-
-    notify("red", `Not quite. The word was "${word}"`);
-  };
-
-  const handleHint = () => {
-    setTooltipOpen(true);
-    setTimeout(() => setTooltipOpen(false), 3000);
-  };
+  const revealWord = view === "wrong" && attempts >= 2;
+  const loading = navigation.state === "loading";
 
   return (
-    <Flex direction="column" p={16} gap={16} flex={1}>
-      <Text size="xl" fw={700}>
-        {definition}
-      </Text>
+    <Flex direction="column" p={16} pb={110} gap={20} flex={1}>
+      <PracticeProgress tone={tone} />
 
-      <TextInput
-        variant="unstyled"
-        placeholder="Type your answer..."
-        size="xl"
-        value={answer}
-        onChange={(e) => setAnswer(e.currentTarget.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") handleSubmit();
-        }}
-        autoFocus
-        style={{ borderBottom: "1px solid #dee2e6" }}
-      />
+      {view === "input" && (
+        <>
+          <Box>
+            <Text {...monoLabel}>Guess the word</Text>
+            <Box mt={14}>
+              <PartOfSpeechPill>{partOfSpeech}</PartOfSpeechPill>
+            </Box>
+            <Text className="serif" fz={25} lh={1.35} mt={16}>
+              {definition}
+            </Text>
+          </Box>
 
-      <Box
-        style={{
-          position: "fixed",
-          bottom: 0,
-          left: 0,
-          right: 0,
-          background:
-            "linear-gradient(to bottom, rgba(255, 255, 255, 0), #fff 16px)",
-          paddingTop: 32,
-          paddingBottom: 16,
-          display: "flex",
-          justifyContent: "center",
-          gap: 16,
-        }}>
-        <Tooltip
-          label={
-            <Flex direction="column" align="center" gap={4}>
-              <Text size="xs">One of these words:</Text>
-              <Flex gap={8}>
+          <Box>
+            <TextInput
+              variant="unstyled"
+              placeholder="type the word…"
+              size="xl"
+              value={answer}
+              onChange={(e) => setAnswer(e.currentTarget.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleCheck();
+              }}
+              autoFocus
+              style={{ borderBottom: "2px solid #1a1a1a" }}
+            />
+          </Box>
+
+          {showHint && hints.length > 1 && (
+            <Box
+              bg="var(--surface-warm)"
+              p="12px 14px"
+              bd="1px solid rgba(0,0,0,.08)"
+              bdrs={12}>
+              <Text {...monoLabel} mb={8}>
+                One of these words
+              </Text>
+              <Group gap={10}>
                 {hints.map((h, i) => (
-                  <Flex key={h} gap={8} align="center">
+                  <Group key={h} gap={10} align="center">
                     {i > 0 && (
-                      <Text size="sm" c="dimmed">
-                        /
+                      <Text c="dimmed" fz={14}>
+                        ·
                       </Text>
                     )}
-                    <Text size="sm" tt="capitalize">
+                    <Text className="serif" fz={16} tt="capitalize">
                       {h}
                     </Text>
-                  </Flex>
+                  </Group>
                 ))}
-              </Flex>
-            </Flex>
-          }
-          opened={tooltipOpen}
-          position="top"
-          withArrow>
-          <Button
-            variant="outline"
-            size="lg"
-            color="dark"
-            type="button"
-            onClick={handleHint}
-            style={{
-              opacity: showHintButton && !solved ? 1 : 0,
-              pointerEvents: showHintButton && !solved ? "auto" : "none",
-              transition: "opacity 400ms ease",
-            }}>
-            Give a hint
-          </Button>
-        </Tooltip>
-        {solved ? (
-          <Button
-            variant="filled"
-            size="lg"
-            color="black"
-            type="button"
-            onClick={handleNext}
-            loading={navigation.state === "loading"}>
-            Next step
-          </Button>
-        ) : (
-          <Button
-            variant="filled"
-            size="lg"
-            color="black"
-            type="button"
-            onClick={handleSubmit}
-            disabled={!answer.trim()}>
-            Submit answer
-          </Button>
-        )}
-      </Box>
+              </Group>
+            </Box>
+          )}
+
+          <ActionBar>
+            <Group gap={10} wrap="nowrap">
+              {canShowHint && (
+                <Button
+                  variant="outline"
+                  color="dark"
+                  h={48}
+                  radius={12}
+                  onClick={() => setShowHint(true)}
+                  disabled={showHint}>
+                  Hint
+                </Button>
+              )}
+              <Button
+                variant="filled"
+                color="black"
+                h={48}
+                radius={12}
+                flex={1}
+                onClick={handleCheck}
+                disabled={!answer.trim()}>
+                Check
+              </Button>
+            </Group>
+          </ActionBar>
+        </>
+      )}
+
+      {view === "correct" && (
+        <>
+          <FeedbackHeader tone="correct" />
+          <Box p={16} bd={CARD_BORDER} bdrs={14}>
+            <Text className="serif" fz={26} tt="capitalize">
+              {word}
+            </Text>
+            <Text fz={14} lh={1.5} c="dimmed" mt={10}>
+              {definition}
+            </Text>
+          </Box>
+
+          <ActionBar>
+            <Button
+              fullWidth
+              variant="filled"
+              color="black"
+              h={48}
+              radius={12}
+              onClick={handleNext}
+              loading={loading}>
+              Next word →
+            </Button>
+          </ActionBar>
+        </>
+      )}
+
+      {view === "wrong" && (
+        <>
+          <FeedbackHeader tone="wrong" />
+
+          <Box
+            p="14px 15px"
+            bg="#fdf3f1"
+            bd="1.5px solid #f0c9c3"
+            bdrs={14}>
+            <Text ff="monospace" fw={500} fz={10} c="#c0392b" mb={6}>
+              YOUR ANSWER
+            </Text>
+            <Text className="serif" fz={15} lh={1.5} tt="capitalize">
+              {answer.trim()}
+            </Text>
+          </Box>
+
+          {revealWord && (
+            <Box p={16} bdrs={14} bd={CARD_BORDER}>
+              <Text ff="monospace" fw={500} fz={10} c="dimmed" mb={6}>
+                ANSWER
+              </Text>
+              <Text className="serif" fz={22} tt="capitalize">
+                {word}
+              </Text>
+              <Text fz={14} lh={1.5} c="dimmed" mt={8}>
+                {definition}
+              </Text>
+            </Box>
+          )}
+
+          <ActionBar>
+            <Group gap={10} wrap="nowrap">
+              {!revealWord && (
+                <Button
+                  variant="outline"
+                  color="dark"
+                  h={48}
+                  radius={12}
+                  onClick={tryAgain}>
+                  Try again
+                </Button>
+              )}
+              <Button
+                variant="filled"
+                color="black"
+                h={48}
+                radius={12}
+                flex={1}
+                onClick={handleNext}
+                loading={loading}>
+                Next word →
+              </Button>
+            </Group>
+          </ActionBar>
+        </>
+      )}
     </Flex>
   );
 };

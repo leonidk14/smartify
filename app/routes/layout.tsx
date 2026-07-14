@@ -15,14 +15,7 @@ import {
   SegmentedControl,
   Text,
 } from "@mantine/core";
-import {
-  IconArrowLeft,
-  IconBook,
-  IconChevronLeft,
-  IconPencil,
-  IconPlayerPlay,
-} from "@tabler/icons-react";
-import { useSessionStore } from "../store/session";
+import { IconBook, IconChevronLeft, IconPlayerPlay } from "@tabler/icons-react";
 import { monoLabel } from "./wordSearch/typography";
 
 const MODE_LABELS: Record<string, string> = {
@@ -35,46 +28,18 @@ export default function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
   const navigation = useNavigation();
-  const phase = useSessionStore((s) => s.phase);
-  const mode = useSessionStore((s) => s.mode);
-  const queue = useSessionStore((s) => s.queue);
-  const meaningIds = useSessionStore((s) => s.meaningIds);
-  const setPhase = useSessionStore((s) => s.setPhase);
 
   const isHome = location.pathname === "/";
   const isPracticeLanding = location.pathname === "/practice";
   const isTopLevelScreen = isHome || isPracticeLanding;
 
   const isSelectScreen = location.pathname === "/practice/select";
-  const selectMode =
-    new URLSearchParams(location.search).get("mode") ?? "both";
-
-  const isPracticeWord = /^\/practice\/.+/.test(location.pathname);
-  const isWordScreen =
-    /^\/practice\/[^/]+$/.test(location.pathname) &&
-    location.pathname !== "/practice/summary" &&
-    location.pathname !== "/practice/select";
-  const showSkip = isWordScreen && phase === "word" && mode !== "word";
-
-  const sentenceMatch = location.pathname.match(
-    /^\/practice\/([^/]+)\/sentence$/,
-  );
-  const backTo = sentenceMatch ? `/practice/${sentenceMatch[1]}` : "/practice";
+  const selectMode = new URLSearchParams(location.search).get("mode") ?? "both";
 
   const isLoadingSentence =
     navigation.state === "loading" &&
     !!navigation.location &&
     /^\/practice\/[^/]+\/sentence$/.test(navigation.location.pathname);
-
-  const skipToSentences = () => {
-    setPhase("sentence");
-    const first = queue[0];
-    navigate(
-      `/practice/${encodeURIComponent(first)}/sentence?m=${encodeURIComponent(
-        meaningIds[first] ?? "",
-      )}`,
-    );
-  };
 
   return (
     <Flex direction="column" style={{ minHeight: "100vh" }}>
@@ -99,33 +64,6 @@ export default function Layout() {
                 Which words?
               </Text>
             </Box>
-          </Group>
-        </Box>
-      ) : !isTopLevelScreen ? (
-        <Box style={{ borderBottom: "1px solid var(--mantine-color-gray-3)" }}>
-          <Group
-            justify={isPracticeWord ? "space-between" : "flex-end"}
-            px={16}
-            h={48}>
-            {isPracticeWord && (
-              <Button
-                component={Link}
-                to={backTo}
-                variant="subtle"
-                color="dark"
-                leftSection={<IconArrowLeft size={18} />}>
-                Back
-              </Button>
-            )}
-            {showSkip && (
-              <Button
-                variant="subtle"
-                color="dark"
-                onClick={skipToSentences}
-                leftSection={<IconPencil size={18} />}>
-                To sentences
-              </Button>
-            )}
           </Group>
         </Box>
       ) : null}

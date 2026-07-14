@@ -3,16 +3,22 @@ import { create } from "zustand";
 type Phase = "word" | "sentence";
 export type PracticeMode = "word" | "sentence" | "both";
 
+export interface StepResult {
+  word: string;
+  step: Phase;
+  correct: boolean;
+}
+
 interface SessionState {
   queue: string[];
   phase: Phase;
   mode: PracticeMode;
   meaningIds: Record<string, string>;
-  scores: Record<string, number>;
+  results: StepResult[];
   startSession: (words: string[], mode?: PracticeMode) => void;
   setMeaning: (word: string, meaningId: string) => void;
   setPhase: (phase: Phase) => void;
-  recordScore: (word: string, score: number) => void;
+  recordResult: (word: string, step: Phase, correct: boolean) => void;
   reset: () => void;
 }
 
@@ -21,7 +27,7 @@ const EMPTY = {
   phase: "word" as Phase,
   mode: "both" as PracticeMode,
   meaningIds: {},
-  scores: {},
+  results: [] as StepResult[],
 };
 
 export const useSessionStore = create<SessionState>((set) => ({
@@ -32,13 +38,13 @@ export const useSessionStore = create<SessionState>((set) => ({
       phase: mode === "sentence" ? "sentence" : "word",
       mode,
       meaningIds: {},
-      scores: {},
+      results: [],
     }),
   setMeaning: (word, meaningId) =>
     set((s) => ({ meaningIds: { ...s.meaningIds, [word]: meaningId } })),
   setPhase: (phase) => set({ phase }),
-  recordScore: (word, score) =>
-    set((s) => ({ scores: { ...s.scores, [word]: score } })),
+  recordResult: (word, step, correct) =>
+    set((s) => ({ results: [...s.results, { word, step, correct }] })),
   reset: () => set({ ...EMPTY }),
 }));
 
