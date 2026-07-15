@@ -24,6 +24,7 @@ const { count, size, warnings } = await generateSW({
   globPatterns: ["**/*.{js,css,html,ico,png,svg,woff,woff2,webmanifest}"],
   swDest: path.join(outDir, "sw.js"),
   inlineWorkboxRuntime: true,
+  importScripts: ["/push-sw.js"],
   // Serve the cached shell for offline navigations. Rewrite the precached
   // index.html entry to "/" so the install-time fetch targets "/" (which every
   // host serves as index.html, with no /index.html redirect to trip over).
