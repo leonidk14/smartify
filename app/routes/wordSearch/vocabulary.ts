@@ -34,7 +34,7 @@ class VocabularyDatabase extends Dexie {
   words!: Table<VocabularyRow, string>;
 
   constructor() {
-    super("dgw-vocabulary");
+    super("smartify-vocabulary");
     this.version(1).stores({ words: "word" });
   }
 }

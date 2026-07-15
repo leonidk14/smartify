@@ -67,7 +67,7 @@ export const links: Route.LinksFunction = () => [
 
 export function meta() {
   return [
-    { title: "dgw" },
+    { title: "smartify" },
     {
       name: "description",
       content: "Your language sparring partner in your phone.",
@@ -78,7 +78,7 @@ export function meta() {
     { name: "mobile-web-app-capable", content: "yes" },
     { name: "apple-mobile-web-app-capable", content: "yes" },
     { name: "apple-mobile-web-app-status-bar-style", content: "default" },
-    { name: "apple-mobile-web-app-title", content: "dgw" },
+    { name: "apple-mobile-web-app-title", content: "Smartify" },
   ];
 }
 
