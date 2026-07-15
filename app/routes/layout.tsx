@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import {
   Outlet,
   useLocation,
@@ -28,6 +29,22 @@ export default function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
   const navigation = useNavigation();
+
+  useEffect(() => {
+    if (!("serviceWorker" in navigator)) {
+      return;
+    }
+
+    const onMessage = (event: MessageEvent) => {
+      if (event.data?.type === "PUSH_NAVIGATE" && event.data.url) {
+        navigate(event.data.url);
+      }
+    };
+
+    navigator.serviceWorker.addEventListener("message", onMessage);
+    return () =>
+      navigator.serviceWorker.removeEventListener("message", onMessage);
+  }, [navigate]);
 
   const isHome = location.pathname === "/";
   const isPracticeLanding = location.pathname === "/practice";

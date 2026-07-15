@@ -23,7 +23,29 @@ self.addEventListener("push", (event) => {
   );
 });
 
-// Wired up in Phase 3 (focus/navigate an open window, else open a new one).
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
+
+  const url = event.notification.data?.url || DEFAULT_URL;
+
+  event.waitUntil(
+    (async () => {
+      const clientList = await clients.matchAll({
+        type: "window",
+        includeUncontrolled: true,
+      });
+
+      const client = clientList.find(
+        (c) => new URL(c.url).origin === self.location.origin,
+      );
+
+      if (client) {
+        await client.focus();
+        client.postMessage({ type: "PUSH_NAVIGATE", url });
+        return;
+      }
+
+      await clients.openWindow(url);
+    })(),
+  );
 });
