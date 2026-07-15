@@ -22,6 +22,24 @@ Prefer Mantine component **style props** over inline `style={{}}` objects. Reach
 Reference examples: [app/routes/practice/practiceStart.tsx](app/routes/practice/practiceStart.tsx),
 [app/routes/practice/practiceSelect.tsx](app/routes/practice/practiceSelect.tsx).
 
+## Code style
+
+- **Comments only in exceptional cases.** Code should be self-explanatory. Write a
+  comment only to: leave a `TODO`, explain a rare/non-obvious edge case, explain
+  genuinely complex logic, or mark something as intentionally descoped. Otherwise
+  favor clear naming over narration — no comments.
+- **Boolean names start with `is` / `should` / `has` / `can`.** e.g. `isShown` (not
+  `show`), `hasError`, `shouldFocus`, `canSubmit`. Applies to booleans we author
+  (variables, state, derived values); does not force renaming third-party props such
+  as Mantine's `disabled` / `checked` / `opened`.
+- **Derive, don't duplicate state.** Use the fewest states needed per entity — don't
+  store what can be computed from existing state/props (e.g. the past `value` +
+  `submitted` pair for one input should be a single state). Distinct entities
+  (different inputs/objects) legitimately keep their own state.
+- **Don't store values in refs.** `useRef` for DOM nodes / imperative handles is
+  fine; using a ref as a mutable value store to avoid re-renders is not (rare edge
+  cases only).
+
 ## Design references
 
 Designs live in a Claude Design project. Whenever a design is referenced — **including
