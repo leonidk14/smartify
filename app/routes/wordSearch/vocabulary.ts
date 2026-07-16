@@ -1,7 +1,8 @@
-import Dexie, { type Table } from "dexie";
 import { v4 as uuidv4 } from "uuid";
-import type { MeaningGroup } from "./actions";
+import { readSnapshot, saveSnapshot } from "../../lib/offlineCache";
+import { callFunction } from "../../lib/supabaseFunctions";
 import type { CachedSentence } from "../practice/sentenceTypes";
+import type { MeaningGroup } from "./actions";
 
 export interface StoredMeaning {
   definition: string;
@@ -22,24 +23,6 @@ export interface VocabularyEntry {
 }
 
 export type VocabularyStore = Record<string, VocabularyEntry>;
-
-// One IndexedDB row per word. The word is the primary key; the rest of the row
-// is a plain VocabularyEntry, so the store is easy to assemble back into the
-// VocabularyStore Record the rest of the app expects.
-interface VocabularyRow extends VocabularyEntry {
-  word: string;
-}
-
-class VocabularyDatabase extends Dexie {
-  words!: Table<VocabularyRow, string>;
-
-  constructor() {
-    super("smartify-vocabulary");
-    this.version(1).stores({ words: "word" });
-  }
-}
-
-const db = new VocabularyDatabase();
 
 function toStoredGroups(groups: MeaningGroup[]): StoredMeaningGroup[] {
   return groups.map((group) => {
@@ -70,24 +53,27 @@ function migrateStore(store: VocabularyStore): boolean {
   return changed;
 }
 
-export async function readVocabulary(): Promise<VocabularyStore> {
-  const rows = await db.words.toArray();
-  const store: VocabularyStore = {};
-  for (const { word, ...entry } of rows) {
-    store[word] = entry;
+export async function readVocabulary(): Promise<{
+  store: VocabularyStore;
+  isFromOfflineCopy: boolean;
+}> {
+  let store: VocabularyStore;
+  try {
+    ({ store } = await callFunction<{ store: VocabularyStore }>(
+      "vocabulary-list",
+    ));
+  } catch {
+    // Supabase unreachable (offline) — fall back to the downloaded snapshot.
+    return { store: await readSnapshot(), isFromOfflineCopy: true };
   }
   if (migrateStore(store)) {
     await writeVocabulary(store);
   }
-  return store;
+  return { store, isFromOfflineCopy: false };
 }
 
 export async function writeVocabulary(store: VocabularyStore): Promise<void> {
-  const rows: VocabularyRow[] = Object.entries(store).map(([word, entry]) => ({
-    word,
-    ...entry,
-  }));
-  await db.words.bulkPut(rows);
+  await callFunction("vocabulary-bulk-put", { store });
 }
 
 export async function saveWord({
@@ -97,21 +83,22 @@ export async function saveWord({
   word: string;
   groups: MeaningGroup[];
 }): Promise<VocabularyEntry> {
-  const entry: VocabularyEntry = {
-    groups: toStoredGroups(groups),
-    shouldPracticeLater: false,
-    savedAt: new Date().toISOString(),
-  };
-  await db.words.put({ word: word.trim().toLowerCase(), ...entry });
+  const { entry } = await callFunction<{ entry: VocabularyEntry }>(
+    "vocabulary-save",
+    { word: word.trim().toLowerCase(), groups: toStoredGroups(groups) },
+  );
   return entry;
 }
 
 export async function markForPractice(word: string): Promise<void> {
-  const key = word.trim().toLowerCase();
-  const row = await db.words.get(key);
+  await callFunction("vocabulary-mark-practice", {
+    word: word.trim().toLowerCase(),
+  });
+}
 
-  if (row) {
-    row.shouldPracticeLater = true;
-    await db.words.put(row);
-  }
+export async function downloadForOffline(): Promise<void> {
+  const { store } = await callFunction<{ store: VocabularyStore }>(
+    "vocabulary-list",
+  );
+  await saveSnapshot(store);
 }

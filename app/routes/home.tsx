@@ -9,7 +9,7 @@ import {
 import { WordSearch } from "./wordSearch/wordSearch";
 
 export async function clientLoader() {
-  const store = await readVocabulary();
+  const { store, isFromOfflineCopy } = await readVocabulary();
   const words = Object.entries(store)
     .filter(([, entry]) => entry.groups.length > 0)
     .sort(
@@ -17,7 +17,7 @@ export async function clientLoader() {
         new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime(),
     );
   const dueCount = words.filter(([, entry]) => entry.shouldPracticeLater).length;
-  return { words, total: words.length, dueCount };
+  return { words, total: words.length, dueCount, isFromOfflineCopy };
 }
 
 export async function clientAction({ request }: Route.ClientActionArgs) {
@@ -38,7 +38,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
   }
 
   const key = normalize(searchItem);
-  const store = await readVocabulary();
+  const { store } = await readVocabulary();
   const cached = store[key];
 
   if (cached && cached.groups.length > 0) {
@@ -66,6 +66,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
       words={loaderData.words}
       total={loaderData.total}
       dueCount={loaderData.dueCount}
+      isFromOfflineCopy={loaderData.isFromOfflineCopy}
     />
   );
 }

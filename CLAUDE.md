@@ -40,6 +40,40 @@ Reference examples: [app/routes/practice/practiceStart.tsx](app/routes/practice/
   fine; using a ref as a mutable value store to avoid re-renders is not (rare edge
   cases only).
 
+## Vocabulary data & seeding
+
+Vocabulary lives in the Supabase Postgres table `vocabulary` (one row per word:
+`word` PK, `groups` jsonb, `should_practice_later`, `saved_at`), accessed by the
+SPA exclusively through the `vocabulary-*` edge functions
+(`supabase/functions/vocabulary-{list,save,mark-practice,bulk-put}`). IndexedDB
+(`smartify-vocabulary`, via [app/lib/offlineCache.ts](app/lib/offlineCache.ts))
+is only an on-demand offline snapshot, not a source of truth.
+
+Seed data:
+
+- **Local seed file:** [data/vocabulary.json](data/vocabulary.json) — a full
+  `VocabularyStore` snapshot (`{ [word]: { groups, shouldPracticeLater, savedAt } }`,
+  see [app/routes/wordSearch/vocabulary.ts](app/routes/wordSearch/vocabulary.ts)
+  for the types).
+- **Cloud fallback copy:** the same file is stored in the private Supabase
+  Storage bucket `seeds` as `seeds/vocabulary.json` (bucket created by the
+  vocabulary migration).
+
+To seed (or re-seed; upserts are idempotent):
+
+```bash
+# uploads data/vocabulary.json to the seeds bucket AND upserts all words
+node --env-file=.env scripts/seed-vocabulary.mjs
+
+# restore the table from the Storage copy instead of the local file
+node --env-file=.env scripts/seed-vocabulary.mjs --from-storage
+```
+
+Requires in `.env`: `SUPABASE_URL` (or `VITE_SUPABASE_URL`) and
+`SUPABASE_SERVICE_ROLE_KEY` (server secret — bypasses RLS, never expose via a
+`VITE_` var). The migration must be applied first (`supabase db push`), since
+the script needs the table and the `seeds` bucket to exist.
+
 ## Design references
 
 Designs live in a Claude Design project. Whenever a design is referenced — **including

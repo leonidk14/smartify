@@ -11,7 +11,11 @@ import {
   MOCK_EVALUATIONS,
   MOCK_GENERATIONS,
 } from "./mocks";
-import { readVocabulary, writeVocabulary } from "../wordSearch/vocabulary";
+import {
+  readVocabulary,
+  writeVocabulary,
+  type VocabularyStore,
+} from "../wordSearch/vocabulary";
 import type {
   CachedSentence,
   EvaluationResult,
@@ -307,7 +311,7 @@ function findSentenceCache({
   word,
   meaningId,
 }: {
-  store: Awaited<ReturnType<typeof readVocabulary>>;
+  store: VocabularyStore;
   word: string;
   meaningId: string;
 }): CachedSentence[] | undefined {
@@ -340,7 +344,7 @@ export async function generateSentence({
     return generateMock(word);
   }
 
-  const store = await readVocabulary();
+  const { store } = await readVocabulary();
   const cachedSentences = findSentenceCache({ store, word, meaningId });
 
   if (!cachedSentences) {
@@ -359,7 +363,7 @@ export async function generateSentence({
     }
 
     cachedSentences.push({ sentence: fresh.sentence, usageCount: 1 });
-    await writeVocabulary(store);
+    await writeVocabulary({ [word]: store[word] });
     return fresh;
   }
 
@@ -370,7 +374,7 @@ export async function generateSentence({
     }
   }
   chosen.usageCount += 1;
-  await writeVocabulary(store);
+  await writeVocabulary({ [word]: store[word] });
 
   const usage = buildTokenUsage({ inputTokens: 0, outputTokens: 0 });
   logTokenUsage({ usage, label: `generate (cache): ${word}` });

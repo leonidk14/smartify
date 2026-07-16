@@ -4,7 +4,7 @@ import type { PracticeMode } from "../store/session";
 import type { Route } from "./+types/practiceSelect";
 
 export async function clientLoader({ request }: Route.ClientLoaderArgs) {
-  const vocabulary = await readVocabulary();
+  const { store: vocabulary } = await readVocabulary();
   const words = Object.entries(vocabulary)
     .filter(([, entry]) => entry.groups.length > 0)
     .sort(

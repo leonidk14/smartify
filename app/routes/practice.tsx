@@ -3,7 +3,7 @@ import { PracticeStart } from "./practice/practiceStart";
 import type { Route } from "./+types/practice";
 
 export async function clientLoader() {
-  const vocabulary = await readVocabulary();
+  const { store: vocabulary } = await readVocabulary();
   const entries = Object.values(vocabulary).filter(
     (entry) => entry.groups.length > 0,
   );

@@ -25,6 +25,6 @@ if (import.meta.env.PROD && "serviceWorker" in navigator) {
   }
 }
 
-// Keep the on-device vocabulary (IndexedDB) durable so it isn't evicted under
-// storage pressure — it's the only copy now.
+// Keep the offline vocabulary snapshot (IndexedDB) durable so it isn't evicted
+// under storage pressure.
 void navigator.storage?.persist?.();

@@ -25,7 +25,7 @@ export async function clientLoader({
   params,
   request,
 }: Route.ClientLoaderArgs) {
-  const vocabulary = await readVocabulary();
+  const { store: vocabulary } = await readVocabulary();
   const entry = vocabulary[params.word];
 
   if (!entry) {

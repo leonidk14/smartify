@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { Link } from "react-router";
 import {
+  ActionIcon,
   Box,
   Button,
   Divider,
@@ -7,17 +9,25 @@ import {
   Paper,
   Stack,
   Text,
+  ThemeIcon,
   Title,
+  Tooltip,
   UnstyledButton,
 } from "@mantine/core";
-import { IconPlus } from "@tabler/icons-react";
-import type { StoredMeaning, VocabularyEntry } from "./vocabulary";
+import { notifications } from "@mantine/notifications";
+import { IconCloudOff, IconDownload, IconPlus } from "@tabler/icons-react";
+import {
+  downloadForOffline,
+  type StoredMeaning,
+  type VocabularyEntry,
+} from "./vocabulary";
 import { monoLabel } from "./typography";
 
 interface VocabularyHomeProps {
   words: [string, VocabularyEntry][];
   total: number;
   dueCount: number;
+  isFromOfflineCopy: boolean;
   onOpenLookup: (query?: string) => void;
 }
 
@@ -31,8 +41,27 @@ export const VocabularyHome = ({
   words,
   total,
   dueCount,
+  isFromOfflineCopy,
   onOpenLookup,
 }: VocabularyHomeProps) => {
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const handleDownloadForOffline = async () => {
+    setIsDownloading(true);
+    try {
+      await downloadForOffline();
+      notifications.show({ message: "Vocabulary saved for offline use" });
+    } catch (error) {
+      console.error("Failed to download vocabulary for offline use:", error);
+      notifications.show({
+        color: "red",
+        message: "Couldn’t download vocabulary. Check your connection.",
+      });
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   return (
     <Stack gap={18} p={20} pb={96}>
       <Group justify="space-between" align="flex-start" wrap="nowrap">
@@ -44,8 +73,32 @@ export const VocabularyHome = ({
             {total} {total === 1 ? "word" : "words"} · {dueCount} due today
           </Text>
         </Box>
-        {/* TODO: put a light/dark theme toggle in this slot (was a settings gear
-            in the design; descoped for now). */}
+        {/* TODO: put a light/dark theme toggle next to these buttons (was a
+            settings gear in the design; descoped for now). */}
+        <Group gap={4} wrap="nowrap">
+          {isFromOfflineCopy ? (
+            <Tooltip label="Offline — showing the downloaded copy">
+              <ThemeIcon
+                variant="transparent"
+                color="yellow"
+                size="lg"
+                aria-label="Offline — showing the downloaded copy">
+                <IconCloudOff size={20} />
+              </ThemeIcon>
+            </Tooltip>
+          ) : null}
+          <ActionIcon
+            variant="subtle"
+            color="gray"
+            size="lg"
+            radius="md"
+            aria-label="Download vocabulary for offline use"
+            disabled={isFromOfflineCopy}
+            loading={isDownloading}
+            onClick={handleDownloadForOffline}>
+            <IconDownload size={20} />
+          </ActionIcon>
+        </Group>
       </Group>
 
       <UnstyledButton

@@ -7,9 +7,15 @@ interface WordSearchProps {
   words: [string, VocabularyEntry][];
   total: number;
   dueCount: number;
+  isFromOfflineCopy: boolean;
 }
 
-export const WordSearch = ({ words, total, dueCount }: WordSearchProps) => {
+export const WordSearch = ({
+  words,
+  total,
+  dueCount,
+  isFromOfflineCopy,
+}: WordSearchProps) => {
   const [lookup, setLookup] = useState<{ open: boolean; query?: string }>({
     open: false,
   });
@@ -20,6 +26,7 @@ export const WordSearch = ({ words, total, dueCount }: WordSearchProps) => {
         words={words}
         total={total}
         dueCount={dueCount}
+        isFromOfflineCopy={isFromOfflineCopy}
         onOpenLookup={(query) => setLookup({ open: true, query })}
       />
       {lookup.open ? (

@@ -3,7 +3,7 @@ import { PracticeWord } from "./practice/practiceWord";
 import type { Route } from "./+types/practiceWord";
 
 export async function clientLoader({ params }: Route.ClientLoaderArgs) {
-  const vocabulary = await readVocabulary();
+  const { store: vocabulary } = await readVocabulary();
   const entry = vocabulary[params.word];
 
   if (!entry) {

@@ -1,5 +1,5 @@
 import { notifications } from "@mantine/notifications";
-import axios from "axios";
+import { callFunction, isSupabaseConfigured } from "./supabaseFunctions";
 
 const BANNER_DISMISSED_KEY = "pushBannerDismissedAt";
 const BANNER_DISMISS_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 1 week
@@ -49,14 +49,12 @@ export function urlBase64ToUint8Array(base64: string): Uint8Array<ArrayBuffer> {
   return output;
 }
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY;
 
 // Handles its own errors (never throws), and needs an active service worker, so
 // it only works on a production build (see `entry.client.tsx`).
 export async function subscribeToPush(): Promise<void> {
-  if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !VAPID_PUBLIC_KEY) {
+  if (!isSupabaseConfigured() || !VAPID_PUBLIC_KEY) {
     console.error(
       "Push is not configured: VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, and VITE_VAPID_PUBLIC_KEY must be set.",
     );
@@ -88,16 +86,7 @@ export async function subscribeToPush(): Promise<void> {
         applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
       }));
 
-    await axios.post(
-      `${SUPABASE_URL}/functions/v1/subscribe`,
-      subscription.toJSON(),
-      {
-        headers: {
-          apikey: SUPABASE_ANON_KEY,
-          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-        },
-      },
-    );
+    await callFunction("subscribe", subscription.toJSON());
 
     dismissBanner();
     notifications.show({ message: "Reminders on" });
