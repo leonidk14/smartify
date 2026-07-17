@@ -132,8 +132,8 @@ export const LookupPanel = ({
   const suggestions =
     query.length > 0 && !hasResult
       ? savedWords
-          .map(([word]) => word)
-          .filter((word) => word.startsWith(query))
+          .map(([word, entry]) => entry.display ?? word)
+          .filter((suggestion) => suggestion.startsWith(query))
           .slice(0, MAX_SUGGESTIONS)
       : [];
 
@@ -223,10 +223,10 @@ export const LookupPanel = ({
             <Text {...monoLabel} mb={8}>
               Suggestions
             </Text>
-            {suggestions.map((word) => (
+            {suggestions.map((suggestion) => (
               <UnstyledButton
-                key={word}
-                onClick={() => commitSearch(word)}
+                key={suggestion}
+                onClick={() => commitSearch(suggestion)}
                 py={11}
                 style={{
                   display: "flex",
@@ -237,9 +237,9 @@ export const LookupPanel = ({
                 <IconSearch size={16} color="rgba(0,0,0,.3)" />
                 <Text size="md">
                   <Text span fw={600}>
-                    {word.slice(0, query.length)}
+                    {suggestion.slice(0, query.length)}
                   </Text>
-                  {word.slice(query.length)}
+                  {suggestion.slice(query.length)}
                 </Text>
               </UnstyledButton>
             ))}

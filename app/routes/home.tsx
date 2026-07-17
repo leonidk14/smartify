@@ -49,7 +49,11 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     };
   }
 
-  const saved = await saveWord({ word: key, groups: result.dictionary.groups });
+  const saved = await saveWord({
+    word: key,
+    display: searchItem.trim().toLowerCase(),
+    groups: result.dictionary.groups,
+  });
 
   return {
     ...result,

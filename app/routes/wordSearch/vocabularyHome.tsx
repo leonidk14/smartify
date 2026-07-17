@@ -163,8 +163,7 @@ export const VocabularyHome = ({
                 <Box key={word}>
                   {index > 0 ? <Divider /> : null}
                   <UnstyledButton
-                    // TODO: fix screen jump during navigation when clicking on a word
-                    onClick={() => onOpenLookup(word)}
+                    onClick={() => onOpenLookup(entry.display ?? word)}
                     style={{
                       display: "flex",
                       alignItems: "flex-start",
@@ -187,7 +186,7 @@ export const VocabularyHome = ({
                     />
                     <Box flex={1} miw={0}>
                       <Text className="serif" style={{ fontSize: 17 }}>
-                        {word}
+                        {entry.display ?? word}
                         {entry.groups[0] ? (
                           <Text
                             span

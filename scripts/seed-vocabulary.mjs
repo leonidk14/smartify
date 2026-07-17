@@ -73,12 +73,18 @@ async function uploadSeedToStorage(json) {
 }
 
 async function upsertRows(store) {
-  const rows = Object.entries(store).map(([word, entry]) => ({
-    word: word.trim().toLowerCase(),
-    groups: entry.groups,
-    should_practice_later: entry.shouldPracticeLater,
-    saved_at: entry.savedAt,
-  }));
+  const rows = Object.entries(store).map(([word, entry]) => {
+    const key = word.trim().toLowerCase();
+    return {
+      word: key,
+      // Prefer an explicit display (multi-word / real-hyphen entries); else the
+      // key itself, which for the single-word seeds is already the readable form.
+      display: entry.display ?? key,
+      groups: entry.groups,
+      should_practice_later: entry.shouldPracticeLater,
+      saved_at: entry.savedAt,
+    };
+  });
 
   const response = await fetch(`${SUPABASE_URL}/rest/v1/vocabulary`, {
     method: "POST",

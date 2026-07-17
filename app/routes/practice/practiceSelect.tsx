@@ -1,6 +1,14 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import { Box, Button, Flex, Group, Stack, Text, ThemeIcon } from "@mantine/core";
+import {
+  Box,
+  Button,
+  Flex,
+  Group,
+  Stack,
+  Text,
+  ThemeIcon,
+} from "@mantine/core";
 import { IconCheck } from "@tabler/icons-react";
 import { monoLabel } from "../wordSearch/typography";
 import type { VocabularyEntry } from "../wordSearch/vocabulary";
@@ -94,7 +102,7 @@ export const PracticeSelect = ({ words, mode }: PracticeSelectProps) => {
           {selected.length} selected
         </Text>
         <Stack gap={0}>
-          {words.map(([word]) => {
+          {words.map(([word, entry]) => {
             const isSelected = selected.includes(word);
             return (
               <Group
@@ -115,8 +123,10 @@ export const PracticeSelect = ({ words, mode }: PracticeSelectProps) => {
                   color={isSelected ? "dark" : "gray"}>
                   {isSelected ? <IconCheck size={13} /> : <span />}
                 </ThemeIcon>
-                <Text className="serif" tt="capitalize" size="lg">
-                  {word}
+                <Text className="serif" size="lg">
+                  {(entry.display?.toLowerCase() ?? word).replace(/^./, (c) =>
+                    c.toUpperCase(),
+                  )}
                 </Text>
               </Group>
             );
