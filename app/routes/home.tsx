@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import type { Route } from "./+types/home";
 import { lookupWord } from "./wordSearch/actions";
 import { normalize } from "./wordSearch/normalize";
@@ -6,19 +7,8 @@ import {
   readVocabulary,
   saveWord,
 } from "./wordSearch/vocabulary";
+import { useVocabulary } from "./wordSearch/useVocabulary";
 import { WordSearch } from "./wordSearch/wordSearch";
-
-export async function clientLoader() {
-  const { store, isFromOfflineCopy } = await readVocabulary();
-  const words = Object.entries(store)
-    .filter(([, entry]) => entry.groups.length > 0)
-    .sort(
-      ([, a], [, b]) =>
-        new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime(),
-    );
-  const dueCount = words.filter(([, entry]) => entry.shouldPracticeLater).length;
-  return { words, total: words.length, dueCount, isFromOfflineCopy };
-}
 
 export async function clientAction({ request }: Route.ClientActionArgs) {
   let formData = await request.formData();
@@ -60,13 +50,28 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
   };
 }
 
-export default function Home({ loaderData }: Route.ComponentProps) {
+export default function Home() {
+  const { store, isFromOfflineCopy } = useVocabulary();
+
+  const { words, dueCount } = useMemo(() => {
+    const words = Object.entries(store)
+      .filter(([, entry]) => entry.groups.length > 0)
+      .sort(
+        ([, a], [, b]) =>
+          new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime(),
+      );
+    const dueCount = words.filter(
+      ([, entry]) => entry.shouldPracticeLater,
+    ).length;
+    return { words, dueCount };
+  }, [store]);
+
   return (
     <WordSearch
-      words={loaderData.words}
-      total={loaderData.total}
-      dueCount={loaderData.dueCount}
-      isFromOfflineCopy={loaderData.isFromOfflineCopy}
+      words={words}
+      total={words.length}
+      dueCount={dueCount}
+      isFromOfflineCopy={isFromOfflineCopy}
     />
   );
 }

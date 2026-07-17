@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useFetcher } from "react-router";
 import {
   ActionIcon,
@@ -18,11 +18,18 @@ import {
 } from "@mantine/core";
 import { IconChevronLeft, IconSearch } from "@tabler/icons-react";
 import type { LookupResult, Typo } from "./actions";
+import { normalize } from "./normalize";
 import type { StoredMeaningGroup, VocabularyEntry } from "./vocabulary";
 import { monoLabel } from "./typography";
 
 type SearchResult = Omit<LookupResult, "dictionary"> & {
   dictionary: { groups: StoredMeaningGroup[]; typo?: Typo };
+};
+
+type PanelResult = {
+  dictionary?: { groups: StoredMeaningGroup[]; typo?: Typo };
+  originalSearchItem?: string;
+  shouldPracticeLater?: boolean;
 };
 
 interface LookupPanelProps {
@@ -41,25 +48,58 @@ export const LookupPanel = ({
   const searchFetcher = useFetcher<SearchResult>();
   const practiceFetcher = useFetcher<{ success: boolean }>();
   const [value, setValue] = useState(initialQuery ?? "");
+  const [committedQuery, setCommittedQuery] = useState(initialQuery ?? "");
   const [markedForPractice, setMarkedForPractice] = useState(false);
 
+  const findCached = useCallback(
+    (term: string): PanelResult | undefined => {
+      const entry = savedWords.find(([word]) => word === normalize(term))?.[1];
+      if (!entry || entry.groups.length === 0) {
+        return undefined;
+      }
+      return {
+        dictionary: { groups: entry.groups },
+        originalSearchItem: term,
+        shouldPracticeLater: entry.shouldPracticeLater,
+      };
+    },
+    [savedWords],
+  );
+
+  const cachedResult = useMemo(
+    () => findCached(committedQuery),
+    [findCached, committedQuery],
+  );
+
+  const commitSearch = (term: string) => {
+    setValue(term);
+    setCommittedQuery(term);
+    setMarkedForPractice(false);
+    if (!findCached(term)) {
+      searchFetcher.submit({ "search-item": term }, { method: "post" });
+    }
+  };
+
   useEffect(() => {
-    if (initialQuery) {
-      searchFetcher.submit({ "search-item": initialQuery }, { method: "post" });
+    if (committedQuery && !cachedResult) {
+      searchFetcher.submit(
+        { "search-item": committedQuery },
+        { method: "post" },
+      );
     }
   }, []);
 
+  const data: PanelResult | undefined = cachedResult ?? searchFetcher.data;
+
   const isLoading =
     searchFetcher.state === "loading" || searchFetcher.state === "submitting";
-  const typo = !isLoading ? searchFetcher.data?.dictionary?.typo : undefined;
-  const groups = searchFetcher.data?.dictionary?.groups ?? null;
+  const typo = !isLoading ? data?.dictionary?.typo : undefined;
+  const groups = data?.dictionary?.groups ?? null;
   const isNothingFound = !isLoading && !!groups && groups.length === 0 && !typo;
   const isError =
-    !isLoading &&
-    !!searchFetcher.data &&
-    (!searchFetcher.data.dictionary || !searchFetcher.data.dictionary.groups);
+    !isLoading && !!data && (!data.dictionary || !data.dictionary.groups);
 
-  const originalSearchItem = searchFetcher.data?.originalSearchItem;
+  const originalSearchItem = data?.originalSearchItem;
   const isDirty =
     !!groups &&
     originalSearchItem !== undefined &&
@@ -70,14 +110,7 @@ export const LookupPanel = ({
   const isMarkingForPractice =
     practiceFetcher.state === "submitting" ||
     practiceFetcher.state === "loading";
-  const isAddedForPractice =
-    searchFetcher.data?.shouldPracticeLater || markedForPractice;
-
-  useEffect(() => {
-    if (isLoading) {
-      setMarkedForPractice(false);
-    }
-  }, [isLoading]);
+  const isAddedForPractice = data?.shouldPracticeLater || markedForPractice;
 
   useEffect(() => {
     if (practiceFetcher.data?.success) {
@@ -106,8 +139,13 @@ export const LookupPanel = ({
 
   return (
     <Flex
-      component={searchFetcher.Form}
-      method="post"
+      component="form"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (query.length > 0) {
+          commitSearch(value);
+        }
+      }}
       direction="column"
       pos="fixed"
       inset={0}
@@ -188,13 +226,7 @@ export const LookupPanel = ({
             {suggestions.map((word) => (
               <UnstyledButton
                 key={word}
-                onClick={() => {
-                  setValue(word);
-                  searchFetcher.submit(
-                    { "search-item": word },
-                    { method: "post" },
-                  );
-                }}
+                onClick={() => commitSearch(word)}
                 py={11}
                 style={{
                   display: "flex",

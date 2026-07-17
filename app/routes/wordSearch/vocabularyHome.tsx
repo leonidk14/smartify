@@ -33,7 +33,9 @@ interface VocabularyHomeProps {
 
 function firstSense(entry: VocabularyEntry): StoredMeaning | undefined {
   const group = entry.groups[0];
-  if (!group) return undefined;
+  if (!group) {
+    return undefined;
+  }
   return Object.values(group.meanings).sort((a, b) => a.order - b.order)[0];
 }
 

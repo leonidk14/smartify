@@ -37,7 +37,9 @@ function toStoredGroups(groups: MeaningGroup[]): StoredMeaningGroup[] {
 function migrateStore(store: VocabularyStore): boolean {
   let changed = false;
   for (const entry of Object.values(store)) {
-    if (!entry?.groups) continue;
+    if (!entry?.groups) {
+      continue;
+    }
     for (const group of entry.groups) {
       if (Array.isArray(group.meanings)) {
         const legacy = group.meanings as unknown as StoredMeaning[];

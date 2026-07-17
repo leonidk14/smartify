@@ -1,13 +1,23 @@
-import { readVocabulary } from "./wordSearch/vocabulary";
+import { useMemo } from "react";
+import { Link } from "react-router";
+import { Button, Center, Stack, Text } from "@mantine/core";
 import { PracticeWord } from "./practice/practiceWord";
+import { useVocabulary } from "./wordSearch/useVocabulary";
+import type { VocabularyStore } from "./wordSearch/vocabulary";
 import type { Route } from "./+types/practiceWord";
 
-export async function clientLoader({ params }: Route.ClientLoaderArgs) {
-  const { store: vocabulary } = await readVocabulary();
-  const entry = vocabulary[params.word];
+interface WordView {
+  word: string;
+  definition: string;
+  meaningId: string;
+  partOfSpeech: string;
+  hints: string[];
+}
 
+function buildWordView(store: VocabularyStore, word: string): WordView | null {
+  const entry = store[word];
   if (!entry) {
-    throw new Response("Word not found", { status: 404 });
+    return null;
   }
 
   const allMeanings = entry.groups.flatMap((g) =>
@@ -17,24 +27,25 @@ export async function clientLoader({ params }: Route.ClientLoaderArgs) {
       partOfSpeech: g.part_of_speech,
     })),
   );
+  if (allMeanings.length === 0) {
+    return null;
+  }
+
   const selected = allMeanings[Math.floor(Math.random() * allMeanings.length)];
 
-  const otherWords = Object.entries(vocabulary).filter(
-    ([key, v]) => key !== params.word && v.groups.length > 0,
+  const otherWords = Object.entries(store).filter(
+    ([key, v]) => key !== word && v.groups.length > 0,
   );
-
   const samePos = otherWords.filter(([, v]) =>
     v.groups.some((g) => g.part_of_speech === selected.partOfSpeech),
   );
 
-  const pool = [...samePos];
-
-  const shuffled = pool.sort(() => Math.random() - 0.5);
+  const shuffled = [...samePos].sort(() => Math.random() - 0.5);
   const decoys = shuffled.slice(0, 2).map(([key]) => key);
-  const hints = buildHints({ correct: params.word, decoys });
+  const hints = buildHints({ correct: word, decoys });
 
   return {
-    word: params.word,
+    word,
     definition: selected.definition,
     meaningId: selected.id,
     partOfSpeech: selected.partOfSpeech,
@@ -55,17 +66,33 @@ function buildHints({
   return result;
 }
 
-export default function PracticeWordRoute({
-  loaderData,
-}: Route.ComponentProps) {
+export default function PracticeWordRoute({ params }: Route.ComponentProps) {
+  const { store } = useVocabulary();
+  const view = useMemo(() => buildWordView(store, params.word), [params.word]);
+
+  if (!view) {
+    return (
+      <Center flex={1} p={24}>
+        <Stack align="center" gap={12}>
+          <Text size="md" c="dimmed">
+            Word not found
+          </Text>
+          <Button component={Link} to="/practice" variant="light" radius="md">
+            Back to practice
+          </Button>
+        </Stack>
+      </Center>
+    );
+  }
+
   return (
     <PracticeWord
-      key={loaderData.word}
-      word={loaderData.word}
-      definition={loaderData.definition}
-      meaningId={loaderData.meaningId}
-      partOfSpeech={loaderData.partOfSpeech}
-      hints={loaderData.hints}
+      key={view.word}
+      word={view.word}
+      definition={view.definition}
+      meaningId={view.meaningId}
+      partOfSpeech={view.partOfSpeech}
+      hints={view.hints}
     />
   );
 }

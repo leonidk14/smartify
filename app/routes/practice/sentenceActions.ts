@@ -316,7 +316,9 @@ function findSentenceCache({
   meaningId: string;
 }): CachedSentence[] | undefined {
   const entry = store[word];
-  if (!entry) return undefined;
+  if (!entry) {
+    return undefined;
+  }
 
   for (const group of entry.groups) {
     const target = group.meanings[meaningId];

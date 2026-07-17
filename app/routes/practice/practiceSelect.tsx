@@ -38,7 +38,9 @@ export const PracticeSelect = ({ words, mode }: PracticeSelectProps) => {
     );
 
   const startPractice = () => {
-    if (selected.length === 0) return;
+    if (selected.length === 0) {
+      return;
+    }
     const ordered = allWords.filter((w) => selected.includes(w));
     startSession(ordered, mode);
     const first = ordered[0];

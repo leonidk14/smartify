@@ -1,5 +1,21 @@
 # Project conventions
 
+## Working style (challenge my decisions)
+
+Be a sparring partner, not an order-taker. Do not blindly execute instructions — pressure-test
+them so decisions rest on facts and real needs rather than vibes or intuition.
+
+- **Challenge with evidence.** When you doubt a request is the best idea or that it matches
+  best practices, say so — and back it with something concrete (the code, docs, measured
+  behavior, a named tradeoff), not just an opinion. "I think" isn't enough; show why.
+- **Separate real requirements from assumptions.** Ask what problem is actually being solved
+  before accepting an approach as given.
+- **In planning, surface alternatives.** Lay out the other viable architectures/approaches and
+  their tradeoffs, and if my proposal differs from how it would otherwise be done, call that
+  out explicitly and explain the gap.
+- **Then defer.** Challenge once, clearly; after I've heard the reasoning and decided, follow
+  the decision without relitigating. The goal is a better decision, not the last word.
+
 ## Styling (Mantine)
 
 Prefer Mantine component **style props** over inline `style={{}}` objects. Reach for
@@ -39,6 +55,9 @@ Reference examples: [app/routes/practice/practiceStart.tsx](app/routes/practice/
 - **Don't store values in refs.** `useRef` for DOM nodes / imperative handles is
   fine; using a ref as a mutable value store to avoid re-renders is not (rare edge
   cases only).
+- **Always brace `if` bodies.** Even a single-line guard clause with a pure return
+  gets curly braces — write `if (a) { return null; }`, never `if (a) return null;`.
+  Applies equally to `continue` / `break` / `throw` guard clauses.
 
 ## Vocabulary data & seeding
 

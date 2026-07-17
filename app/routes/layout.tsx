@@ -16,14 +16,27 @@ import {
   SegmentedControl,
   Text,
 } from "@mantine/core";
+import type { ShouldRevalidateFunctionArgs } from "react-router";
 import { IconBook, IconChevronLeft, IconPlayerPlay } from "@tabler/icons-react";
 import { monoLabel } from "./wordSearch/typography";
+import { readVocabulary } from "./wordSearch/vocabulary";
 
 const MODE_LABELS: Record<string, string> = {
   word: "Guess the word",
   sentence: "Rebuild the sentence",
   both: "Guess & rebuild",
 };
+
+export async function clientLoader() {
+  return readVocabulary();
+}
+
+export function shouldRevalidate({ formMethod }: ShouldRevalidateFunctionArgs) {
+  // The layout loads the whole vocabulary once and only needs to refetch after a
+  // mutation. Without this, React Router's default revalidation refetches it on
+  // every search-param change (e.g. the ?mode added when opening /practice/select).
+  return formMethod != null && formMethod !== "GET";
+}
 
 export default function Layout() {
   const location = useLocation();

@@ -1,21 +1,19 @@
-import { readVocabulary } from "./wordSearch/vocabulary";
+import { useMemo } from "react";
 import { PracticeStart } from "./practice/practiceStart";
-import type { Route } from "./+types/practice";
+import { useVocabulary } from "./wordSearch/useVocabulary";
 
-export async function clientLoader() {
-  const { store: vocabulary } = await readVocabulary();
-  const entries = Object.values(vocabulary).filter(
-    (entry) => entry.groups.length > 0,
-  );
-  const markedCount = entries.filter((e) => e.shouldPracticeLater).length;
-  return { total: entries.length, markedCount };
-}
+export default function Practice() {
+  const { store } = useVocabulary();
 
-export default function Practice({ loaderData }: Route.ComponentProps) {
-  return (
-    <PracticeStart
-      total={loaderData.total}
-      markedCount={loaderData.markedCount}
-    />
-  );
+  const { total, markedCount } = useMemo(() => {
+    const entries = Object.values(store).filter(
+      (entry) => entry.groups.length > 0,
+    );
+    return {
+      total: entries.length,
+      markedCount: entries.filter((e) => e.shouldPracticeLater).length,
+    };
+  }, [store]);
+
+  return <PracticeStart total={total} markedCount={markedCount} />;
 }
