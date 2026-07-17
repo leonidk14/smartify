@@ -31,11 +31,22 @@ export async function clientLoader() {
   return readVocabulary();
 }
 
-export function shouldRevalidate({ formMethod }: ShouldRevalidateFunctionArgs) {
+export function shouldRevalidate({
+  formMethod,
+  actionResult,
+}: ShouldRevalidateFunctionArgs) {
   // The layout loads the whole vocabulary once and only needs to refetch after a
   // mutation. Without this, React Router's default revalidation refetches it on
   // every search-param change (e.g. the ?mode added when opening /practice/select).
-  return formMethod != null && formMethod !== "GET";
+  if (formMethod == null || formMethod === "GET") {
+    return false;
+  }
+
+  if (actionResult?.dictionary?.groups?.length === 0) {
+    return false;
+  }
+
+  return true;
 }
 
 export default function Layout() {

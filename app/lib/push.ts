@@ -1,5 +1,5 @@
 import { notifications } from "@mantine/notifications";
-import { callFunction, isSupabaseConfigured } from "./supabaseFunctions";
+import { postFunction, isSupabaseConfigured } from "./supabaseFunctions";
 
 const BANNER_DISMISSED_KEY = "pushBannerDismissedAt";
 const BANNER_DISMISS_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 1 week
@@ -86,7 +86,7 @@ export async function subscribeToPush(): Promise<void> {
         applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
       }));
 
-    await callFunction("subscribe", subscription.toJSON());
+    await postFunction("subscribe", subscription.toJSON());
 
     dismissBanner();
     notifications.show({ message: "Reminders on" });

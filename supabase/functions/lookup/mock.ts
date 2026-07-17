@@ -1,5 +1,8 @@
-import type { LookupResult, MeaningGroup } from "./actions";
-import { buildTokenUsage } from "./usage";
+import {
+  buildTokenUsage,
+  type LookupResponse,
+  type MeaningGroup,
+} from "./dictionary.ts";
 
 function entry({
   groups,
@@ -9,14 +12,14 @@ function entry({
   groups: MeaningGroup[];
   inputTokens: number;
   outputTokens: number;
-}): LookupResult {
+}): LookupResponse {
   return {
     dictionary: { groups },
     usage: buildTokenUsage({ inputTokens, outputTokens }),
   };
 }
 
-export const MOCK_RESPONSES: Record<string, LookupResult> = {
+const MOCK_RESPONSES: Record<string, LookupResponse> = {
   oblivious: entry({
     groups: [
       {
@@ -173,8 +176,7 @@ export const MOCK_RESPONSES: Record<string, LookupResult> = {
               "'The river swelled after the heavy rains.' — Mark Twain, The Adventures of Huckleberry Finn",
           },
           {
-            definition:
-              "To rise or protrude, as from a surface or body part.",
+            definition: "To rise or protrude, as from a surface or body part.",
             example:
               "'Her ankle began to swell from the injury.' — Louisa May Alcott, Little Women",
           },
@@ -289,7 +291,7 @@ export const MOCK_RESPONSES: Record<string, LookupResult> = {
   }),
 };
 
-export const MOCK_RESPONSES_TYPO: Record<string, LookupResult> = {
+const MOCK_RESPONSES_TYPO: Record<string, LookupResponse> = {
   apopletic: {
     dictionary: {
       groups: [],
@@ -299,8 +301,14 @@ export const MOCK_RESPONSES_TYPO: Record<string, LookupResult> = {
   },
 };
 
-export const MOCK_ERROR_RESPONSE: LookupResult = entry({
+const MOCK_NOT_FOUND: LookupResponse = entry({
   groups: [],
   inputTokens: 243,
   outputTokens: 8,
 });
+
+// `word` is already de-slugged (spaces, no dashes); match the mock keys case-insensitively.
+export function lookupMock(word: string): LookupResponse {
+  const key = word.toLowerCase();
+  return MOCK_RESPONSES[key] ?? MOCK_RESPONSES_TYPO[key] ?? MOCK_NOT_FOUND;
+}

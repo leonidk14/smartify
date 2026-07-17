@@ -93,6 +93,22 @@ Requires in `.env`: `SUPABASE_URL` (or `VITE_SUPABASE_URL`) and
 `VITE_` var). The migration must be applied first (`supabase db push`), since
 the script needs the table and the `seeds` bucket to exist.
 
+## Edge functions (Deno)
+
+Edge functions run in Deno and declare npm deps inline with `npm:pkg@ver`
+specifiers (e.g. `npm:@anthropic-ai/sdk@0.110.0`). After **adding or bumping**
+an `npm:` import in any `supabase/functions/**` file, cache the package and
+record it in the function lockfile — otherwise the Deno LSP flags
+`npm package "…" is not installed or doesn't exist` and it stays out of
+`supabase/functions/deno.lock`:
+
+```bash
+deno cache --config supabase/functions/deno.json supabase/functions/<name>/index.ts
+```
+
+(`--config` points Deno at `supabase/functions/deno.json` so it writes the
+adjacent `supabase/functions/deno.lock`.) Commit the updated lockfile.
+
 ## Design references
 
 Designs live in a Claude Design project. Whenever a design is referenced — **including

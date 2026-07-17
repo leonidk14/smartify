@@ -40,6 +40,15 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
   }
 
   const result = await lookupWord(searchItem);
+
+  if (result.dictionary.groups.length === 0) {
+    return {
+      ...result,
+      originalSearchItem: searchItem,
+      shouldPracticeLater: false,
+    };
+  }
+
   const saved = await saveWord({ word: key, groups: result.dictionary.groups });
 
   return {

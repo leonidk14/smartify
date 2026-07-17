@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from "uuid";
 import { readSnapshot, saveSnapshot } from "../../lib/offlineCache";
-import { callFunction } from "../../lib/supabaseFunctions";
+import { postFunction } from "../../lib/supabaseFunctions";
 import type { CachedSentence } from "../practice/sentenceTypes";
 import type { MeaningGroup } from "./actions";
 
@@ -61,7 +61,7 @@ export async function readVocabulary(): Promise<{
 }> {
   let store: VocabularyStore;
   try {
-    ({ store } = await callFunction<{ store: VocabularyStore }>(
+    ({ store } = await postFunction<{ store: VocabularyStore }>(
       "vocabulary-list",
     ));
   } catch {
@@ -75,7 +75,7 @@ export async function readVocabulary(): Promise<{
 }
 
 export async function writeVocabulary(store: VocabularyStore): Promise<void> {
-  await callFunction("vocabulary-bulk-put", { store });
+  await postFunction("vocabulary-bulk-put", { store });
 }
 
 export async function saveWord({
@@ -85,7 +85,7 @@ export async function saveWord({
   word: string;
   groups: MeaningGroup[];
 }): Promise<VocabularyEntry> {
-  const { entry } = await callFunction<{ entry: VocabularyEntry }>(
+  const { entry } = await postFunction<{ entry: VocabularyEntry }>(
     "vocabulary-save",
     { word: word.trim().toLowerCase(), groups: toStoredGroups(groups) },
   );
@@ -93,13 +93,13 @@ export async function saveWord({
 }
 
 export async function markForPractice(word: string): Promise<void> {
-  await callFunction("vocabulary-mark-practice", {
+  await postFunction("vocabulary-mark-practice", {
     word: word.trim().toLowerCase(),
   });
 }
 
 export async function downloadForOffline(): Promise<void> {
-  const { store } = await callFunction<{ store: VocabularyStore }>(
+  const { store } = await postFunction<{ store: VocabularyStore }>(
     "vocabulary-list",
   );
   await saveSnapshot(store);
