@@ -1,5 +1,35 @@
 # Welcome to React Router!
 
+## LLM mode toggles (mock vs. real)
+
+Every edge function that calls Anthropic has its own runtime toggle. Unset — or
+set to anything other than `real` — means the function returns mock data
+and spends no tokens. Mock is the default, so a fresh deploy can never start
+billing by accident.
+
+| Function            | Secret          | Mock data                                      |
+| ------------------- | --------------- | ---------------------------------------------- |
+| `lookup`            | `LOOKUP_MODE`   | `supabase/functions/lookup/mock.ts`            |
+| `generate-sentence` | `GENERATE_MODE` | `supabase/functions/generate-sentence/mock.ts` |
+| `evaluate-sentence` | `EVALUATE_MODE` | `supabase/functions/evaluate-sentence/mock.ts` |
+
+The three are deliberately independent, so real sentence generation can be
+enabled without also paying for real lookups.
+
+```bash
+# turn one on (real Anthropic calls)
+supabase secrets set EVALUATE_MODE=real
+
+# turn it back off (mock)
+supabase secrets unset EVALUATE_MODE
+
+# see what is currently set
+supabase secrets list
+
+# all three at once
+supabase secrets set LOOKUP_MODE=real GENERATE_MODE=real EVALUATE_MODE=real
+```
+
 A modern, production-ready template for building full-stack React applications using React Router.
 
 [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/remix-run/react-router-templates/tree/main/default)

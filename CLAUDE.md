@@ -62,7 +62,7 @@ Reference examples: [app/routes/practice/practiceStart.tsx](app/routes/practice/
   mutate a nested node and rely on that silently updating a root object you save
   elsewhere (`chosen.usageCount += 1` … later … `save(tree)`). The reader has to
   chase aliases across functions to see that they are the same object. Instead have
-  helpers take what they read and *return* what they changed, so the data flow is
+  helpers take what they read and _return_ what they changed, so the data flow is
   visible at the call site:
   `await save(withUsageCountIncremented({ tree, index }))`. Simplicity over
   smartness — if following a value requires tracing references, restructure it.
@@ -116,6 +116,27 @@ deno cache --config supabase/functions/deno.json supabase/functions/<name>/index
 
 (`--config` points Deno at `supabase/functions/deno.json` so it writes the
 adjacent `supabase/functions/deno.lock`.) Commit the updated lockfile.
+
+### LLM mode toggles (mock vs. real)
+
+Every function that calls Anthropic is gated behind its own `*_MODE` secret,
+checked as `Deno.env.get("<NAME>_MODE") !== "real"` → return mock. Unset or any
+other value means mock, so the default never spends tokens:
+
+| Function            | Secret          | Mock data                                      |
+| ------------------- | --------------- | ---------------------------------------------- |
+| `lookup`            | `LOOKUP_MODE`   | `supabase/functions/lookup/mock.ts`            |
+| `generate-sentence` | `GENERATE_MODE` | `supabase/functions/generate-sentence/mock.ts` |
+| `evaluate-sentence` | `EVALUATE_MODE` | `supabase/functions/evaluate-sentence/mock.ts` |
+
+```bash
+supabase secrets set EVALUATE_MODE=real   # enable real calls
+supabase secrets unset EVALUATE_MODE      # back to mock
+supabase secrets list                     # what is set right now
+```
+
+The toggles are intentionally separate — never collapse them into one shared
+flag, since each guards a different cost.
 
 ## Design references
 

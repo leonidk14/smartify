@@ -1,5 +1,5 @@
-import type { EvaluationResult, SentenceEvaluation } from "./sentenceTypes";
-import { buildTokenUsage } from "../wordSearch/usage";
+import { buildTokenUsage } from "../_shared/usage.ts";
+import type { EvaluationResult, SentenceEvaluation } from "./evaluation.ts";
 
 function evaluation({
   result,
@@ -16,8 +16,8 @@ function evaluation({
   };
 }
 
-// Each word can have several mock evaluations; the action picks one at random.
-export const MOCK_EVALUATIONS: Record<string, EvaluationResult[]> = {
+// Each word can have several mock evaluations; one is picked at random.
+const MOCK_EVALUATIONS: Record<string, EvaluationResult[]> = {
   // Near-perfect: no correction, empty segments.
   crikey: [
     evaluation({ result: { score: 9.8 }, inputTokens: 1062, outputTokens: 24 }),
@@ -41,7 +41,7 @@ export const MOCK_EVALUATIONS: Record<string, EvaluationResult[]> = {
   ],
 };
 
-export const DEFAULT_MOCK_EVALUATION: EvaluationResult = evaluation({
+const DEFAULT_MOCK_EVALUATION: EvaluationResult = evaluation({
   result: {
     score: 7.5,
     correctedSentence: "Her ephemeral joy faded by morning.",
@@ -54,3 +54,13 @@ export const DEFAULT_MOCK_EVALUATION: EvaluationResult = evaluation({
   inputTokens: 320,
   outputTokens: 70,
 });
+
+export async function evaluateMock(word: string): Promise<EvaluationResult> {
+  const delay = 500 + Math.random() * 1000;
+  await new Promise((resolve) => setTimeout(resolve, delay));
+
+  const candidates = MOCK_EVALUATIONS[word];
+  return candidates?.length
+    ? candidates[Math.floor(Math.random() * candidates.length)]
+    : DEFAULT_MOCK_EVALUATION;
+}
