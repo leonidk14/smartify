@@ -4,9 +4,16 @@ import type { CachedSentence } from "../practice/sentenceTypes";
 
 export type { TokenUsage } from "./usage";
 
+export interface ExampleSentence {
+  original: string;
+  source: string;
+  /** The prompt requires a real quotation, so this should always be false. */
+  generated: boolean;
+}
+
 export interface Meaning {
   definition: string;
-  example: string;
+  example: ExampleSentence;
   sentences?: CachedSentence[];
 }
 

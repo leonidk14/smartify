@@ -25,14 +25,21 @@ const MOCK_RESPONSES: Record<string, LookupResponse> = {
           {
             definition:
               "Not aware of or concerned about what is happening around one; lacking knowledge or consciousness of something.",
-            example:
-              "'He was oblivious to the commotion around him, lost in thought.' — Jane Austen, Emma",
+            example: {
+              original:
+                "He was oblivious to the commotion around him, lost in thought.",
+              source: "Jane Austen, Emma",
+              generated: false,
+            },
           },
           {
             definition:
               "Characterized by or showing lack of attention or awareness; inattentive.",
-            example:
-              "'She walked on, oblivious to the stares of passersby.' — Virginia Woolf, Mrs Dalloway",
+            example: {
+              original: "She walked on, oblivious to the stares of passersby.",
+              source: "Virginia Woolf, Mrs Dalloway",
+              generated: false,
+            },
           },
         ],
       },
@@ -49,14 +56,22 @@ const MOCK_RESPONSES: Record<string, LookupResponse> = {
           {
             definition:
               "Lack of respect; disrespectful or impertinent behavior or speech.",
-            example:
-              "'His impudence in contradicting his elders was remarkable.' — Jane Austen, Pride and Prejudice",
+            example: {
+              original:
+                "His impudence in contradicting his elders was remarkable.",
+              source: "Jane Austen, Pride and Prejudice",
+              generated: false,
+            },
           },
           {
             definition:
               "Bold or audacious disregard for convention or propriety.",
-            example:
-              "'She had the impudence to suggest that the committee had been negligent.' — George Orwell, Politics and the English Language",
+            example: {
+              original:
+                "She had the impudence to suggest that the committee had been negligent.",
+              source: "George Orwell, Politics and the English Language",
+              generated: false,
+            },
           },
         ],
       },
@@ -73,14 +88,22 @@ const MOCK_RESPONSES: Record<string, LookupResponse> = {
           {
             definition:
               "Dependent on chance or circumstances beyond one's control; uncertain or unpredictable in outcome.",
-            example:
-              "'The precarious state of the negotiations meant that peace could collapse at any moment.' — David McCullough, Truman",
+            example: {
+              original:
+                "The precarious state of the negotiations meant that peace could collapse at any moment.",
+              source: "David McCullough, Truman",
+              generated: false,
+            },
           },
           {
             definition:
               "Dangerously lacking in stability or security; insecure or unstable in position or condition.",
-            example:
-              "'He balanced precariously on the narrow ledge, one slip away from disaster.' — Cormac McCarthy, The Road",
+            example: {
+              original:
+                "He balanced precariously on the narrow ledge, one slip away from disaster.",
+              source: "Cormac McCarthy, The Road",
+              generated: false,
+            },
           },
         ],
       },
@@ -97,14 +120,21 @@ const MOCK_RESPONSES: Record<string, LookupResponse> = {
           {
             definition:
               "In a manner involving serious and immediate danger or risk; dangerously.",
-            example:
-              "'The ship was perilously close to the rocks.' — Patrick O'Brian, Master and Commander",
+            example: {
+              original: "The ship was perilously close to the rocks.",
+              source: "Patrick O'Brian, Master and Commander",
+              generated: false,
+            },
           },
           {
             definition:
               "To a degree or extent that is alarmingly high or precarious.",
-            example:
-              "'His health had become perilously fragile after months of illness.' — Hilary Mantel, Wolf Hall",
+            example: {
+              original:
+                "His health had become perilously fragile after months of illness.",
+              source: "Hilary Mantel, Wolf Hall",
+              generated: false,
+            },
           },
         ],
       },
@@ -121,14 +151,22 @@ const MOCK_RESPONSES: Record<string, LookupResponse> = {
           {
             definition:
               "The quality of being strident; harshness or shrillness of sound.",
-            example:
-              "'The stridency of the alarm cut through the morning silence.' — Stephen King, The Shining",
+            example: {
+              original:
+                "The stridency of the alarm cut through the morning silence.",
+              source: "Stephen King, The Shining",
+              generated: false,
+            },
           },
           {
             definition:
               "The quality of being loud, emphatic, or forceful in expression, often in a way that is grating or unpleasant.",
-            example:
-              "'The stridency of his political rhetoric alienated moderate voters.' — David McCullough, Truman",
+            example: {
+              original:
+                "The stridency of his political rhetoric alienated moderate voters.",
+              source: "David McCullough, Truman",
+              generated: false,
+            },
           },
         ],
       },
@@ -145,14 +183,22 @@ const MOCK_RESPONSES: Record<string, LookupResponse> = {
           {
             definition:
               "Relating to or affected by apoplexy; of or pertaining to sudden loss of consciousness or paralysis caused by cerebral hemorrhage or thrombosis.",
-            example:
-              "'He fell in an apoplectic fit, his face darkening with blood.' — Charles Dickens, Our Mutual Friend",
+            example: {
+              original:
+                "He fell in an apoplectic fit, his face darkening with blood.",
+              source: "Charles Dickens, Our Mutual Friend",
+              generated: false,
+            },
           },
           {
             definition:
               "Extremely angry; furious or enraged to an intense degree.",
-            example:
-              "'The coach was apoplectic when his team conceded the penalty.' — Sports reporting, The Guardian",
+            example: {
+              original:
+                "The coach was apoplectic when his team conceded the penalty.",
+              source: "Sports reporting, The Guardian",
+              generated: false,
+            },
           },
         ],
       },
@@ -169,25 +215,37 @@ const MOCK_RESPONSES: Record<string, LookupResponse> = {
           {
             definition:
               "To increase in size, volume, or extent; to expand or enlarge.",
-            example:
-              "'The river swelled after the heavy rains.' — Mark Twain, The Adventures of Huckleberry Finn",
+            example: {
+              original: "The river swelled after the heavy rains.",
+              source: "Mark Twain, The Adventures of Huckleberry Finn",
+              generated: false,
+            },
           },
           {
             definition: "To rise or protrude, as from a surface or body part.",
-            example:
-              "'Her ankle began to swell from the injury.' — Louisa May Alcott, Little Women",
+            example: {
+              original: "Her ankle began to swell from the injury.",
+              source: "Louisa May Alcott, Little Women",
+              generated: false,
+            },
           },
           {
             definition:
               "To cause to increase in size or volume; to make tumid or turgid.",
-            example:
-              "'Pride swells the heart of a conceited man.' — Jane Austen, Emma",
+            example: {
+              original: "Pride swells the heart of a conceited man.",
+              source: "Jane Austen, Emma",
+              generated: false,
+            },
           },
           {
             definition:
               "To arise or issue forth; to come forth as a wave or flood of emotion or sound.",
-            example:
-              "'Music swelled from the concert hall.' — F. Scott Fitzgerald, The Great Gatsby",
+            example: {
+              original: "Music swelled from the concert hall.",
+              source: "F. Scott Fitzgerald, The Great Gatsby",
+              generated: false,
+            },
           },
         ],
       },
@@ -197,20 +255,30 @@ const MOCK_RESPONSES: Record<string, LookupResponse> = {
           {
             definition:
               "A long wave or undulation of the ocean surface, typically caused by distant storms or strong winds.",
-            example:
-              "'The ship rose and fell with the swell of the sea.' — Herman Melville, Moby Dick",
+            example: {
+              original: "The ship rose and fell with the swell of the sea.",
+              source: "Herman Melville, Moby Dick",
+              generated: false,
+            },
           },
           {
             definition:
               "A gradual increase in loudness of sound, particularly in music.",
-            example:
-              "'The swell of the orchestra filled the concert hall.' — Thomas Mann, The Magic Mountain",
+            example: {
+              original: "The swell of the orchestra filled the concert hall.",
+              source: "Thomas Mann, The Magic Mountain",
+              generated: false,
+            },
           },
           {
             definition:
               "A protuberance or enlargement on the body or a surface.",
-            example:
-              "'There was a swell on his forehead where he had struck it.' — Stephen King, The Stand",
+            example: {
+              original:
+                "There was a swell on his forehead where he had struck it.",
+              source: "Stephen King, The Stand",
+              generated: false,
+            },
           },
         ],
       },
@@ -220,8 +288,11 @@ const MOCK_RESPONSES: Record<string, LookupResponse> = {
           {
             definition:
               "Excellent or outstanding; admirable or impressive (chiefly British, informal, archaic).",
-            example:
-              "'That is a swell idea, my dear fellow.' — P. G. Wodehouse, The Inimitable Jeeves",
+            example: {
+              original: "That is a swell idea, my dear fellow.",
+              source: "P. G. Wodehouse, The Inimitable Jeeves",
+              generated: false,
+            },
           },
         ],
       },
@@ -238,31 +309,48 @@ const MOCK_RESPONSES: Record<string, LookupResponse> = {
           {
             definition:
               "To dive or fall suddenly and steeply into water or another medium.",
-            example:
-              "'He took a deep breath and plunged into the icy lake.' — Ranulph Fiennes, Mind Over Matter",
+            example: {
+              original: "He took a deep breath and plunged into the icy lake.",
+              source: "Ranulph Fiennes, Mind Over Matter",
+              generated: false,
+            },
           },
           {
             definition:
               "To thrust or push something suddenly and forcefully into or through something else.",
-            example:
-              "'The knife plunged through the fabric with ease.' — Agatha Christie, Murder on the Orient Express",
+            example: {
+              original: "The knife plunged through the fabric with ease.",
+              source: "Agatha Christie, Murder on the Orient Express",
+              generated: false,
+            },
           },
           {
             definition:
               "To descend or drop suddenly; to fall sharply in value or intensity.",
-            example:
-              "'The stock market plunged amid economic uncertainty.' — Financial Times",
+            example: {
+              original: "The stock market plunged amid economic uncertainty.",
+              source: "Financial Times",
+              generated: false,
+            },
           },
           {
             definition:
               "To move abruptly or impetuously into an action, condition, or situation.",
-            example:
-              "'They plunged ahead with the renovation despite budget constraints.' — The Guardian",
+            example: {
+              original:
+                "They plunged ahead with the renovation despite budget constraints.",
+              source: "The Guardian",
+              generated: false,
+            },
           },
           {
             definition: "To immerse or submerge in liquid.",
-            example:
-              "'Plunge the vegetables into boiling water for three minutes.' — Nigella Lawson, How to Eat",
+            example: {
+              original:
+                "Plunge the vegetables into boiling water for three minutes.",
+              source: "Nigella Lawson, How to Eat",
+              generated: false,
+            },
           },
         ],
       },
@@ -271,14 +359,22 @@ const MOCK_RESPONSES: Record<string, LookupResponse> = {
         meanings: [
           {
             definition: "An act of plunging; a sudden dive or fall.",
-            example:
-              "'The plunge into the pool felt exhilarating on the hot summer day.' — David Copperfield",
+            example: {
+              original:
+                "The plunge into the pool felt exhilarating on the hot summer day.",
+              source: "David Copperfield",
+              generated: false,
+            },
           },
           {
             definition:
               "A sudden and marked fall in value, amount, or intensity.",
-            example:
-              "'The company faced a financial plunge after the scandal broke.' — The Economist",
+            example: {
+              original:
+                "The company faced a financial plunge after the scandal broke.",
+              source: "The Economist",
+              generated: false,
+            },
           },
         ],
       },

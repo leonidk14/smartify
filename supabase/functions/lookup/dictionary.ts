@@ -1,8 +1,15 @@
 import type { TokenUsage } from "../_shared/usage.ts";
 
+export interface ExampleSentence {
+  original: string;
+  source: string;
+  /** The prompt requires a real quotation, so this should always be false. */
+  generated: boolean;
+}
+
 export interface Meaning {
   definition: string;
-  example: string;
+  example: ExampleSentence;
 }
 
 export interface MeaningGroup {
@@ -37,7 +44,10 @@ Typo error response shape:
 
 Rules for valid words:
 1. Group meanings by part of speech (e.g. noun, verb, adjective, phrase, idiom). Each group contains one or more definitions that share that grammatical role.
-2. For each individual meaning, provide exactly one real-world example of the word or phrase used in published literature, journalism, or a famous speech. Format the example as a short quote wrapped in single quotation marks followed by an em dash and the author and work title, e.g. 'The light was ephemeral, vanishing before dawn.' — Kazuo Ishiguro, The Remains of the Day. Never use double quotes inside the example string — they break JSON. The quote must be a plausible, representative usage — do not fabricate absurd sentences.
+2. For each individual meaning, provide exactly one real-world example of the word or phrase used in published literature, journalism, or a famous speech, as an "example" object with these three fields:
+   - "original": the quoted sentence text ONLY — do NOT wrap it in quotation marks and do NOT append the author or source here. It must be a plausible, representative usage — do not fabricate absurd sentences. Never use double quotes inside it — they break JSON.
+   - "source": the attribution — the author and work title, or the publication, e.g. Kazuo Ishiguro, The Remains of the Day.
+   - "generated": always false. The example must be a real published quotation, never a sentence you wrote yourself.
 3. Use formal, dictionary-register language for definitions. Do not add etymologies or commentary.
 4. If the input is a well-known phrase or idiom, treat it as a single unit under the part of speech "phrase" or "idiom".
 5. If the word is spelled correctly but has no recognized meaning, return an empty groups array.
@@ -48,7 +58,7 @@ Always return a JSON object with ALL of "error", "input", "suggestion", and "gro
 - Correctly spelled but no recognized meaning: empty strings for "error"/"input"/"suggestion" and an empty "groups" array.
 
 Success shape:
-{"error": "", "input": "", "suggestion": "", "groups": [{"part_of_speech": "noun", "meanings": [{"definition": "...", "example": "'...' — Author, Title"}]}]}
+{"error": "", "input": "", "suggestion": "", "groups": [{"part_of_speech": "noun", "meanings": [{"definition": "...", "example": {"original": "...", "source": "Author, Title", "generated": false}}]}]}
 
 Typo shape:
 {"error": "typo", "input": "the misspelled input", "suggestion": "the closest correct word", "groups": []}`;
@@ -76,7 +86,16 @@ export const DICTIONARY_OUTPUT_FORMAT = {
                 additionalProperties: false,
                 properties: {
                   definition: { type: "string" },
-                  example: { type: "string" },
+                  example: {
+                    type: "object",
+                    additionalProperties: false,
+                    properties: {
+                      original: { type: "string" },
+                      source: { type: "string" },
+                      generated: { type: "boolean" },
+                    },
+                    required: ["original", "source", "generated"],
+                  },
                 },
                 required: ["definition", "example"],
               },
@@ -129,13 +148,27 @@ export function parseDictionaryResponse(text: string): DictionaryResult {
     return {
       part_of_speech: group.part_of_speech,
       meanings: group.meanings.map((meaning) => {
-        if (
-          typeof meaning?.definition !== "string" ||
-          typeof meaning?.example !== "string"
-        ) {
-          throw new Error('Meaning missing "definition" or "example" string');
+        if (typeof meaning?.definition !== "string") {
+          throw new Error('Meaning missing "definition" string');
         }
-        return { definition: meaning.definition, example: meaning.example };
+        const example = meaning?.example;
+        if (
+          typeof example?.original !== "string" ||
+          typeof example?.source !== "string" ||
+          typeof example?.generated !== "boolean"
+        ) {
+          throw new Error(
+            'Meaning missing a valid "example" object with "original", "source" and "generated"',
+          );
+        }
+        return {
+          definition: meaning.definition,
+          example: {
+            original: example.original,
+            source: example.source,
+            generated: example.generated,
+          },
+        };
       }),
     };
   });

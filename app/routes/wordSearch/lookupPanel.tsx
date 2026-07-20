@@ -17,7 +17,7 @@ import {
   UnstyledButton,
 } from "@mantine/core";
 import { IconChevronLeft, IconSearch } from "@tabler/icons-react";
-import type { LookupResult, Typo } from "./actions";
+import type { ExampleSentence, LookupResult, Typo } from "./actions";
 import { normalize } from "./normalize";
 import type { StoredMeaningGroup, VocabularyEntry } from "./vocabulary";
 import { monoLabel } from "./typography";
@@ -265,6 +265,9 @@ export const LookupPanel = ({
   );
 };
 
+const formatExample = ({ original, source }: ExampleSentence): string =>
+  source ? `'${original}' — ${source}` : `'${original}'`;
+
 const WordResult = ({
   word,
   groups,
@@ -308,7 +311,7 @@ const WordResult = ({
                 </Text>
                 <Stack gap={6} flex={1}>
                   <Text size="md">{sense.definition}</Text>
-                  {sense.example ? (
+                  {sense.example?.original ? (
                     <Text
                       className="serif"
                       fs="italic"
@@ -316,7 +319,7 @@ const WordResult = ({
                       c="dimmed"
                       pl={10}
                       style={{ borderLeft: "2px solid rgba(0,0,0,.15)" }}>
-                      {sense.example}
+                      {formatExample(sense.example)}
                     </Text>
                   ) : null}
                 </Stack>

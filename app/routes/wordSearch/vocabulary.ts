@@ -2,11 +2,11 @@ import { v4 as uuidv4 } from "uuid";
 import { readSnapshot, saveSnapshot } from "../../lib/offlineCache";
 import { postFunction } from "../../lib/supabaseFunctions";
 import type { CachedSentence } from "../practice/sentenceTypes";
-import type { MeaningGroup } from "./actions";
+import type { ExampleSentence, MeaningGroup } from "./actions";
 
 export interface StoredMeaning {
   definition: string;
-  example: string;
+  example: ExampleSentence;
   order: number;
   sentences?: CachedSentence[];
 }
