@@ -114,6 +114,11 @@ export const PracticeWord = ({
 
   const revealWord = view === "wrong" && attempts >= 2;
   const loading = navigation.state === "loading";
+  const nextLabel = nextWord(queue, word)
+    ? "Next word →"
+    : mode === "word"
+      ? "To summary →"
+      : "To sentences →";
 
   return (
     <Flex direction="column" p={16} pb={110} gap={20} flex={1}>
@@ -221,7 +226,7 @@ export const PracticeWord = ({
               radius={12}
               onClick={handleNext}
               loading={loading}>
-              Next word →
+              {nextLabel}
             </Button>
           </ActionBar>
         </>
@@ -278,7 +283,7 @@ export const PracticeWord = ({
                 flex={1}
                 onClick={handleNext}
                 loading={loading}>
-                Next word →
+                {nextLabel}
               </Button>
             </Group>
           </ActionBar>

@@ -123,6 +123,7 @@ export const PracticeSentence = ({
   const correct = !!evaluation && evaluation.score >= NEAR_PERFECT_THRESHOLD;
 
   const tone = evaluation ? (correct ? "correct" : "wrong") : "neutral";
+  const nextLabel = nextWord(queue, word) ? "Next word →" : "To summary →";
 
   const handleSubmit = () => {
     const sentence = value.trim();
@@ -343,7 +344,7 @@ export const PracticeSentence = ({
               h={48}
               radius={12}
               onClick={() => advance(correct)}>
-              Next word →
+              {nextLabel}
             </Button>
           </ActionBar>
         </>
