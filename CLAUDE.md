@@ -58,6 +58,14 @@ Reference examples: [app/routes/practice/practiceStart.tsx](app/routes/practice/
 - **Always brace `if` bodies.** Even a single-line guard clause with a pure return
   gets curly braces — write `if (a) { return null; }`, never `if (a) return null;`.
   Applies equally to `continue` / `break` / `throw` guard clauses.
+- **Explicit beats clever — don't make changes land via shared references.** Never
+  mutate a nested node and rely on that silently updating a root object you save
+  elsewhere (`chosen.usageCount += 1` … later … `save(tree)`). The reader has to
+  chase aliases across functions to see that they are the same object. Instead have
+  helpers take what they read and *return* what they changed, so the data flow is
+  visible at the call site:
+  `await save(withUsageCountIncremented({ tree, index }))`. Simplicity over
+  smartness — if following a value requires tracing references, restructure it.
 
 ## Vocabulary data & seeding
 

@@ -1,8 +1,5 @@
-import {
-  buildTokenUsage,
-  type LookupResponse,
-  type MeaningGroup,
-} from "./dictionary.ts";
+import { buildTokenUsage } from "../_shared/usage.ts";
+import { type LookupResponse, type MeaningGroup } from "./dictionary.ts";
 
 function entry({
   groups,

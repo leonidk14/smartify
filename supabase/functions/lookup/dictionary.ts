@@ -1,3 +1,5 @@
+import type { TokenUsage } from "../_shared/usage.ts";
+
 export interface Meaning {
   definition: string;
   example: string;
@@ -18,52 +20,9 @@ export interface DictionaryResult {
   typo?: Typo;
 }
 
-export interface TokenUsage {
-  inputTokens: number;
-  outputTokens: number;
-  totalTokens: number;
-  inputCost: number;
-  outputCost: number;
-  totalCost: number;
-}
-
 export interface LookupResponse {
   dictionary: DictionaryResult;
   usage: TokenUsage;
-}
-
-// ── Pricing (USD per token) ────────────────────────────────────────────────────
-// Claude Haiku 4.5: $1.00 / 1M input, $5.00 / 1M output
-// Claude Sonnet 5:  $3.00 / 1M input, $15.00 / 1M output
-// Source: https://www.anthropic.com/pricing — verify if prices change.
-
-export type PricingModel = "haiku" | "sonnet";
-
-const PRICING: Record<PricingModel, { input: number; output: number }> = {
-  haiku: { input: 1.0 / 1_000_000, output: 5.0 / 1_000_000 },
-  sonnet: { input: 3.0 / 1_000_000, output: 15.0 / 1_000_000 },
-};
-
-export function buildTokenUsage({
-  inputTokens,
-  outputTokens,
-  model = "haiku",
-}: {
-  inputTokens: number;
-  outputTokens: number;
-  model?: PricingModel;
-}): TokenUsage {
-  const price = PRICING[model];
-  const inputCost = inputTokens * price.input;
-  const outputCost = outputTokens * price.output;
-  return {
-    inputTokens,
-    outputTokens,
-    totalTokens: inputTokens + outputTokens,
-    inputCost,
-    outputCost,
-    totalCost: inputCost + outputCost,
-  };
 }
 
 export const DICTIONARY_SYSTEM_PROMPT = `You are a strict dictionary lookup service. When given a word or phrase, provide its meanings in the style and substance of the Oxford English Dictionary — concise, precise, and ordered by most common usage first.

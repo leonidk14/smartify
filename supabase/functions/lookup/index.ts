@@ -2,8 +2,8 @@ import Anthropic from "npm:@anthropic-ai/sdk@0.110.0";
 import { requireEnv } from "../_shared/env.ts";
 import { serveFunction } from "../_shared/handler.ts";
 import { errorResponse, jsonResponse } from "../_shared/http.ts";
+import { buildTokenUsage } from "../_shared/usage.ts";
 import {
-  buildTokenUsage,
   DICTIONARY_OUTPUT_FORMAT,
   DICTIONARY_SYSTEM_PROMPT,
   parseDictionaryResponse,

@@ -10,6 +10,7 @@ export function isSupabaseConfigured(): boolean {
 export async function postFunction<T = unknown>(
   name: string,
   payload: unknown = {},
+  extraHeaders: Record<string, string> = {},
 ): Promise<T> {
   if (!isSupabaseConfigured()) {
     throw new Error(
@@ -24,6 +25,7 @@ export async function postFunction<T = unknown>(
       headers: {
         apikey: SUPABASE_ANON_KEY,
         Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        ...extraHeaders,
       },
     },
   );
