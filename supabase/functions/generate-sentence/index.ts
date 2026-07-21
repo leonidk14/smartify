@@ -99,7 +99,12 @@ serveFunction(async (req) => {
     return errorResponse(error.message, 500);
   }
 
-  const groups = (data?.groups ?? []) as StoredMeaningGroup[];
+  if (!data) {
+    console.warn(`[generate-sentence] "${key}" is not in the vocabulary`);
+    return errorResponse(`Unknown word "${key}"`, 404);
+  }
+
+  const groups = data.groups as StoredMeaningGroup[];
   const sentences = getSentences({ groups, meaningId });
 
   const writeUpdatedWordGroups = async (updated: StoredMeaningGroup[]) => {
@@ -112,15 +117,11 @@ serveFunction(async (req) => {
     }
   };
 
-  // Unknown word or meaning — generate, but there is nowhere to cache it.
   if (!sentences) {
-    const fresh = await generateFresh({
-      client,
-      word: key,
-      meaning: meaningDefinition,
-      meanings,
-    });
-    return respond({ word: key, ...fresh });
+    console.warn(
+      `[generate-sentence] "${key}" has no meaning "${meaningId}" — caller's vocabulary is stale`,
+    );
+    return errorResponse(`Unknown meaning "${meaningId}" for "${key}"`, 404);
   }
 
   if (sentences.length < SENTENCES_IN_CACHE_SIZE) {
