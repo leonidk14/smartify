@@ -52,3 +52,18 @@ export function nextWord(queue: string[], word: string): string | null {
   const i = queue.indexOf(word);
   return i >= 0 && i < queue.length - 1 ? queue[i + 1] : null;
 }
+
+export function parsePracticeMode(value: string | null): PracticeMode {
+  return value === "word" || value === "sentence" ? value : "both";
+}
+
+export function firstStepPath({
+  word,
+  mode,
+}: {
+  word: string;
+  mode: PracticeMode;
+}): string {
+  const path = `/practice/${encodeURIComponent(word)}`;
+  return mode === "sentence" ? `${path}/sentence?m=` : path;
+}

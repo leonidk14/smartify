@@ -9,7 +9,7 @@ self.addEventListener("push", (event) => {
   }
 
   const title = payload.title || "Ready to practice?";
-  const body = payload.body || "A few minutes keeps it sticky.";
+  const body = payload.body || "Your words are waiting.";
   const url = payload.url || DEFAULT_URL;
 
   event.waitUntil(

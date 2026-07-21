@@ -90,6 +90,33 @@ The seed script requires `SUPABASE_URL` (or `VITE_SUPABASE_URL`) and
 `SUPABASE_SERVICE_ROLE_KEY` in `.env` (see `.env.example`). The service-role
 key bypasses RLS — keep it out of `VITE_`-prefixed vars.
 
+## Practice reminders (push)
+
+Subscribed devices get one push per day at **20:00 Europe/Berlin** — _"Ready to
+practice? / 5 words are waiting."_ — carrying 5 words chosen from the vocabulary:
+the ones marked for practice first, topped up with other saved words. The words
+themselves stay out of the notification text (a lock screen is not the place for
+vocabulary) and ride in the link instead.
+
+Tapping it opens `/practice/session?mode=both&words=…`, which rebuilds the
+session queue from the URL and drops the user on the first word; the run does
+the word step for all 5, then the sentence step for all 5.
+
+### Sending one by hand
+
+```bash
+# `force` bypasses the 20:00 window — without it, a send outside that hour
+# is skipped exactly like the scheduler's off-hour run
+curl -X POST "$VITE_SUPABASE_URL/functions/v1/send-reminders" \
+  -H "Authorization: Bearer $VITE_SUPABASE_ANON_KEY" \
+  -H "apikey: $VITE_SUPABASE_ANON_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"force":true}'
+```
+
+In Postman: `POST {{supabase_url}}/functions/v1/send-reminders`, the same two
+key headers, body raw/JSON.
+
 ## Building for Production
 
 Create a production build:

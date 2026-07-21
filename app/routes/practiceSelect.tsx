@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useSearchParams } from "react-router";
 import { PracticeSelect } from "./practice/practiceSelect";
-import type { PracticeMode } from "../store/session";
+import { parsePracticeMode } from "../store/session";
 import { useVocabulary } from "./wordSearch/useVocabulary";
 
 export default function PracticeSelectRoute() {
@@ -19,9 +19,7 @@ export default function PracticeSelectRoute() {
     [store],
   );
 
-  const requested = searchParams.get("mode");
-  const mode: PracticeMode =
-    requested === "word" || requested === "sentence" ? requested : "both";
+  const mode = parsePracticeMode(searchParams.get("mode"));
 
   return <PracticeSelect words={words} mode={mode} />;
 }

@@ -12,7 +12,11 @@ import {
 import { IconCheck } from "@tabler/icons-react";
 import { monoLabel } from "../wordSearch/typography";
 import type { VocabularyEntry } from "../wordSearch/vocabulary";
-import { type PracticeMode, useSessionStore } from "../../store/session";
+import {
+  firstStepPath,
+  type PracticeMode,
+  useSessionStore,
+} from "../../store/session";
 
 interface PracticeSelectProps {
   words: [string, VocabularyEntry][];
@@ -51,12 +55,7 @@ export const PracticeSelect = ({ words, mode }: PracticeSelectProps) => {
     }
     const ordered = allWords.filter((w) => selected.includes(w));
     startSession(ordered, mode);
-    const first = ordered[0];
-    if (mode === "sentence") {
-      navigate(`/practice/${encodeURIComponent(first)}/sentence?m=`);
-    } else {
-      navigate(`/practice/${encodeURIComponent(first)}`);
-    }
+    navigate(firstStepPath({ word: ordered[0], mode }));
   };
 
   if (words.length === 0) {
