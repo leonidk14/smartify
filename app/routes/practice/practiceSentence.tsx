@@ -23,7 +23,7 @@ interface PracticeSentenceProps {
   meaning: string;
   original: string;
   source: string;
-  simplified: string;
+  simplified: string | null;
   generated: boolean;
   generationFailed: boolean;
 }

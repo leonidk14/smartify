@@ -8,7 +8,8 @@ import type { TokenUsage } from "../_shared/usage.ts";
 export interface GeneratedSentence {
   original: string;
   source: string;
-  simplified: string;
+  /** Null on a sentence seeded from a dictionary example, until backfilled. */
+  simplified: string | null;
   meaning?: string;
   generated?: boolean;
   error?: string;
@@ -26,7 +27,6 @@ export interface CachedSentence {
 
 export interface StoredMeaning {
   definition: string;
-  example: string;
   order: number;
   sentences?: CachedSentence[];
 }
@@ -122,5 +122,28 @@ export function incrementUsageCount({
     );
   }
   target.usageCount += 1;
+  return updated;
+}
+
+export function setSimplified({
+  groups,
+  meaningId,
+  sentenceIndex,
+  simplified,
+}: {
+  groups: StoredMeaningGroup[];
+  meaningId: string;
+  sentenceIndex: number;
+  simplified: string;
+}): StoredMeaningGroup[] {
+  const updated = structuredClone(groups);
+  const meaning = findMeaning({ groups: updated, meaningId });
+  const target = meaning?.sentences?.[sentenceIndex];
+  if (!target) {
+    throw new Error(
+      `No sentence at index ${sentenceIndex} for meaning "${meaningId}"`,
+    );
+  }
+  target.sentence.simplified = simplified;
   return updated;
 }

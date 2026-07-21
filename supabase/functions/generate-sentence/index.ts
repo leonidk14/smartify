@@ -4,7 +4,7 @@ import { serveFunction } from "../_shared/handler.ts";
 import { errorResponse, jsonResponse } from "../_shared/http.ts";
 import { createAdminClient } from "../_shared/supabase.ts";
 import { buildTokenUsage, type TokenUsage } from "../_shared/usage.ts";
-import { generateFresh } from "./generation.ts";
+import { generateFresh, simplifySentence } from "./generation.ts";
 import { generateMock } from "./mock.ts";
 import {
   addSentence,
@@ -12,6 +12,7 @@ import {
   incrementUsageCount,
   leastUsedIndex,
   SENTENCES_IN_CACHE_SIZE,
+  setSimplified,
   type GeneratedSentence,
   type StoredMeaningGroup,
 } from "./sentenceCache.ts";
@@ -145,17 +146,34 @@ serveFunction(async (req) => {
   }
 
   const sentenceIndex = leastUsedIndex(sentences);
-  const updatedGroups = incrementUsageCount({
-    groups,
-    meaningId,
-    sentenceIndex,
+  const cached = sentences[sentenceIndex].sentence;
+  const counted = incrementUsageCount({ groups, meaningId, sentenceIndex });
+
+  if (cached.simplified) {
+    await writeUpdatedWordGroups(counted);
+
+    return respond({
+      word: key,
+      sentence: cached,
+      usage: buildTokenUsage({ inputTokens: 0, outputTokens: 0 }),
+      source: "cache",
+    });
+  }
+
+  const { simplified, usage } = await simplifySentence({
+    client,
+    word: key,
+    meaning: meaningDefinition,
+    original: cached.original,
   });
-  await writeUpdatedWordGroups(updatedGroups);
+  await writeUpdatedWordGroups(
+    setSimplified({ groups: counted, meaningId, sentenceIndex, simplified }),
+  );
 
   return respond({
     word: key,
-    sentence: sentences[sentenceIndex].sentence,
-    usage: buildTokenUsage({ inputTokens: 0, outputTokens: 0 }),
-    source: "cache",
+    sentence: { ...cached, simplified },
+    usage,
+    source: "cache+simplify",
   });
 });

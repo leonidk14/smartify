@@ -1,9 +1,6 @@
 import { readVocabulary } from "./wordSearch/vocabulary";
 import { PracticeSentence } from "./practice/practiceSentence";
-import {
-  evaluateSentence,
-  generateSentence,
-} from "./practice/sentenceActions";
+import { evaluateSentence, generateSentence } from "./practice/sentenceActions";
 import type { SentenceEvaluation } from "./practice/sentenceTypes";
 import type { Route } from "./+types/practiceSentence";
 
@@ -72,7 +69,7 @@ export async function clientLoader({
       meaning: sentence.meaning ?? meaning,
       original: sentence.original,
       source: sentence.source,
-      simplified: sentence.simplified,
+      simplified: sentence.simplified ?? null,
       generated: sentence.generated ?? false,
       error: false,
     };

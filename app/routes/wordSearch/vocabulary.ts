@@ -2,11 +2,10 @@ import { v4 as uuidv4 } from "uuid";
 import { readSnapshot, saveSnapshot } from "../../lib/offlineCache";
 import { postFunction } from "../../lib/supabaseFunctions";
 import type { CachedSentence } from "../practice/sentenceTypes";
-import type { ExampleSentence, MeaningGroup } from "./actions";
+import type { MeaningGroup } from "./actions";
 
 export interface StoredMeaning {
   definition: string;
-  example: ExampleSentence;
   order: number;
   sentences?: CachedSentence[];
 }
@@ -28,8 +27,21 @@ export type VocabularyStore = Record<string, VocabularyEntry>;
 function toStoredGroups(groups: MeaningGroup[]): StoredMeaningGroup[] {
   return groups.map((group) => {
     const meanings: Record<string, StoredMeaning> = {};
-    group.meanings.forEach((meaning, order) => {
-      meanings[uuidv4()] = { ...meaning, order };
+    group.meanings.forEach(({ definition, example }, order) => {
+      meanings[uuidv4()] = {
+        definition,
+        order,
+        sentences: [
+          {
+            sentence: {
+              original: example.original,
+              source: example.source,
+              simplified: null,
+            },
+            usageCount: 0,
+          },
+        ],
+      };
     });
     return { part_of_speech: group.part_of_speech, meanings };
   });

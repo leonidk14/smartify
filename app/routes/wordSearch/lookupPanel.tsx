@@ -17,7 +17,8 @@ import {
   UnstyledButton,
 } from "@mantine/core";
 import { IconChevronLeft, IconSearch } from "@tabler/icons-react";
-import type { ExampleSentence, LookupResult, Typo } from "./actions";
+import type { LookupResult, Typo } from "./actions";
+import type { GeneratedSentence } from "../practice/sentenceTypes";
 import { normalize } from "./normalize";
 import type { StoredMeaningGroup, VocabularyEntry } from "./vocabulary";
 import { monoLabel } from "./typography";
@@ -265,7 +266,7 @@ export const LookupPanel = ({
   );
 };
 
-const formatExample = ({ original, source }: ExampleSentence): string =>
+const formatExample = ({ original, source }: GeneratedSentence): string =>
   source ? `'${original}' — ${source}` : `'${original}'`;
 
 const WordResult = ({
@@ -304,27 +305,30 @@ const WordResult = ({
                 {senses.length} {senses.length === 1 ? "sense" : "senses"}
               </Text>
             </Group>
-            {senses.map((sense, index) => (
-              <Group key={index} gap={12} align="flex-start" wrap="nowrap">
-                <Text ff="monospace" size="sm" c="dimmed" pt={1}>
-                  {index + 1}
-                </Text>
-                <Stack gap={6} flex={1}>
-                  <Text size="md">{sense.definition}</Text>
-                  {sense.example?.original ? (
-                    <Text
-                      className="serif"
-                      fs="italic"
-                      size="sm"
-                      c="dimmed"
-                      pl={10}
-                      style={{ borderLeft: "2px solid rgba(0,0,0,.15)" }}>
-                      {formatExample(sense.example)}
-                    </Text>
-                  ) : null}
-                </Stack>
-              </Group>
-            ))}
+            {senses.map((sense, index) => {
+              const example = sense.sentences?.[0]?.sentence;
+              return (
+                <Group key={index} gap={12} align="flex-start" wrap="nowrap">
+                  <Text ff="monospace" size="sm" c="dimmed" pt={1}>
+                    {index + 1}
+                  </Text>
+                  <Stack gap={6} flex={1}>
+                    <Text size="md">{sense.definition}</Text>
+                    {example?.original ? (
+                      <Text
+                        className="serif"
+                        fs="italic"
+                        size="sm"
+                        c="dimmed"
+                        pl={10}
+                        style={{ borderLeft: "2px solid rgba(0,0,0,.15)" }}>
+                        {formatExample(example)}
+                      </Text>
+                    ) : null}
+                  </Stack>
+                </Group>
+              );
+            })}
           </Stack>
         );
       })}

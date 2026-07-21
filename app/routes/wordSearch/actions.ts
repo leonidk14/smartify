@@ -1,6 +1,5 @@
 import { getFunction } from "../../lib/supabaseFunctions";
 import type { TokenUsage } from "./usage";
-import type { CachedSentence } from "../practice/sentenceTypes";
 
 export type { TokenUsage } from "./usage";
 
@@ -14,7 +13,6 @@ export interface ExampleSentence {
 export interface Meaning {
   definition: string;
   example: ExampleSentence;
-  sentences?: CachedSentence[];
 }
 
 export interface MeaningGroup {

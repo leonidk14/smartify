@@ -3,6 +3,7 @@ import {
   buildTokenUsage,
   sumTokenUsage,
   type PricingModel,
+  type TokenUsage,
 } from "../_shared/usage.ts";
 import type { GeneratedSentence, SentenceGeneration } from "./sentenceCache.ts";
 
@@ -51,6 +52,29 @@ const GENERATION_OUTPUT_FORMAT = {
       "generated",
       "error",
     ],
+  },
+} as const;
+
+const SIMPLIFICATION_SYSTEM_PROMPT = `You help English learners practice a target word. You are given a WORD, the MEANING it carries here, and a SENTENCE that uses it.
+
+Always return a JSON object with ALL of these fields present:
+1. "simplified": a plain-language paraphrase of the SENTENCE (without any attribution) that keeps the same idea but uses only simple, common words — AND does NOT contain the WORD or any obvious inflection of it. Replace the word with a plain description of its sense, so the learner can reinstate the word themselves. On failure, set this to an empty string.
+2. "error": on success, an empty string. Only when you cannot paraphrase the sentence at all, a short plain explanation of why, with "simplified" set to an empty string.
+
+Rules:
+- Success: {"simplified": "...", "error": ""}
+- Failure: {"simplified": "", "error": "..."}`;
+
+const SIMPLIFICATION_OUTPUT_FORMAT = {
+  type: "json_schema",
+  schema: {
+    type: "object",
+    additionalProperties: false,
+    properties: {
+      simplified: { type: "string" },
+      error: { type: "string" },
+    },
+    required: ["simplified", "error"],
   },
 } as const;
 
@@ -117,6 +141,61 @@ export function parseGenerationResponse(text: string): GeneratedSentence {
   };
 }
 
+export function parseSimplificationResponse(text: string): string {
+  const parsed = JSON.parse(stripFences(text));
+
+  if (typeof parsed !== "object" || parsed === null) {
+    throw new Error("Response is not a JSON object");
+  }
+
+  const { simplified, error } = parsed as {
+    simplified?: unknown;
+    error?: unknown;
+  };
+
+  if (typeof error === "string" && error.trim()) {
+    throw new Error(error);
+  }
+
+  if (typeof simplified !== "string" || !simplified.trim()) {
+    throw new Error('Response missing a non-empty "simplified" string');
+  }
+
+  return simplified;
+}
+
+async function runPrompt({
+  client,
+  pricing,
+  system,
+  format,
+  userContent,
+}: {
+  client: Anthropic;
+  pricing: PricingModel;
+  system: string;
+  format: typeof GENERATION_OUTPUT_FORMAT | typeof SIMPLIFICATION_OUTPUT_FORMAT;
+  userContent: string;
+}): Promise<{ text: string; usage: TokenUsage }> {
+  const { id, maxTokens } = GENERATION_MODELS[pricing];
+  const response = await client.messages.create({
+    model: id,
+    max_tokens: maxTokens,
+    system,
+    output_config: { format },
+    messages: [{ role: "user", content: userContent }],
+  });
+
+  return {
+    text: extractText(response.content),
+    usage: buildTokenUsage({
+      inputTokens: response.usage.input_tokens,
+      outputTokens: response.usage.output_tokens,
+      model: pricing,
+    }),
+  };
+}
+
 async function runGeneration({
   client,
   pricing,
@@ -126,23 +205,15 @@ async function runGeneration({
   pricing: PricingModel;
   userContent: string;
 }): Promise<SentenceGeneration> {
-  const { id, maxTokens } = GENERATION_MODELS[pricing];
-  const response = await client.messages.create({
-    model: id,
-    max_tokens: maxTokens,
+  const { text, usage } = await runPrompt({
+    client,
+    pricing,
     system: GENERATION_SYSTEM_PROMPT,
-    output_config: { format: GENERATION_OUTPUT_FORMAT },
-    messages: [{ role: "user", content: userContent }],
+    format: GENERATION_OUTPUT_FORMAT,
+    userContent,
   });
 
-  const sentence = parseGenerationResponse(extractText(response.content));
-  const usage = buildTokenUsage({
-    inputTokens: response.usage.input_tokens,
-    outputTokens: response.usage.output_tokens,
-    model: pricing,
-  });
-
-  return { sentence, usage };
+  return { sentence: parseGenerationResponse(text), usage };
 }
 
 export async function generateFresh({
@@ -181,4 +252,26 @@ export async function generateFresh({
     usage: sumTokenUsage(haiku.usage, sonnet.usage),
     source: "haiku+sonnet",
   };
+}
+
+export async function simplifySentence({
+  client,
+  word,
+  meaning,
+  original,
+}: {
+  client: Anthropic;
+  word: string;
+  meaning: string;
+  original: string;
+}): Promise<{ simplified: string; usage: TokenUsage }> {
+  const { text, usage } = await runPrompt({
+    client,
+    pricing: "haiku",
+    system: SIMPLIFICATION_SYSTEM_PROMPT,
+    format: SIMPLIFICATION_OUTPUT_FORMAT,
+    userContent: `Word: ${word}\nMeaning: ${meaning}\nSentence: ${original}`,
+  });
+
+  return { simplified: parseSimplificationResponse(text), usage };
 }
