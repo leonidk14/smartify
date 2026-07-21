@@ -92,21 +92,23 @@ export const LookupPanel = ({
 
   const data: PanelResult | undefined = cachedResult ?? searchFetcher.data;
 
+  const query = value.trim().toLowerCase();
   const isLoading =
     searchFetcher.state === "loading" || searchFetcher.state === "submitting";
-  const typo = !isLoading ? data?.dictionary?.typo : undefined;
+  const isDirty = query !== committedQuery.trim().toLowerCase();
+  const isShowingSearchOutcome = !isLoading && !isDirty;
+
   const groups = data?.dictionary?.groups ?? null;
-  const isNothingFound = !isLoading && !!groups && groups.length === 0 && !typo;
+  const typo = isShowingSearchOutcome ? data?.dictionary?.typo : undefined;
+  const hasResult = isShowingSearchOutcome && !!groups && groups.length > 0;
+  const isNothingFound =
+    isShowingSearchOutcome && !!groups && groups.length === 0 && !typo;
   const isError =
-    !isLoading && !!data && (!data.dictionary || !data.dictionary.groups);
+    isShowingSearchOutcome &&
+    !!data &&
+    (!data.dictionary || !data.dictionary.groups);
 
   const originalSearchItem = data?.originalSearchItem;
-  const isDirty =
-    !!groups &&
-    originalSearchItem !== undefined &&
-    value.trim().toLowerCase() !== originalSearchItem.trim().toLowerCase();
-
-  const hasResult = !isLoading && !!groups && groups.length > 0 && !isDirty;
 
   const isMarkingForPractice =
     practiceFetcher.state === "submitting" ||
@@ -129,7 +131,6 @@ export const LookupPanel = ({
     );
   };
 
-  const query = value.trim().toLowerCase();
   const suggestions =
     query.length > 0 && !hasResult
       ? savedWords
