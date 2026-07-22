@@ -12,6 +12,7 @@ interface WordView {
   meaningId: string;
   partOfSpeech: string;
   hints: string[];
+  display?: string;
 }
 
 function buildWordView(store: VocabularyStore, word: string): WordView | null {
@@ -50,6 +51,7 @@ function buildWordView(store: VocabularyStore, word: string): WordView | null {
     meaningId: selected.id,
     partOfSpeech: selected.partOfSpeech,
     hints,
+    display: entry.display,
   };
 }
 
@@ -93,6 +95,7 @@ export default function PracticeWordRoute({ params }: Route.ComponentProps) {
       meaningId={view.meaningId}
       partOfSpeech={view.partOfSpeech}
       hints={view.hints}
+      display={view.display}
     />
   );
 }

@@ -88,11 +88,11 @@ export const PracticeSelect = ({ words, mode }: PracticeSelectProps) => {
     <Flex direction="column" px={20} pb={96} gap={16}>
       <Group gap={8} wrap="nowrap">
         {quickButton(
-          `Marked · ${markedWords.length}`,
+          `Marked`,
           () => setSelected(markedWords),
           markedWords.length === 0,
         )}
-        {quickButton(`All · ${allWords.length}`, () => setSelected(allWords))}
+        {quickButton(`All`, () => setSelected(allWords))}
         {quickButton("Random", selectRandom)}
       </Group>
 

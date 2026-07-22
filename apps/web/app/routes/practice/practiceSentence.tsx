@@ -236,6 +236,13 @@ export const PracticeSentence = ({
             minRows={3}
             value={value}
             onChange={(e) => setValue(e.currentTarget.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                handleSubmit();
+              }
+            }}
+            enterKeyHint="send"
             disabled={isSubmitting}
             styles={{
               input: { padding: "14px 15px", fontSize: 15, lineHeight: 1.5 },

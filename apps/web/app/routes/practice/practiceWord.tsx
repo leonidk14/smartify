@@ -1,8 +1,9 @@
 import { Box, Button, Flex, Group, Text, TextInput } from "@mantine/core";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useNavigation } from "react-router";
 import { normalize } from "../wordSearch/normalize";
 import { nextWord, useSessionStore } from "../../store/session";
+import { useKeyboardInset } from "../../lib/useKeyboardInset";
 import { monoLabel } from "../wordSearch/typography";
 import { CARD_BORDER } from "./constants";
 import { PracticeProgress } from "./practiceProgress";
@@ -15,6 +16,7 @@ interface PracticeWordProps {
   meaningId: string;
   partOfSpeech: string;
   hints: string[];
+  display?: string;
 }
 
 type View = "input" | "correct" | "wrong";
@@ -41,6 +43,7 @@ export const PracticeWord = ({
   meaningId,
   partOfSpeech,
   hints,
+  display,
 }: PracticeWordProps) => {
   const [answer, setAnswer] = useState("");
   const [attempts, setAttempts] = useState(0);
@@ -48,6 +51,8 @@ export const PracticeWord = ({
   const [view, setView] = useState<View>("input");
   const navigation = useNavigation();
   const navigate = useNavigate();
+  const definitionRef = useRef<HTMLParagraphElement>(null);
+  const isKeyboardOpen = useKeyboardInset() > 0;
 
   const queue = useSessionStore((s) => s.queue);
   const mode = useSessionStore((s) => s.mode);
@@ -62,6 +67,18 @@ export const PracticeWord = ({
       startSession([word]);
     }
   }, [word]);
+
+  // Keyed off the keyboard opening rather than the field focusing: at focus time
+  // the viewport hasn't shrunk yet, so the scroll would land short.
+  useEffect(() => {
+    if (!isKeyboardOpen) {
+      return;
+    }
+    definitionRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  }, [isKeyboardOpen, view, word]);
 
   const tone =
     view === "correct" ? "correct" : view === "wrong" ? "wrong" : "neutral";
@@ -131,7 +148,13 @@ export const PracticeWord = ({
             <Box mt={14}>
               <PartOfSpeechPill>{partOfSpeech}</PartOfSpeechPill>
             </Box>
-            <Text className="serif" fz={25} lh={1.35} mt={16}>
+            <Text
+              ref={definitionRef}
+              className="serif"
+              fz={25}
+              lh={1.35}
+              mt={16}
+              style={{ scrollMarginTop: 16 }}>
               {definition}
             </Text>
           </Box>
@@ -150,6 +173,7 @@ export const PracticeWord = ({
               style={{ borderBottom: "2px solid #1a1a1a" }}
               autoComplete="off"
               type="search"
+              enterKeyHint="send"
             />
           </Box>
 
@@ -212,7 +236,7 @@ export const PracticeWord = ({
           <FeedbackHeader tone="correct" />
           <Box p={16} bd={CARD_BORDER} bdrs={14}>
             <Text className="serif" fz={26} tt="capitalize">
-              {word}
+              {display}
             </Text>
             <Text fz={14} lh={1.5} c="dimmed" mt={10}>
               {definition}
