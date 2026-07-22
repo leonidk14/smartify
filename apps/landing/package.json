@@ -1,0 +1,13 @@
+{
+  "name": "smartify-landing",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "VITE_APP_URL=${VITE_APP_URL:-http://localhost:5173} vite --port 5174",
+    "build": "VITE_APP_URL=${VITE_APP_URL:-http://localhost:5173} vite build",
+    "preview": "vite preview --port 5174"
+  },
+  "devDependencies": {
+    "vite": "^8.0.3"
+  }
+}

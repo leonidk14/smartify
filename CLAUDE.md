@@ -16,6 +16,28 @@ them so decisions rest on facts and real needs rather than vibes or intuition.
 - **Then defer.** Challenge once, clearly; after I've heard the reasoning and decided, follow
   the decision without relitigating. The goal is a better decision, not the last word.
 
+## Repository layout (npm workspaces)
+
+Two independent apps under `apps/*`, with shared infra at the root.
+
+| Path | What |
+| --- | --- |
+| `apps/web` | the PWA (React Router v7 SPA, Mantine). Workspace name `smartify`. |
+| `apps/landing` | the public marketing page. Plain HTML + CSS on Vite, **ships zero JS** — never add a framework or a runtime dependency to it. Workspace name `smartify-landing`. |
+| `supabase/` `scripts/` `data/` `.env` | root-level, shared. Their commands run from the root unchanged. |
+
+The root `package.json` has **no dependencies** — it is workspace wiring plus script
+aliases. Add dependencies to the owning app, never to the root.
+
+```bash
+npm run dev / build / serve / typecheck   # apps/web, on :5173
+npm run landing:dev / landing:build       # apps/landing, on :5174
+```
+
+`apps/web/vite.config.ts` sets `envDir: "../../"` so the app reads the root `.env` —
+if `VITE_*` values ever come back undefined, check that first. The build's SW step
+resolves as `node ../../scripts/generate-sw.mjs` from the `apps/web` CWD.
+
 ## Styling (Mantine)
 
 Prefer Mantine component **style props** over inline `style={{}}` objects. Reach for
@@ -35,8 +57,8 @@ Prefer Mantine component **style props** over inline `style={{}}` objects. Reach
 - Non-Mantine elements (e.g. Tabler `@tabler/icons-react` SVGs) take their own
   props (`size`, `color`) and `style`; Mantine style props don't apply to them.
 
-Reference examples: [app/routes/practice/practiceStart.tsx](app/routes/practice/practiceStart.tsx),
-[app/routes/practice/practiceSelect.tsx](app/routes/practice/practiceSelect.tsx).
+Reference examples: [apps/web/app/routes/practice/practiceStart.tsx](apps/web/app/routes/practice/practiceStart.tsx),
+[apps/web/app/routes/practice/practiceSelect.tsx](apps/web/app/routes/practice/practiceSelect.tsx).
 
 ## Code style
 
@@ -73,14 +95,14 @@ Vocabulary lives in the Supabase Postgres table `vocabulary` (one row per word:
 `word` PK, `groups` jsonb, `should_practice_later`, `saved_at`), accessed by the
 SPA exclusively through the `vocabulary-*` edge functions
 (`supabase/functions/vocabulary-{list,save,mark-practice,bulk-put}`). IndexedDB
-(`smartify-vocabulary`, via [app/lib/offlineCache.ts](app/lib/offlineCache.ts))
+(`smartify-vocabulary`, via [apps/web/app/lib/offlineCache.ts](apps/web/app/lib/offlineCache.ts))
 is only an on-demand offline snapshot, not a source of truth.
 
 Seed data:
 
 - **Local seed file:** [data/vocabulary.json](data/vocabulary.json) — a full
   `VocabularyStore` snapshot (`{ [word]: { groups, shouldPracticeLater, savedAt } }`,
-  see [app/routes/wordSearch/vocabulary.ts](app/routes/wordSearch/vocabulary.ts)
+  see [apps/web/app/routes/wordSearch/vocabulary.ts](apps/web/app/routes/wordSearch/vocabulary.ts)
   for the types).
 - **Cloud fallback copy:** the same file is stored in the private Supabase
   Storage bucket `seeds` as `seeds/vocabulary.json` (bucket created by the

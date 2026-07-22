@@ -3,6 +3,8 @@ import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "vite";
 
 export default defineConfig({
+  // The .env files live at the monorepo root, not next to this config.
+  envDir: "../../",
   server: {
     allowedHosts: [".ngrok-free.dev"],
   },

@@ -1,4 +1,14 @@
-# Welcome to React Router!
+# smartify
+
+An npm-workspaces monorepo with two independent apps:
+
+| Path | What | Dev | Build output |
+| --- | --- | --- | --- |
+| `apps/web` | the PWA — React Router v7 SPA | `npm run dev` (:5173) | `apps/web/build/client` |
+| `apps/landing` | the marketing page — static HTML + CSS, no JS | `npm run landing:dev` (:5174) | `apps/landing/dist` |
+
+`supabase/`, `scripts/`, `data/` and `.env` stay at the root and are shared; every
+command below runs from the repo root.
 
 ## LLM mode toggles (mock vs. real)
 
@@ -56,13 +66,24 @@ npm install
 
 ### Development
 
-Start the development server with HMR:
+Start the app's dev server with HMR:
 
 ```bash
 npm run dev
 ```
 
-Your application will be available at `http://localhost:5173`.
+The app will be available at `http://localhost:5173`.
+
+The landing page is a separate workspace and runs on its own port — both can be up at
+the same time:
+
+```bash
+npm run landing:dev     # http://localhost:5174
+npm run landing:build   # → apps/landing/dist
+```
+
+See [apps/landing/README.md](apps/landing/README.md) for how to point its CTAs at a
+deployed app URL.
 
 ## Vocabulary data & seeding
 
