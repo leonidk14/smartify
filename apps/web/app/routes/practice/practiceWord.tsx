@@ -148,6 +148,8 @@ export const PracticeWord = ({
               }}
               autoFocus
               style={{ borderBottom: "2px solid #1a1a1a" }}
+              autoComplete="off"
+              type="search"
             />
           </Box>
 
@@ -236,11 +238,7 @@ export const PracticeWord = ({
         <>
           <FeedbackHeader tone="wrong" />
 
-          <Box
-            p="14px 15px"
-            bg="#fdf3f1"
-            bd="1.5px solid #f0c9c3"
-            bdrs={14}>
+          <Box p="14px 15px" bg="#fdf3f1" bd="1.5px solid #f0c9c3" bdrs={14}>
             <Text ff="monospace" fw={500} fz={10} c="#c0392b" mb={6}>
               YOUR ANSWER
             </Text>

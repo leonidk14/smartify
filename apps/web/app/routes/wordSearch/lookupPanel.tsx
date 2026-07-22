@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFetcher } from "react-router";
 import {
   ActionIcon,
@@ -22,6 +22,7 @@ import type { GeneratedSentence } from "../practice/sentenceTypes";
 import { normalize } from "./normalize";
 import type { StoredMeaningGroup, VocabularyEntry } from "./vocabulary";
 import { monoLabel } from "./typography";
+import { useKeyboardInset } from "../../lib/useKeyboardInset";
 
 type SearchResult = Omit<LookupResult, "dictionary"> & {
   dictionary: { groups: StoredMeaningGroup[]; typo?: Typo };
@@ -51,6 +52,8 @@ export const LookupPanel = ({
   const [value, setValue] = useState(initialQuery ?? "");
   const [committedQuery, setCommittedQuery] = useState(initialQuery ?? "");
   const [markedForPractice, setMarkedForPractice] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const keyboardInset = useKeyboardInset();
 
   const findCached = useCallback(
     (term: string): PanelResult | undefined => {
@@ -73,6 +76,8 @@ export const LookupPanel = ({
   );
 
   const commitSearch = (term: string) => {
+    // Dismisses the on-screen keyboard on mobile — the result needs the room.
+    inputRef.current?.blur();
     setValue(term);
     setCommittedQuery(term);
     setMarkedForPractice(false);
@@ -135,7 +140,7 @@ export const LookupPanel = ({
     query.length > 0 && !hasResult
       ? savedWords
           .map(([word, entry]) => entry.display ?? word)
-          .filter((suggestion) => suggestion.startsWith(query))
+          .filter((suggestion) => suggestion.includes(query))
           .slice(0, MAX_SUGGESTIONS)
       : [];
 
@@ -150,7 +155,10 @@ export const LookupPanel = ({
       }}
       direction="column"
       pos="fixed"
-      inset={0}
+      top={0}
+      left={0}
+      right={0}
+      bottom={keyboardInset}
       bg="white"
       mih={0}
       style={{ zIndex: 200 }}>
@@ -170,6 +178,7 @@ export const LookupPanel = ({
         </Group>
         <Group gap={8} align="stretch" wrap="nowrap">
           <TextInput
+            ref={inputRef}
             name="search-item"
             placeholder="Type a word…"
             value={value}
@@ -179,6 +188,8 @@ export const LookupPanel = ({
             radius="md"
             leftSection={<IconSearch size={16} />}
             flex={1}
+            type="search"
+            autoComplete="off"
           />
           <Button
             type="submit"
@@ -225,26 +236,31 @@ export const LookupPanel = ({
             <Text {...monoLabel} mb={8}>
               Suggestions
             </Text>
-            {suggestions.map((suggestion) => (
-              <UnstyledButton
-                key={suggestion}
-                onClick={() => commitSearch(suggestion)}
-                py={11}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                  borderBottom: "1px solid rgba(0,0,0,.06)",
-                }}>
-                <IconSearch size={16} color="rgba(0,0,0,.3)" />
-                <Text size="md">
-                  <Text span fw={600}>
-                    {suggestion.slice(0, query.length)}
+            {suggestions.map((suggestion) => {
+              const matchStart = suggestion.indexOf(query);
+              const matchEnd = matchStart + query.length;
+              return (
+                <UnstyledButton
+                  key={suggestion}
+                  onClick={() => commitSearch(suggestion)}
+                  py={11}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    borderBottom: "1px solid rgba(0,0,0,.06)",
+                  }}>
+                  <IconSearch size={16} color="rgba(0,0,0,.3)" />
+                  <Text size="md">
+                    {suggestion.slice(0, matchStart)}
+                    <Text span fw={600}>
+                      {suggestion.slice(matchStart, matchEnd)}
+                    </Text>
+                    {suggestion.slice(matchEnd)}
                   </Text>
-                  {suggestion.slice(query.length)}
-                </Text>
-              </UnstyledButton>
-            ))}
+                </UnstyledButton>
+              );
+            })}
           </Stack>
         ) : null}
       </ScrollArea>
