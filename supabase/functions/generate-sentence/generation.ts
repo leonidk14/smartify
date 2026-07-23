@@ -7,7 +7,9 @@ import {
 } from "../_shared/usage.ts";
 import type { GeneratedSentence, SentenceGeneration } from "./sentenceCache.ts";
 
-export type GenerationSource = "haiku" | "haiku+sonnet";
+export type GenerationSource = "haiku" | "sonnet" | "haiku+sonnet";
+
+export type GenerationModel = "auto" | "haiku" | "sonnet";
 
 const GENERATION_SYSTEM_PROMPT = `You help English learners practice a target word. You are given a WORD, a REQUESTED meaning to practice, and a list of all MEANINGS available for that word.
 
@@ -221,18 +223,29 @@ export async function generateFresh({
   word,
   meaning,
   meanings,
+  model = "auto",
 }: {
   client: Anthropic;
   word: string;
   meaning: string;
   meanings: string[];
+  model?: GenerationModel;
 }): Promise<SentenceGeneration & { source: GenerationSource }> {
   const meaningsList = meanings.map((m) => `- ${m}`).join("\n");
   const userContent = `Word: ${word}\nRequested meaning: ${meaning}\nMeanings:\n${meaningsList}`;
 
+  if (model === "sonnet") {
+    const sonnet = await runGeneration({
+      client,
+      pricing: "sonnet",
+      userContent,
+    });
+    return { ...sonnet, source: "sonnet" };
+  }
+
   const haiku = await runGeneration({ client, pricing: "haiku", userContent });
 
-  if (!haiku.sentence.error) {
+  if (model === "haiku" || !haiku.sentence.error) {
     return { ...haiku, source: "haiku" };
   }
 

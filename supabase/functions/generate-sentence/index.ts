@@ -4,7 +4,11 @@ import { serveFunction } from "../_shared/handler.ts";
 import { errorResponse, jsonResponse } from "../_shared/http.ts";
 import { createAdminClient } from "../_shared/supabase.ts";
 import { buildTokenUsage, type TokenUsage } from "../_shared/usage.ts";
-import { generateFresh, simplifySentence } from "./generation.ts";
+import {
+  generateFresh,
+  simplifySentence,
+  type GenerationModel,
+} from "./generation.ts";
 import { generateMock } from "./mock.ts";
 import {
   addSentence,
@@ -80,11 +84,25 @@ serveFunction(async (req) => {
 
   const key = word.trim().toLowerCase();
 
-  // Mock output is never persisted — return it directly.
-  if (Deno.env.get("GENERATE_MODE") !== "real") {
+  // "real" runs the default Haiku→Sonnet flow; "sonnet"/"haiku" pin generation
+  // to that single model. Any other value stays mock so the default never
+  // spends tokens. Mock output is never persisted — return it directly.
+  const generateMode = (Deno.env.get("GENERATE_MODE") ?? "").toLowerCase();
+  if (
+    generateMode !== "real" &&
+    generateMode !== "sonnet" &&
+    generateMode !== "haiku"
+  ) {
     const mock = await generateMock(key);
     return respond({ word: key, ...mock, source: "mock" });
   }
+
+  const generationModel: GenerationModel =
+    generateMode === "sonnet"
+      ? "sonnet"
+      : generateMode === "haiku"
+        ? "haiku"
+        : "auto";
 
   const client = new Anthropic({ apiKey: requireEnv("ANTHROPIC_API_KEY") });
   const supabase = createAdminClient();
@@ -130,6 +148,7 @@ serveFunction(async (req) => {
       word: key,
       meaning: meaningDefinition,
       meanings,
+      model: generationModel,
     });
 
     if (fresh.sentence.error) {

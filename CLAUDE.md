@@ -160,6 +160,11 @@ supabase secrets list                     # what is set right now
 The toggles are intentionally separate — never collapse them into one shared
 flag, since each guards a different cost.
 
+`GENERATE_MODE` additionally doubles as a model selector for the real path
+(matched case-insensitively): `real` runs the default Haiku→Sonnet fallback,
+`sonnet` pins generation to Sonnet only, and `haiku` pins it to Haiku only.
+Any other value (or unset) is still mock.
+
 ## Design references
 
 Designs live in a Claude Design project. Whenever a design is referenced — **including
