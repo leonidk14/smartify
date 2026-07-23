@@ -109,12 +109,12 @@ export const PracticeWord = ({
 
     const next = nextWord(queue, word);
     if (next) {
-      navigate(`/practice/${encodeURIComponent(next)}`);
+      navigate(`/practice/${encodeURIComponent(next)}`, { replace: true });
       return;
     }
 
     if (mode === "word") {
-      navigate("/practice/summary");
+      navigate("/practice/summary", { replace: true });
       return;
     }
 
@@ -126,6 +126,7 @@ export const PracticeWord = ({
       `/practice/${encodeURIComponent(firstWord)}/sentence?m=${encodeURIComponent(
         firstMeaningId ?? "",
       )}`,
+      { replace: true },
     );
   };
 

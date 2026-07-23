@@ -1,4 +1,5 @@
-import { Link, useNavigate } from "react-router";
+import { useEffect } from "react";
+import { Link, useBlocker, useNavigate } from "react-router";
 import { Box, Button, Flex, Group, Text } from "@mantine/core";
 import { IconCheck, IconX } from "@tabler/icons-react";
 import { useSessionStore } from "../store/session";
@@ -18,12 +19,22 @@ export default function PracticeSummary() {
   const results = useSessionStore((s) => s.results);
   const reset = useSessionStore((s) => s.reset);
 
+  const blocker = useBlocker(({ historyAction }) => historyAction === "POP");
+
+  useEffect(() => {
+    if (blocker.state !== "blocked") {
+      return;
+    }
+    reset();
+    navigate("/practice", { replace: true });
+  }, [blocker, navigate, reset]);
+
   const correctCount = results.filter((r) => r.correct).length;
   const reviewCount = results.length - correctCount;
 
   const done = () => {
     reset();
-    navigate("/practice");
+    navigate("/practice", { replace: true });
   };
 
   if (results.length === 0) {

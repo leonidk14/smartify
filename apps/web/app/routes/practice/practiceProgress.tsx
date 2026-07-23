@@ -30,7 +30,7 @@ export const PracticeProgress = ({
 
   const handleExit = () => {
     reset();
-    navigate("/practice");
+    navigate("/practice", { replace: true });
   };
 
   return (

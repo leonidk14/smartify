@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { Await } from "react-router";
 import { Flex, Loader, Text } from "@mantine/core";
 import { readVocabulary } from "./wordSearch/vocabulary";
+import { useBlockBack } from "../lib/useBlockBack";
 import { PracticeSentence } from "./practice/practiceSentence";
 import { evaluateSentence, generateSentence } from "./practice/sentenceActions";
 import type { SentenceEvaluation } from "./practice/sentenceTypes";
@@ -130,6 +131,8 @@ function BuildingSentence() {
 export default function PracticeSentenceRoute({
   loaderData,
 }: Route.ComponentProps) {
+  useBlockBack("You can't go back during practice.");
+
   return (
     <Suspense key={loaderData.word} fallback={<BuildingSentence />}>
       <Await resolve={loaderData.sentence}>

@@ -141,9 +141,10 @@ export const PracticeSentence = ({
         `/practice/${encodeURIComponent(next)}/sentence?m=${encodeURIComponent(
           meaningIds[next] ?? "",
         )}`,
+        { replace: true },
       );
     } else {
-      navigate("/practice/summary");
+      navigate("/practice/summary", { replace: true });
     }
   };
 

@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { Link } from "react-router";
 import { Button, Center, Stack, Text } from "@mantine/core";
 import { PracticeWord } from "./practice/practiceWord";
+import { useBlockBack } from "../lib/useBlockBack";
 import { useVocabulary } from "./wordSearch/useVocabulary";
 import type { VocabularyStore } from "./wordSearch/vocabulary";
 import type { Route } from "./+types/practiceWord";
@@ -69,6 +70,7 @@ function buildHints({
 }
 
 export default function PracticeWordRoute({ params }: Route.ComponentProps) {
+  useBlockBack("You can't go back during practice.");
   const { store } = useVocabulary();
   const view = useMemo(() => buildWordView(store, params.word), [params.word]);
 
