@@ -1,8 +1,29 @@
+import { Suspense } from "react";
+import { Await } from "react-router";
+import { Flex, Loader, Text } from "@mantine/core";
 import { readVocabulary } from "./wordSearch/vocabulary";
 import { PracticeSentence } from "./practice/practiceSentence";
 import { evaluateSentence, generateSentence } from "./practice/sentenceActions";
 import type { SentenceEvaluation } from "./practice/sentenceTypes";
 import type { Route } from "./+types/practiceSentence";
+
+interface SentenceData {
+  meaning: string;
+  original: string;
+  source: string;
+  simplified: string | null;
+  generated: boolean;
+  generationFailed: boolean;
+}
+
+const failedSentence = (meaning: string): SentenceData => ({
+  meaning,
+  original: "",
+  source: "",
+  simplified: "",
+  generated: false,
+  generationFailed: true,
+});
 
 export const shouldRevalidate = ({
   currentUrl,
@@ -43,48 +64,33 @@ export async function clientLoader({
     allMeanings[Math.floor(Math.random() * allMeanings.length)];
   const meaning = selected.definition;
 
-  try {
-    const { sentence } = await generateSentence({
-      word: params.word,
-      meaningId: selected.id,
-      meaningDefinition: meaning,
-      meanings,
+  const sentence: Promise<SentenceData> = generateSentence({
+    word: params.word,
+    meaningId: selected.id,
+    meaningDefinition: meaning,
+    meanings,
+  })
+    .then(({ sentence }): SentenceData => {
+      if (sentence.error) {
+        console.error("Sentence generation failed", sentence.error);
+        return failedSentence(meaning);
+      }
+
+      return {
+        meaning: sentence.meaning ?? meaning,
+        original: sentence.original,
+        source: sentence.source,
+        simplified: sentence.simplified ?? null,
+        generated: sentence.generated ?? false,
+        generationFailed: false,
+      };
+    })
+    .catch((e): SentenceData => {
+      console.error("Sentence generation failed", e);
+      return failedSentence(meaning);
     });
 
-    if (sentence.error) {
-      console.error("Sentence generation failed", sentence.error);
-      return {
-        word: params.word,
-        meaning,
-        original: "",
-        source: "",
-        simplified: "",
-        generated: false,
-        error: true,
-      };
-    }
-
-    return {
-      word: params.word,
-      meaning: sentence.meaning ?? meaning,
-      original: sentence.original,
-      source: sentence.source,
-      simplified: sentence.simplified ?? null,
-      generated: sentence.generated ?? false,
-      error: false,
-    };
-  } catch (e) {
-    console.error("Sentence generation failed", e);
-    return {
-      word: params.word,
-      meaning,
-      original: "",
-      source: "",
-      simplified: "",
-      generated: false,
-      error: true,
-    };
-  }
+  return { word: params.word, sentence };
 }
 
 export async function clientAction({
@@ -110,19 +116,35 @@ export async function clientAction({
   }
 }
 
+function BuildingSentence() {
+  return (
+    <Flex direction="column" align="center" justify="center" gap={16} flex={1}>
+      <Loader color="dark" size="lg" />
+      <Text size="md" c="dimmed">
+        Building your sentence…
+      </Text>
+    </Flex>
+  );
+}
+
 export default function PracticeSentenceRoute({
   loaderData,
 }: Route.ComponentProps) {
   return (
-    <PracticeSentence
-      key={loaderData.word}
-      word={loaderData.word}
-      meaning={loaderData.meaning}
-      original={loaderData.original}
-      source={loaderData.source}
-      simplified={loaderData.simplified}
-      generated={loaderData.generated}
-      generationFailed={loaderData.error}
-    />
+    <Suspense key={loaderData.word} fallback={<BuildingSentence />}>
+      <Await resolve={loaderData.sentence}>
+        {(sentence) => (
+          <PracticeSentence
+            word={loaderData.word}
+            meaning={sentence.meaning}
+            original={sentence.original}
+            source={sentence.source}
+            simplified={sentence.simplified}
+            generated={sentence.generated}
+            generationFailed={sentence.generationFailed}
+          />
+        )}
+      </Await>
+    </Suspense>
   );
 }

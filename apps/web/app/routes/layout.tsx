@@ -1,18 +1,11 @@
 import { useEffect } from "react";
-import {
-  Outlet,
-  useLocation,
-  useNavigate,
-  useNavigation,
-  Link,
-} from "react-router";
+import { Outlet, useLocation, useNavigate, Link } from "react-router";
 import {
   ActionIcon,
   Box,
   Button,
   Flex,
   Group,
-  Loader,
   SegmentedControl,
   Text,
 } from "@mantine/core";
@@ -52,7 +45,6 @@ export function shouldRevalidate({
 export default function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
-  const navigation = useNavigation();
 
   useEffect(() => {
     if (!("serviceWorker" in navigator)) {
@@ -76,11 +68,6 @@ export default function Layout() {
 
   const isSelectScreen = location.pathname === "/practice/select";
   const selectMode = new URLSearchParams(location.search).get("mode") ?? "both";
-
-  const isLoadingSentence =
-    navigation.state === "loading" &&
-    !!navigation.location &&
-    /^\/practice\/[^/]+\/sentence$/.test(navigation.location.pathname);
 
   return (
     <Flex direction="column" style={{ minHeight: "100vh" }}>
@@ -112,28 +99,8 @@ export default function Layout() {
       <Flex
         direction="column"
         flex={1}
-        style={{ position: "relative" }}
         pb={isTopLevelScreen ? 80 : undefined}>
         <Outlet />
-        {isLoadingSentence && (
-          <Flex
-            direction="column"
-            align="center"
-            justify="center"
-            gap={16}
-            style={{
-              position: "absolute",
-              inset: 0,
-              zIndex: 100,
-              backgroundColor: "rgba(255, 255, 255, 0.9)",
-              backdropFilter: "blur(2px)",
-            }}>
-            <Loader color="dark" size="lg" />
-            <Text size="md" c="dimmed">
-              Building your sentence…
-            </Text>
-          </Flex>
-        )}
       </Flex>
 
       {isTopLevelScreen && (
