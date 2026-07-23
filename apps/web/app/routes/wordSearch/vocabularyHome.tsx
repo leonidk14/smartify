@@ -89,7 +89,7 @@ export const VocabularyHome = ({
               </ThemeIcon>
             </Tooltip>
           ) : null}
-          <ActionIcon
+          {/* <ActionIcon
             variant="subtle"
             color="gray"
             size="lg"
@@ -99,7 +99,7 @@ export const VocabularyHome = ({
             loading={isDownloading}
             onClick={handleDownloadForOffline}>
             <IconDownload size={20} />
-          </ActionIcon>
+          </ActionIcon> */}
         </Group>
       </Group>
 
