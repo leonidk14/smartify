@@ -14,6 +14,7 @@ import "@mantine/notifications/styles.css";
 import { ColorSchemeScript, MantineProvider } from "@mantine/core";
 import { Notifications } from "@mantine/notifications";
 import { cssVariablesResolver, theme } from "./theme";
+import { AuthProvider } from "./lib/auth";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -73,7 +74,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           defaultColorScheme="light"
         >
           <Notifications position="top-center" />
-          {children}
+          <AuthProvider>{children}</AuthProvider>
         </MantineProvider>
         <ScrollRestoration />
         <Scripts />

@@ -1,4 +1,5 @@
 import Anthropic from "npm:@anthropic-ai/sdk@0.110.0";
+import { getRequestUser } from "../_shared/auth.ts";
 import { requireEnv } from "../_shared/env.ts";
 import { serveFunction } from "../_shared/handler.ts";
 import { errorResponse, jsonResponse } from "../_shared/http.ts";
@@ -54,8 +55,8 @@ serveFunction(async (req) => {
     return errorResponse("Method not allowed", 405);
   }
 
-  const providedKey = req.headers.get("x-lookup-key");
-  if (!providedKey || providedKey !== requireEnv("LOOKUP_AUTH_KEY")) {
+  const user = await getRequestUser(req);
+  if (!user) {
     return errorResponse("Unauthorized", 401);
   }
 

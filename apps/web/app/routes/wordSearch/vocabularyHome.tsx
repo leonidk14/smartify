@@ -1,11 +1,11 @@
-import { useState } from "react";
 import { Link } from "react-router";
 import {
-  ActionIcon,
+  Avatar,
   Box,
   Button,
   Divider,
   Group,
+  Menu,
   Paper,
   Stack,
   Text,
@@ -15,13 +15,10 @@ import {
   UnstyledButton,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { IconCloudOff, IconDownload, IconPlus } from "@tabler/icons-react";
-import {
-  downloadForOffline,
-  type StoredMeaning,
-  type VocabularyEntry,
-} from "./vocabulary";
+import { IconCloudOff, IconLogout, IconPlus } from "@tabler/icons-react";
+import { type StoredMeaning, type VocabularyEntry } from "./vocabulary";
 import { monoLabel } from "./typography";
+import { useAuth } from "../../lib/auth";
 
 interface VocabularyHomeProps {
   words: [string, VocabularyEntry][];
@@ -39,6 +36,13 @@ function firstSense(entry: VocabularyEntry): StoredMeaning | undefined {
   return Object.values(group.meanings).sort((a, b) => a.order - b.order)[0];
 }
 
+function initialsFromEmail(email: string | undefined): string {
+  if (!email) {
+    return "?";
+  }
+  return email.slice(0, 2).toUpperCase();
+}
+
 export const VocabularyHome = ({
   words,
   total,
@@ -46,23 +50,18 @@ export const VocabularyHome = ({
   isFromOfflineCopy,
   onOpenLookup,
 }: VocabularyHomeProps) => {
-  const [isDownloading, setIsDownloading] = useState(false);
+  const { isSignedIn, user, signOut, openSignIn } = useAuth();
 
-  const handleDownloadForOffline = async () => {
-    setIsDownloading(true);
-    try {
-      await downloadForOffline();
-      notifications.show({ message: "Vocabulary saved for offline use" });
-    } catch (error) {
-      console.error("Failed to download vocabulary for offline use:", error);
-      notifications.show({
-        color: "red",
-        message: "Couldn’t download vocabulary. Check your connection.",
-      });
-    } finally {
-      setIsDownloading(false);
-    }
+  const handleSignOut = async () => {
+    await signOut();
+    notifications.show({ message: "Signed out" });
   };
+
+  const wordCountLabel = `${total} ${total === 1 ? "word" : "words"}`;
+  const dueLabel =
+    dueCount > 0
+      ? `${dueCount} ${dueCount === 1 ? "word is" : "words are"} ready`
+      : "Practice your vocabulary";
 
   return (
     <Stack gap={18} p={20} pb={96}>
@@ -72,12 +71,12 @@ export const VocabularyHome = ({
             Your Vocabulary
           </Title>
           <Text ff="monospace" size="xs" c="dimmed" mt={5}>
-            {total} {total === 1 ? "word" : "words"} · {dueCount} due today
+            {isSignedIn
+              ? `${wordCountLabel} · ${dueCount} due today`
+              : `${wordCountLabel} · offline copy`}
           </Text>
         </Box>
-        {/* TODO: put a light/dark theme toggle next to these buttons (was a
-            settings gear in the design; descoped for now). */}
-        <Group gap={4} wrap="nowrap">
+        <Group gap={8} wrap="nowrap" align="center">
           {isFromOfflineCopy ? (
             <Tooltip label="Offline — showing the downloaded copy">
               <ThemeIcon
@@ -89,17 +88,35 @@ export const VocabularyHome = ({
               </ThemeIcon>
             </Tooltip>
           ) : null}
-          {/* <ActionIcon
-            variant="subtle"
-            color="gray"
-            size="lg"
-            radius="md"
-            aria-label="Download vocabulary for offline use"
-            disabled={isFromOfflineCopy}
-            loading={isDownloading}
-            onClick={handleDownloadForOffline}>
-            <IconDownload size={20} />
-          </ActionIcon> */}
+          {isSignedIn ? (
+            <Menu position="bottom-end" width={200}>
+              <Menu.Target>
+                <Avatar
+                  radius="xl"
+                  size={34}
+                  aria-label="Account"
+                  style={{
+                    background: "var(--color-text)",
+                    color: "#fff",
+                    cursor: "pointer",
+                  }}>
+                  {initialsFromEmail(user?.email)}
+                </Avatar>
+              </Menu.Target>
+              <Menu.Dropdown>
+                <Menu.Label>{user?.email}</Menu.Label>
+                <Menu.Item
+                  leftSection={<IconLogout size={16} />}
+                  onClick={handleSignOut}>
+                  Sign out
+                </Menu.Item>
+              </Menu.Dropdown>
+            </Menu>
+          ) : (
+            <Button size="sm" radius="xl" onClick={() => openSignIn()}>
+              Sign in
+            </Button>
+          )}
         </Group>
       </Group>
 
@@ -121,6 +138,33 @@ export const VocabularyHome = ({
         </Text>
       </UnstyledButton>
 
+      {!isSignedIn ? (
+        <Paper radius={15} p={16} bg="var(--color-surface-inverse)">
+          <Text fw={600} fz={13.5} c="var(--color-text-on-inverse)">
+            Unlock sentence practice
+          </Text>
+          <Text
+            mt={5}
+            fz={12.5}
+            style={{
+              lineHeight: 1.5,
+              color: "var(--color-text-on-inverse-dimmed)",
+            }}>
+            Sign in to practice with generated sentences. Your saved words and
+            guess-the-word practice stays available when signed out.
+          </Text>
+          <Button
+            variant="white"
+            color="dark"
+            fullWidth
+            mt={13}
+            radius={11}
+            onClick={() => openSignIn()}>
+            Sign in to continue
+          </Button>
+        </Paper>
+      ) : null}
+
       {total > 0 ? (
         <Paper
           radius={15}
@@ -131,9 +175,7 @@ export const VocabularyHome = ({
           }}>
           <Text {...monoLabel}>Due for practice</Text>
           <Text className="serif" mt={6} style={{ fontSize: 19 }}>
-            {dueCount > 0
-              ? `${dueCount} ${dueCount === 1 ? "word is" : "words are"} ready`
-              : "Practice your vocabulary"}
+            {dueLabel}
           </Text>
           <Button
             component={Link}
@@ -149,7 +191,7 @@ export const VocabularyHome = ({
 
       <Box>
         <Text {...monoLabel} mb={6}>
-          All words
+          {isSignedIn ? "All words" : "All words · browsable offline"}
         </Text>
         {total === 0 ? (
           <Text size="sm" c="dimmed" py={16}>

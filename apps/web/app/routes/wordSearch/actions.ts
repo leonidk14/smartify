@@ -42,7 +42,5 @@ function toLookupSlug(word: string): string {
 }
 
 export async function lookupWord(word: string): Promise<LookupResult> {
-  return getFunction<LookupResult>("lookup", toLookupSlug(word), {
-    "x-lookup-key": import.meta.env.VITE_LOOKUP_KEY,
-  });
+  return getFunction<LookupResult>("lookup", toLookupSlug(word));
 }

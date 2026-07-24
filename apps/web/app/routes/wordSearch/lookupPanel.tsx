@@ -23,6 +23,7 @@ import { normalize } from "./normalize";
 import type { StoredMeaningGroup, VocabularyEntry } from "./vocabulary";
 import { monoLabel } from "./typography";
 import { useKeyboardInset } from "../../lib/useKeyboardInset";
+import { useAuth } from "../../lib/auth";
 
 type SearchResult = Omit<LookupResult, "dictionary"> & {
   dictionary: { groups: StoredMeaningGroup[]; typo?: Typo };
@@ -54,6 +55,7 @@ export const LookupPanel = ({
   const [markedForPractice, setMarkedForPractice] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const keyboardInset = useKeyboardInset();
+  const { isSignedIn, openSignIn } = useAuth();
 
   const findCached = useCallback(
     (term: string): PanelResult | undefined => {
@@ -81,19 +83,30 @@ export const LookupPanel = ({
     setValue(term);
     setCommittedQuery(term);
     setMarkedForPractice(false);
-    if (!findCached(term)) {
+    // A new word needs the LLM lookup, which requires a signed-in user; the
+    // sign-in-required view below handles the signed-out case.
+    if (!findCached(term) && isSignedIn) {
       searchFetcher.submit({ "search-item": term }, { method: "post" });
     }
   };
 
   useEffect(() => {
-    if (committedQuery && !cachedResult) {
+    if (committedQuery && !cachedResult && isSignedIn) {
       searchFetcher.submit(
         { "search-item": committedQuery },
         { method: "post" },
       );
     }
   }, []);
+
+  useEffect(() => {
+    // A signed-out lookup of a new word parks on the sign-in prompt; once the
+    // user signs in there, send them back to home. Keyed on auth only — adding
+    // the query deps would wrongly close the panel mid-search once signed in.
+    if (isSignedIn && committedQuery.trim().length > 0 && !cachedResult) {
+      onClose();
+    }
+  }, [isSignedIn]);
 
   const data: PanelResult | undefined = cachedResult ?? searchFetcher.data;
 
@@ -112,6 +125,11 @@ export const LookupPanel = ({
     isShowingSearchOutcome &&
     !!data &&
     (!data.dictionary || !data.dictionary.groups);
+  const isSignInRequired =
+    isShowingSearchOutcome &&
+    !isSignedIn &&
+    committedQuery.trim().length > 0 &&
+    !cachedResult;
 
   const originalSearchItem = data?.originalSearchItem;
 
@@ -261,6 +279,19 @@ export const LookupPanel = ({
                 </UnstyledButton>
               );
             })}
+          </Stack>
+        ) : isSignInRequired ? (
+          <Stack align="center" gap={12} mt={40}>
+            <Text size="md" ta="center">
+              Sign in to look up new words
+            </Text>
+            <Text size="sm" c="dimmed" ta="center" maw={260}>
+              New lookups are generated on the fly. Your saved words stay
+              available offline.
+            </Text>
+            <Button radius="md" onClick={() => openSignIn()}>
+              Sign in
+            </Button>
           </Stack>
         ) : null}
       </ScrollArea>
