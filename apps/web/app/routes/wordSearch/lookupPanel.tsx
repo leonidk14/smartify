@@ -159,7 +159,7 @@ export const LookupPanel = ({
       left={0}
       right={0}
       bottom={keyboardInset}
-      bg="white"
+      bg="var(--color-surface)"
       mih={0}
       style={{ zIndex: 200 }}>
       <Box p={16} pb={12}>

@@ -10,7 +10,7 @@ import {
 import { useState } from "react";
 import { useFetcher, useNavigate } from "react-router";
 import { IconRefresh } from "@tabler/icons-react";
-import { CARD_BORDER, NEAR_PERFECT_THRESHOLD } from "./constants";
+import { NEAR_PERFECT_THRESHOLD } from "./constants";
 import type { SentenceEvaluation } from "./sentenceTypes";
 import { nextWord, useSessionStore } from "../../store/session";
 import { monoLabel } from "../wordSearch/typography";
@@ -30,8 +30,6 @@ interface PracticeSentenceProps {
 
 type ActionData = SentenceEvaluation | { error: true };
 
-const ERROR_ACCENT = "#b4441e";
-
 function escapeRegExp(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
@@ -50,7 +48,7 @@ const UnderlineWord = ({ text, word }: { text: string; word: string }) => {
             span
             style={{
               textDecoration: "underline",
-              textDecorationColor: "#1f8a5b",
+              textDecorationColor: "var(--color-text-success)",
             }}>
             {part}
           </Text>
@@ -77,20 +75,26 @@ const Section = ({
 }) => (
   <Box
     p="14px 15px"
-    bg={warm ? "var(--surface-warm)" : tint === "red" ? "#fdf3f1" : undefined}
+    bg={
+      warm
+        ? "var(--color-surface-warm)"
+        : tint === "red"
+          ? "var(--color-surface-error)"
+          : undefined
+    }
     bdrs={14}
     bd={
       tint === "red"
-        ? "1.5px solid #f0c9c3"
+        ? "1.5px solid var(--color-border-error)"
         : warm
           ? "1px solid rgba(0,0,0,.08)"
-          : CARD_BORDER
+          : "1px solid var(--color-border)"
     }>
     <Text
       ff="monospace"
       fw={500}
       fz={10}
-      c={tint === "red" ? "#c0392b" : "dimmed"}
+      c={tint === "red" ? "var(--color-text-error)" : "dimmed"}
       mb={6}>
       {label}
     </Text>
@@ -157,15 +161,23 @@ export const PracticeSentence = ({
           <Text {...monoLabel}>Rebuild the sentence</Text>
         </Box>
 
-        <Box bg="#fbf1ee" bd={`1px solid ${ERROR_ACCENT}47`} bdrs={14} p={16}>
-          <Group gap={9} align="center" wrap="nowrap" c={ERROR_ACCENT}>
+        <Box
+          bg="var(--color-surface-error-2)"
+          bd="1px solid var(--color-border-error-strong)"
+          bdrs={14}
+          p={16}>
+          <Group
+            gap={9}
+            align="center"
+            wrap="nowrap"
+            c="var(--color-text-error-strong)">
             <Center
               w={22}
               h={22}
               fz={13}
               fw={700}
               flex="none"
-              bd={`1.5px solid ${ERROR_ACCENT}`}
+              bd="1.5px solid var(--color-text-error-strong)"
               bdrs="50%">
               !
             </Center>
@@ -293,7 +305,7 @@ export const PracticeSentence = ({
             }
           />
 
-          <Box p={16} bd={CARD_BORDER} bdrs={14}>
+          <Box p={16} bd="1px solid var(--color-border)" bdrs={14}>
             <Text className="serif" fz={22} tt="capitalize">
               {word}
             </Text>

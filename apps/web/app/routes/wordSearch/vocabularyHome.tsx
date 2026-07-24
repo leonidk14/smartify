@@ -126,7 +126,7 @@ export const VocabularyHome = ({
           radius={15}
           p={16}
           style={{
-            background: "var(--surface-warm)",
+            background: "var(--color-surface-warm)",
             border: "1px solid rgba(0,0,0,.08)",
           }}>
           <Text {...monoLabel}>Due for practice</Text>
@@ -180,7 +180,7 @@ export const VocabularyHome = ({
                         flex: "none",
                         // TODO: re-visit all colors and fonts and centralize them
                         background: entry.shouldPracticeLater
-                          ? "#c87a1e"
+                          ? "var(--color-warning)"
                           : "rgba(0,0,0,.2)",
                       }}
                     />

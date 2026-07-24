@@ -48,8 +48,8 @@ export const NotificationBanner = () => {
       px={15}
       pt={15}
       pb={14}
-      bg="#eef2ee"
-      bd="1px solid rgba(30,110,70,.22)">
+      bg="var(--color-surface-info)"
+      bd="1px solid var(--color-border-info)">
       <Group gap={12} wrap="nowrap" align="flex-start">
         <ThemeIcon size={34} radius={10} color="dark.9" variant="filled">
           <IconBell size={17} />

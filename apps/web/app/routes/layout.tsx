@@ -96,10 +96,7 @@ export default function Layout() {
         </Box>
       ) : null}
 
-      <Flex
-        direction="column"
-        flex={1}
-        pb={isTopLevelScreen ? 80 : undefined}>
+      <Flex direction="column" flex={1} pb={isTopLevelScreen ? 80 : undefined}>
         <Outlet />
       </Flex>
 
@@ -112,7 +109,7 @@ export default function Layout() {
             right: 0,
             padding: "8px 16px 16px",
             background:
-              "linear-gradient(to bottom, rgba(255,255,255,0), #fff 12px)",
+              "linear-gradient(to bottom, rgba(255,255,255,0), var(--color-surface) 12px)",
           }}>
           <SegmentedControl
             fullWidth
@@ -120,7 +117,7 @@ export default function Layout() {
             color="ink"
             value={isHome ? "/" : "/practice"}
             onChange={(value) => navigate(value)}
-            styles={{ root: { background: "var(--surface-warm)" } }}
+            styles={{ root: { background: "var(--color-surface-warm)" } }}
             data={[
               {
                 value: "/",

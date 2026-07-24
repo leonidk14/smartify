@@ -11,35 +11,9 @@ import type { Route } from "./+types/root";
 import "./app.css";
 import "@mantine/core/styles.css";
 import "@mantine/notifications/styles.css";
-import {
-  ColorSchemeScript,
-  createTheme,
-  type MantineColorsTuple,
-  MantineProvider,
-} from "@mantine/core";
+import { ColorSchemeScript, MantineProvider } from "@mantine/core";
 import { Notifications } from "@mantine/notifications";
-
-const ink: MantineColorsTuple = [
-  "#f5f5f4",
-  "#e7e7e6",
-  "#cfcfce",
-  "#b0b0af",
-  "#8f8f8e",
-  "#6f6f6e",
-  "#4d4d4c",
-  "#333332",
-  "#242423",
-  "#1a1a1a",
-];
-
-const theme = createTheme({
-  black: "#1a1a1a",
-  primaryColor: "ink",
-  primaryShade: 9,
-  colors: { ink },
-  fontFamilyMonospace: "ui-monospace, Menlo, Consolas, monospace",
-  headings: { fontFamily: "var(--font-serif)" },
-});
+import { cssVariablesResolver, theme } from "./theme";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -93,7 +67,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         <ColorSchemeScript defaultColorScheme="light" />
-        <MantineProvider theme={theme} defaultColorScheme="light">
+        <MantineProvider
+          theme={theme}
+          cssVariablesResolver={cssVariablesResolver}
+          defaultColorScheme="light"
+        >
           <Notifications position="top-center" />
           {children}
         </MantineProvider>

@@ -6,14 +6,14 @@ type FeedbackTone = "correct" | "wrong";
 const TONE = {
   correct: {
     label: "Correct!",
-    color: "#1f8a5b",
-    bg: "#e6f3ec",
+    color: "var(--color-text-success)",
+    bg: "var(--color-surface-success)",
     icon: <IconCheck size={28} stroke={2.4} />,
   },
   wrong: {
     label: "Not quite",
-    color: "#c0392b",
-    bg: "#fbe9e7",
+    color: "var(--color-text-error)",
+    bg: "var(--color-surface-error-3)",
     icon: <IconX size={26} stroke={2.4} />,
   },
 } as const;

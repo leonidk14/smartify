@@ -19,7 +19,7 @@ export const ActionBar = ({ children }: ActionBarProps) => {
       pb={16}
       style={{
         background:
-          "linear-gradient(to bottom, rgba(255, 255, 255, 0), #fff 16px)",
+          "linear-gradient(to bottom, rgba(255, 255, 255, 0), var(--color-surface) 16px)",
       }}>
       {children}
     </Box>

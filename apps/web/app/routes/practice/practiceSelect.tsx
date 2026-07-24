@@ -138,7 +138,7 @@ export const PracticeSelect = ({ words, mode }: PracticeSelectProps) => {
         bottom={0}
         left={0}
         right={0}
-        bg="white"
+        bg="var(--color-surface)"
         px={20}
         pt={12}
         pb={16}

@@ -5,7 +5,6 @@ import { normalize } from "../wordSearch/normalize";
 import { nextWord, useSessionStore } from "../../store/session";
 import { useKeyboardInset } from "../../lib/useKeyboardInset";
 import { monoLabel } from "../wordSearch/typography";
-import { CARD_BORDER } from "./constants";
 import { PracticeProgress } from "./practiceProgress";
 import { ActionBar } from "./actionBar";
 import { FeedbackHeader } from "./feedbackHeader";
@@ -171,7 +170,7 @@ export const PracticeWord = ({
                 if (e.key === "Enter") handleCheck();
               }}
               autoFocus
-              style={{ borderBottom: "2px solid #1a1a1a" }}
+              style={{ borderBottom: "2px solid var(--color-text)" }}
               autoComplete="off"
               type="search"
               enterKeyHint="send"
@@ -180,7 +179,7 @@ export const PracticeWord = ({
 
           {showHint && hints.length > 1 && (
             <Box
-              bg="var(--surface-warm)"
+              bg="var(--color-surface-warm)"
               p="12px 14px"
               bd="1px solid rgba(0,0,0,.08)"
               bdrs={12}>
@@ -235,7 +234,7 @@ export const PracticeWord = ({
       {view === "correct" && (
         <>
           <FeedbackHeader tone="correct" />
-          <Box p={16} bd={CARD_BORDER} bdrs={14}>
+          <Box p={16} bd="1px solid var(--color-border)" bdrs={14}>
             <Text className="serif" fz={26} tt="capitalize">
               {display}
             </Text>
@@ -263,8 +262,17 @@ export const PracticeWord = ({
         <>
           <FeedbackHeader tone="wrong" />
 
-          <Box p="14px 15px" bg="#fdf3f1" bd="1.5px solid #f0c9c3" bdrs={14}>
-            <Text ff="monospace" fw={500} fz={10} c="#c0392b" mb={6}>
+          <Box
+            p="14px 15px"
+            bg="var(--color-surface-error)"
+            bd="1.5px solid var(--color-border-error)"
+            bdrs={14}>
+            <Text
+              ff="monospace"
+              fw={500}
+              fz={10}
+              c="var(--color-text-error)"
+              mb={6}>
               YOUR ANSWER
             </Text>
             <Text className="serif" fz={15} lh={1.5} tt="capitalize">
@@ -273,7 +281,7 @@ export const PracticeWord = ({
           </Box>
 
           {revealWord && (
-            <Box p={16} bdrs={14} bd={CARD_BORDER}>
+            <Box p={16} bdrs={14} bd="1px solid var(--color-border)">
               <Text ff="monospace" fw={500} fz={10} c="dimmed" mb={6}>
                 ANSWER
               </Text>

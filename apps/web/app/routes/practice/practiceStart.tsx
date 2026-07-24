@@ -81,7 +81,7 @@ export const PracticeStart = ({ total, markedCount }: PracticeStartProps) => {
                 <Center
                   w={34}
                   h={34}
-                  bg="var(--surface-warm)"
+                  bg="var(--color-surface-warm)"
                   c="dark.9"
                   flex="none"
                   style={{ borderRadius: 9 }}>

@@ -7,9 +7,9 @@ import { monoLabel } from "../wordSearch/typography";
 export type ProgressTone = "neutral" | "correct" | "wrong";
 
 const TONE_COLOR: Record<ProgressTone, string> = {
-  neutral: "#1a1a1a",
-  correct: "#1f8a5b",
-  wrong: "#c0392b",
+  neutral: "var(--color-text)",
+  correct: "var(--color-text-success)",
+  wrong: "var(--color-text-error)",
 };
 
 interface PracticeProgressProps {

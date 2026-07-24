@@ -7,7 +7,6 @@
 }
 
 :root {
-  --surface-warm: #f4f2ee;
   --font-serif: Georgia, "Times New Roman", serif;
 }
 
@@ -20,11 +19,7 @@ html {
 }
 
 body {
-  @apply bg-white dark:bg-gray-950 min-h-full flex flex-col;
-
-  @media (prefers-color-scheme: dark) {
-    color-scheme: dark;
-  }
+  @apply bg-white min-h-full flex flex-col;
 }
 
 body > div {

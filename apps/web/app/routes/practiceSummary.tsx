@@ -4,10 +4,6 @@ import { Box, Button, Flex, Group, Text } from "@mantine/core";
 import { IconCheck, IconX } from "@tabler/icons-react";
 import { useSessionStore } from "../store/session";
 import { ActionBar } from "./practice/actionBar";
-import { CARD_BORDER } from "./practice/constants";
-
-const GREEN = "#1f8a5b";
-const RED = "#c0392b";
 
 const StepTag: Record<string, string> = {
   word: "Guess a word",
@@ -73,8 +69,16 @@ export default function PracticeSummary() {
       </Box>
 
       <Group gap={10} grow>
-        <StatTile value={correctCount} label="CORRECT" color={GREEN} />
-        <StatTile value={reviewCount} label="REVIEW" color={RED} />
+        <StatTile
+          value={correctCount}
+          label="CORRECT"
+          color="var(--color-text-success)"
+        />
+        <StatTile
+          value={reviewCount}
+          label="REVIEW"
+          color="var(--color-text-error)"
+        />
       </Group>
 
       <Flex direction="column">
@@ -87,9 +91,17 @@ export default function PracticeSummary() {
             wrap="nowrap"
             style={{ borderBottom: "1px solid rgba(0,0,0,.07)" }}>
             {r.correct ? (
-              <IconCheck size={18} color={GREEN} stroke={2.4} />
+              <IconCheck
+                size={18}
+                stroke={2.4}
+                style={{ color: "var(--color-text-success)" }}
+              />
             ) : (
-              <IconX size={18} color={RED} stroke={2.4} />
+              <IconX
+                size={18}
+                stroke={2.4}
+                style={{ color: "var(--color-text-error)" }}
+              />
             )}
             <Text className="serif" fz={17} flex={1} tt="capitalize">
               {r.word}
@@ -98,7 +110,7 @@ export default function PracticeSummary() {
               ff="monospace"
               fw={500}
               fz={11}
-              c={r.correct ? "dimmed" : RED}>
+              c={r.correct ? "dimmed" : "var(--color-text-error)"}>
               {StepTag[r.step]}
             </Text>
           </Group>
@@ -129,7 +141,7 @@ const StatTile = ({
   label: string;
   color: string;
 }) => (
-  <Box p={12} ta="center" bd={CARD_BORDER} bdrs={12}>
+  <Box p={12} ta="center" bd="1px solid var(--color-border)" bdrs={12}>
     <Text className="serif" fz={24} c={color}>
       {value}
     </Text>
