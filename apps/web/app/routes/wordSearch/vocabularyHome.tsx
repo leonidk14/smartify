@@ -69,7 +69,7 @@ export const VocabularyHome = ({
       <Group justify="space-between" align="flex-start" wrap="nowrap">
         <Box>
           <Title order={1} fw={400} style={{ fontSize: 26, lineHeight: 1.1 }}>
-            My Vocabulary
+            Your Vocabulary
           </Title>
           <Text ff="monospace" size="xs" c="dimmed" mt={5}>
             {total} {total === 1 ? "word" : "words"} · {dueCount} due today
