@@ -12,6 +12,7 @@ import {
 import { useForm } from "@mantine/form";
 import { notifications } from "@mantine/notifications";
 import { useAuth } from "./auth";
+import { useKeyboardInset } from "./useKeyboardInset";
 
 const labelStyles = {
   label: {
@@ -58,12 +59,14 @@ export function SignInDrawer() {
     form.reset();
   });
 
+  const keyboardInset = useKeyboardInset();
+
   return (
     <Drawer
       opened={isSignInOpen}
       onClose={handleClose}
       position="bottom"
-      size="xs"
+      size={300 + keyboardInset}
       withCloseButton={false}
       overlayProps={{ backgroundOpacity: 0.35 }}
       radius={0}
