@@ -67,6 +67,7 @@ export function SignInDrawer() {
       onClose={handleClose}
       position="bottom"
       size={300 + keyboardInset}
+      zIndex={300}
       withCloseButton={false}
       overlayProps={{ backgroundOpacity: 0.35 }}
       radius={0}

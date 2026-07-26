@@ -236,7 +236,7 @@ export const LookupPanel = ({
               span
               fw={700}
               style={{ cursor: "pointer" }}
-              onClick={() => setValue(typo.suggestion)}>
+              onClick={() => commitSearch(typo.suggestion)}>
               {typo.suggestion}
             </Text>
             ?
