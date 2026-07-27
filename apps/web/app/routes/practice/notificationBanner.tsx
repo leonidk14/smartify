@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Box, Button, Group, Paper, Text, ThemeIcon } from "@mantine/core";
 import { IconBell } from "@tabler/icons-react";
+import { useAuth } from "../../lib/auth";
 import {
   dismissBanner,
   isBannerDismissed,
@@ -9,6 +10,7 @@ import {
 } from "../../lib/push";
 
 export const NotificationBanner = () => {
+  const { isSignedIn } = useAuth();
   const [isVisible, setIsVisible] = useState(
     () =>
       isPushSupported() &&
@@ -20,7 +22,7 @@ export const NotificationBanner = () => {
   );
   const [isBusy, setIsBusy] = useState(false);
 
-  if (!isVisible) {
+  if (!isVisible || !isSignedIn) {
     return null;
   }
 

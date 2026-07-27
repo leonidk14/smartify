@@ -2,7 +2,11 @@ import Anthropic from "npm:@anthropic-ai/sdk@0.110.0";
 import { getRequestUser } from "../_shared/auth.ts";
 import { requireEnv } from "../_shared/env.ts";
 import { serveFunction } from "../_shared/handler.ts";
-import { errorResponse, jsonResponse } from "../_shared/http.ts";
+import {
+  errorResponse,
+  INTERNAL_ERROR,
+  jsonResponse,
+} from "../_shared/http.ts";
 import { createAdminClient } from "../_shared/supabase.ts";
 import { buildTokenUsage, type TokenUsage } from "../_shared/usage.ts";
 import {
@@ -115,7 +119,8 @@ serveFunction(async (req) => {
     .maybeSingle();
 
   if (error) {
-    return errorResponse(error.message, 500);
+    console.error(error);
+    return errorResponse(INTERNAL_ERROR, 500);
   }
 
   if (!data) {

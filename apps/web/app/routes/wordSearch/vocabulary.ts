@@ -47,48 +47,19 @@ function toStoredGroups(groups: MeaningGroup[]): StoredMeaningGroup[] {
   });
 }
 
-function migrateStore(store: VocabularyStore): boolean {
-  let changed = false;
-  for (const entry of Object.values(store)) {
-    if (!entry?.groups) {
-      continue;
-    }
-    for (const group of entry.groups) {
-      if (Array.isArray(group.meanings)) {
-        const legacy = group.meanings as unknown as StoredMeaning[];
-        const meanings: Record<string, StoredMeaning> = {};
-        legacy.forEach((meaning, index) => {
-          meanings[uuidv4()] = { ...meaning, order: meaning.order ?? index };
-        });
-        group.meanings = meanings;
-        changed = true;
-      }
-    }
-  }
-  return changed;
-}
-
 export async function readVocabulary(): Promise<{
   store: VocabularyStore;
   isFromOfflineCopy: boolean;
 }> {
-  let store: VocabularyStore;
   try {
-    ({ store } = await postFunction<{ store: VocabularyStore }>(
+    const { store } = await postFunction<{ store: VocabularyStore }>(
       "vocabulary-list",
-    ));
+    );
+    return { store, isFromOfflineCopy: false };
   } catch {
     // Supabase unreachable (offline) — fall back to the downloaded snapshot.
     return { store: await readSnapshot(), isFromOfflineCopy: true };
   }
-  if (migrateStore(store)) {
-    await writeVocabulary(store);
-  }
-  return { store, isFromOfflineCopy: false };
-}
-
-export async function writeVocabulary(store: VocabularyStore): Promise<void> {
-  await postFunction("vocabulary-bulk-put", { store });
 }
 
 export async function saveWord({

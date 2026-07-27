@@ -304,7 +304,9 @@ export const LookupPanel = ({
             radius="md"
             type="button"
             onClick={handlePracticeLater}
-            disabled={isMarkingForPractice || isAddedForPractice}
+            disabled={
+              !isSignedIn || isMarkingForPractice || isAddedForPractice
+            }
             loading={isMarkingForPractice}>
             {isAddedForPractice ? "Added for practice" : "Practice later"}
           </Button>

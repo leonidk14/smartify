@@ -1,7 +1,11 @@
 import webpush from "npm:web-push@3";
 import { requireEnv } from "../_shared/env.ts";
 import { serveFunction } from "../_shared/handler.ts";
-import { errorResponse, jsonResponse } from "../_shared/http.ts";
+import {
+  errorResponse,
+  INTERNAL_ERROR,
+  jsonResponse,
+} from "../_shared/http.ts";
 import { createAdminClient } from "../_shared/supabase.ts";
 
 interface Subscription {
@@ -140,10 +144,17 @@ function buildPayload({
   });
 }
 
-// Triggered by pg_cron (or manually by an operator) — never called by the SPA.
+// Triggered by pg_cron (or manually by an operator) — never called by the SPA,
+// so it is gated on a shared secret rather than a user token. Without it, anyone
+// holding the bundled anon key could push arbitrary text to every subscriber
+// (`force` also skips the hour gate below).
 serveFunction(async (req) => {
   if (req.method !== "POST") {
     return errorResponse("Method not allowed", 405);
+  }
+
+  if (req.headers.get("x-reminders-secret") !== requireEnv("REMINDERS_SECRET")) {
+    return errorResponse("Unauthorized", 401);
   }
 
   const rawBody = await req.json().catch(() => ({}));
@@ -176,7 +187,8 @@ serveFunction(async (req) => {
       .returns<WordRow[]>();
 
     if (error) {
-      return errorResponse(error.message, 500);
+      console.error(error);
+      return errorResponse(INTERNAL_ERROR, 500);
     }
 
     words = pickWords({ rows: data ?? [], count: options.count });
@@ -192,7 +204,8 @@ serveFunction(async (req) => {
     .returns<Subscription[]>();
 
   if (error) {
-    return errorResponse(error.message, 500);
+    console.error(error);
+    return errorResponse(INTERNAL_ERROR, 500);
   }
 
   const body = options.body ?? defaultBody(words.length);

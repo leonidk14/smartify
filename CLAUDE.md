@@ -94,9 +94,14 @@ Reference examples: [apps/web/app/routes/practice/practiceStart.tsx](apps/web/ap
 Vocabulary lives in the Supabase Postgres table `vocabulary` (one row per word:
 `word` PK, `groups` jsonb, `should_practice_later`, `saved_at`), accessed by the
 SPA exclusively through the `vocabulary-*` edge functions
-(`supabase/functions/vocabulary-{list,save,mark-practice,bulk-put}`). IndexedDB
+(`supabase/functions/vocabulary-{list,save,mark-practice}`). IndexedDB
 (`smartify-vocabulary`, via [apps/web/app/lib/offlineCache.ts](apps/web/app/lib/offlineCache.ts))
 is only an on-demand offline snapshot, not a source of truth.
+
+`vocabulary-list` is deliberately public; every **write** function calls
+`getRequestUser` and 401s anonymous callers. Any new function that mutates the
+database must do the same — the anon key is published in the client bundle, so
+it is not a credential.
 
 Seed data:
 

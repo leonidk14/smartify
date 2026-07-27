@@ -1,5 +1,10 @@
+import { getRequestUser } from "../_shared/auth.ts";
 import { serveFunction } from "../_shared/handler.ts";
-import { errorResponse, jsonResponse } from "../_shared/http.ts";
+import {
+  errorResponse,
+  INTERNAL_ERROR,
+  jsonResponse,
+} from "../_shared/http.ts";
 import { createAdminClient } from "../_shared/supabase.ts";
 import { rowToEntry, type VocabularyRow } from "../_shared/vocabularyRows.ts";
 
@@ -9,10 +14,14 @@ interface SaveBody {
   groups?: unknown;
 }
 
-// TODO(auth): scope to the authenticated user once auth exists.
 serveFunction(async (req) => {
   if (req.method !== "POST") {
     return errorResponse("Method not allowed", 405);
+  }
+
+  const user = await getRequestUser(req);
+  if (!user) {
+    return errorResponse("Unauthorized", 401);
   }
 
   let body: SaveBody;
@@ -48,7 +57,8 @@ serveFunction(async (req) => {
     .upsert(row, { onConflict: "word" });
 
   if (error) {
-    return errorResponse(error.message, 500);
+    console.error(error);
+    return errorResponse(INTERNAL_ERROR, 500);
   }
 
   return jsonResponse({ entry: rowToEntry(row) });

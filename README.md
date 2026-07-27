@@ -91,6 +91,9 @@ App data (the vocabulary) lives in Supabase: the `vocabulary` Postgres table,
 accessed via the `vocabulary-*` edge functions. The device's IndexedDB is only
 an on-demand offline snapshot (header download button).
 
+`vocabulary-list` is readable by anyone; the two write functions require a
+signed-in user's access token and reject anonymous callers with a 401.
+
 Seed data comes from `data/vocabulary.json` (a `VocabularyStore` snapshot). A
 copy of it is kept in the private `seeds` Storage bucket as
 `seeds/vocabulary.json`, serving as a fallback/restore source.
@@ -98,7 +101,7 @@ copy of it is kept in the private `seeds` Storage bucket as
 ```bash
 # one-time setup: apply migrations and deploy the functions
 supabase db push
-supabase functions deploy vocabulary-list vocabulary-save vocabulary-mark-practice vocabulary-bulk-put
+supabase functions deploy vocabulary-list vocabulary-save vocabulary-mark-practice
 
 # seed: uploads data/vocabulary.json to the seeds bucket AND upserts all words
 node --env-file=.env scripts/seed-vocabulary.mjs
@@ -131,12 +134,20 @@ the word step for all 5, then the sentence step for all 5.
 curl -X POST "$VITE_SUPABASE_URL/functions/v1/send-reminders" \
   -H "Authorization: Bearer $VITE_SUPABASE_ANON_KEY" \
   -H "apikey: $VITE_SUPABASE_ANON_KEY" \
+  -H "x-reminders-secret: $REMINDERS_SECRET" \
   -H "Content-Type: application/json" \
   -d '{"force":true}'
 ```
 
-In Postman: `POST {{supabase_url}}/functions/v1/send-reminders`, the same two
-key headers, body raw/JSON.
+In Postman: `POST {{supabase_url}}/functions/v1/send-reminders`, the same three
+headers, body raw/JSON.
+
+`x-reminders-secret` is required — the function is cron-triggered and never
+called by the SPA, so it is gated on a shared secret rather than a user token.
+The anon key alone must not be enough to push to every subscriber. Set it with
+`supabase secrets set REMINDERS_SECRET=...` and add the same header to the cron
+job (Supabase dashboard → Integrations → Cron); the nightly send starts failing
+silently if the two ever disagree.
 
 ## Building for Production
 

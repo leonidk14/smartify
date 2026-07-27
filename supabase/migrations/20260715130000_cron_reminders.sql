@@ -8,10 +8,13 @@
 --
 -- pg_cron only runs SQL inside Postgres; to actually run the send-reminders Edge
 -- Function it makes an outbound HTTP POST (via pg_net) to the function's public
--- URL, with an `Authorization: Bearer` header. The anon key is enough here — it
--- is a valid JWT (so it passes the function's verify_jwt gate), and the function
--- does its DB work with its own service-role key internally. The anon key is not
--- secret (it already ships in the client bundle).
+-- URL, with an `Authorization: Bearer` header. The anon key satisfies the
+-- gateway's verify_jwt gate, but it is NOT secret (it ships in the client
+-- bundle), so it authorizes nothing on its own. The function additionally
+-- requires an `x-reminders-secret` header matching the REMINDERS_SECRET secret —
+-- otherwise anyone could push arbitrary text to every subscriber. Keep the
+-- header on the live job in sync with the secret, or the nightly send starts
+-- returning 401 silently.
 --
 -- Whatever fires the job, the function sends only when the hour in Europe/Berlin
 -- equals REMINDER_HOUR (20) — see supabase/functions/send-reminders/index.ts. A
@@ -22,7 +25,8 @@
 --
 -- To trigger a send by hand, `force` skips the hour gate:
 --   curl -X POST "$VITE_SUPABASE_URL/functions/v1/send-reminders" \
---     -H "Authorization: Bearer $VITE_SUPABASE_ANON_KEY" -d '{"force":true}'
+--     -H "Authorization: Bearer $VITE_SUPABASE_ANON_KEY" \
+--     -H "x-reminders-secret: $REMINDERS_SECRET" -d '{"force":true}'
 
 create extension if not exists pg_cron;
 create extension if not exists pg_net;
@@ -38,7 +42,8 @@ create extension if not exists pg_net;
 --     url := 'https://<project-ref>.supabase.co/functions/v1/send-reminders',
 --     headers := jsonb_build_object(
 --       'Content-Type', 'application/json',
---       'Authorization', 'Bearer <anon-key>'
+--       'Authorization', 'Bearer <anon-key>',
+--       'x-reminders-secret', '<reminders-secret>'
 --     ),
 --     body := '{}'::jsonb
 --   );

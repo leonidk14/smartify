@@ -1,5 +1,5 @@
 import { corsHeaders } from "./cors.ts";
-import { errorResponse } from "./http.ts";
+import { errorResponse, INTERNAL_ERROR } from "./http.ts";
 
 function withCors(response: Response, cors: Record<string, string>): Response {
   const headers = new Headers(response.headers);
@@ -22,10 +22,11 @@ export function serveFunction(
     try {
       return withCors(await handler(req), cors);
     } catch (error) {
+      // Log the real cause to the function logs, but never return it: raw
+      // PostgREST/SDK text leaks table and column names, and requireEnv's
+      // message names the missing secret.
       console.error(error);
-      const message =
-        error instanceof Error ? error.message : "Unexpected error";
-      return withCors(errorResponse(message, 500), cors);
+      return withCors(errorResponse(INTERNAL_ERROR, 500), cors);
     }
   });
 }

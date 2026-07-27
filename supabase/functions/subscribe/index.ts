@@ -1,5 +1,10 @@
+import { getRequestUser } from "../_shared/auth.ts";
 import { serveFunction } from "../_shared/handler.ts";
-import { errorResponse, jsonResponse } from "../_shared/http.ts";
+import {
+  errorResponse,
+  INTERNAL_ERROR,
+  jsonResponse,
+} from "../_shared/http.ts";
 import { createAdminClient } from "../_shared/supabase.ts";
 
 interface SubscribeBody {
@@ -7,10 +12,14 @@ interface SubscribeBody {
   keys?: { p256dh?: unknown; auth?: unknown };
 }
 
-// TODO: No auth in v1 — add anti-abuse later.
 serveFunction(async (req) => {
   if (req.method !== "POST") {
     return errorResponse("Method not allowed", 405);
+  }
+
+  const user = await getRequestUser(req);
+  if (!user) {
+    return errorResponse("Unauthorized", 401);
   }
 
   let body: SubscribeBody;
@@ -38,7 +47,8 @@ serveFunction(async (req) => {
     .upsert({ endpoint, p256dh, auth }, { onConflict: "endpoint" });
 
   if (error) {
-    return errorResponse(error.message, 500);
+    console.error(error);
+    return errorResponse(INTERNAL_ERROR, 500);
   }
 
   return jsonResponse({ ok: true });
