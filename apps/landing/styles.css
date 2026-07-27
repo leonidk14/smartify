@@ -62,6 +62,16 @@ ul {
   text-transform: uppercase;
 }
 
+.tag {
+  display: inline-block;
+  margin-left: 10px;
+  padding: 3px 10px;
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  border-radius: 999px;
+  letter-spacing: 1.5px;
+  color: var(--muted);
+}
+
 /* ── Buttons ─────────────────────────────────────────────────────────────── */
 
 .btn {
@@ -187,7 +197,7 @@ ul {
   color: var(--dim);
 }
 
-/* ── Phone mock ──────────────────────────────────────────────────────────── */
+/* ── Phone screenshot ────────────────────────────────────────────────────── */
 
 .hero-mock {
   justify-self: center;
@@ -195,7 +205,6 @@ ul {
 
 .phone {
   width: 300px;
-  height: 620px;
   background: var(--card);
   border: 1px solid rgba(0, 0, 0, 0.14);
   border-radius: 38px;
@@ -204,195 +213,11 @@ ul {
 }
 
 .phone-screen {
+  display: block;
   width: 100%;
-  height: 100%;
+  height: auto;
   border-radius: 28px;
   background: var(--card);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-.phone-status {
-  height: 32px;
-  flex: none;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 20px;
-  font: 600 11px var(--mono);
-}
-
-.dim {
-  opacity: 0.5;
-}
-
-.phone-body {
-  flex: 1;
-  overflow: hidden;
-  padding: 6px 18px 0;
-  display: flex;
-  flex-direction: column;
-  gap: 13px;
-}
-
-.mock-head {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-}
-
-.mock-title {
-  font: 400 22px/1 var(--serif);
-}
-
-.mock-mono {
-  margin-top: 3px;
-  font: 500 10px var(--mono);
-  letter-spacing: 0.5px;
-  color: var(--dim);
-}
-
-.mock-icons {
-  display: flex;
-  gap: 7px;
-}
-
-.mock-icon {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  border: 1.5px solid rgba(0, 0, 0, 0.18);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 13px;
-  color: rgba(0, 0, 0, 0.5);
-}
-
-.mock-search {
-  height: 42px;
-  border: 1.5px solid rgba(0, 0, 0, 0.16);
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  padding: 0 14px;
-  font-size: 13px;
-  color: rgba(0, 0, 0, 0.42);
-}
-
-.plus {
-  font-weight: 600;
-  font-size: 16px;
-}
-
-.mock-due {
-  background: #f4f2ee;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 14px;
-  padding: 13px 14px;
-}
-
-.mock-due .mock-mono {
-  margin-top: 0;
-}
-
-.mock-due-title {
-  margin-top: 5px;
-  font: 400 17px/1.2 var(--serif);
-}
-
-.mock-btn {
-  margin-top: 11px;
-  height: 40px;
-  border-radius: 11px;
-  background: var(--ink);
-  color: var(--card);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font: 600 13px var(--sans);
-}
-
-.mock-section {
-  margin-bottom: 4px;
-}
-
-.mock-list li {
-  display: flex;
-  align-items: flex-start;
-  gap: 11px;
-  padding: 10px 0;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.07);
-}
-
-.mock-list li:last-child {
-  border-bottom: 0;
-}
-
-.dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  margin-top: 6px;
-  flex: none;
-  background: rgba(0, 0, 0, 0.2);
-}
-
-.dot-due {
-  background: #c87a1e;
-}
-
-.mock-word {
-  font: 400 16px/1.1 var(--serif);
-}
-
-.mock-word em {
-  font: italic 11px var(--serif);
-  color: var(--dim);
-  margin-left: 4px;
-}
-
-.mock-def {
-  margin-top: 1px;
-  font-size: 11.5px;
-  color: rgba(0, 0, 0, 0.5);
-}
-
-.phone-tabs {
-  height: 60px;
-  flex: none;
-  border-top: 1px solid rgba(0, 0, 0, 0.09);
-  display: flex;
-  align-items: center;
-  padding: 0 18px 8px;
-}
-
-.tabs {
-  display: flex;
-  gap: 4px;
-  background: #f4f2ee;
-  border-radius: 11px;
-  padding: 4px;
-  width: 100%;
-}
-
-.tab {
-  flex: 1;
-  height: 34px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  font: 600 12px var(--sans);
-  color: rgba(0, 0, 0, 0.5);
-}
-
-.tab-active {
-  background: var(--ink);
-  color: var(--card);
 }
 
 /* ── Stats ───────────────────────────────────────────────────────────────── */
@@ -529,6 +354,44 @@ ul {
   text-wrap: pretty;
 }
 
+/* ── In-development note ─────────────────────────────────────────────────── */
+
+.note {
+  display: grid;
+  grid-template-columns: 0.9fr 1.1fr;
+  gap: 64px;
+  align-items: start;
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-radius: 18px;
+  padding: 36px 38px 38px;
+}
+
+.note h2 {
+  margin-top: 16px;
+  font-size: 30px;
+  line-height: 1.15;
+  text-wrap: balance;
+}
+
+.note-body {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.note-lead {
+  font: 400 21px/1.5 var(--serif);
+  color: rgba(0, 0, 0, 0.8);
+}
+
+.note-body p:not(.note-lead) {
+  font-size: 15px;
+  line-height: 1.65;
+  color: rgba(0, 0, 0, 0.6);
+  text-wrap: pretty;
+}
+
 /* ── How ─────────────────────────────────────────────────────────────────── */
 
 .how-title {
@@ -619,6 +482,18 @@ ul {
   color: var(--dim);
 }
 
+.footer-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.footer-by a {
+  color: var(--muted);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .footer-links {
   display: flex;
   gap: 24px;
@@ -640,6 +515,16 @@ ul {
   .why {
     grid-template-columns: 1fr;
     gap: 28px;
+  }
+
+  .note {
+    grid-template-columns: 1fr;
+    gap: 24px;
+    padding: 30px 26px 32px;
+  }
+
+  .note h2 {
+    font-size: 26px;
   }
 
   .cards,

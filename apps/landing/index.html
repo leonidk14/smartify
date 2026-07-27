@@ -7,7 +7,7 @@
     <title>smartify — a quieter way to grow the words you actually use</title>
     <meta
       name="description"
-      content="Look up a word, save it, and let short recall sessions bring it back. smartify is a small, calm vocabulary app — guess the word, rebuild the sentence, one nudge a day. No account, works offline." />
+      content="Look up a word, save it, and let short recall sessions bring it back. smartify is a small, calm vocabulary app — guess the word, rebuild the sentence, one nudge a day. Your saved words stay open without signing in." />
     <meta name="theme-color" content="#f0eee9" />
 
     <meta property="og:type" content="website" />
@@ -17,7 +17,7 @@
       content="smartify — a quieter way to grow the words you actually use" />
     <meta
       property="og:description"
-      content="Look up a word, save it, and let short recall sessions bring it back. No account, works offline." />
+      content="Look up a word, save it, and let short recall sessions bring it back. Your saved words stay open without signing in." />
     <!-- TODO: replace og.png (currently the 512×512 app icon) with a proper
          1200×630 share image, then switch the card back to summary_large_image. -->
     <meta property="og:image" content="/og.png" />
@@ -51,13 +51,16 @@
 
       <section class="hero">
         <div class="hero-copy">
-          <p class="eyebrow">Vocabulary, made to stick</p>
+          <p class="eyebrow">
+            Vocabulary, made to stick
+            <span class="tag">In development</span>
+          </p>
           <h1>A quieter way to grow the words you actually use.</h1>
           <p class="lede">
             Look up a word, keep it, and practise it in short bursts — guess it
             from its definition, or rebuild a sentence around it. One nudge a
-            day, no account, and your list stays readable on the train with no
-            signal.
+            day, and the words you've saved stay open whether or not you're
+            signed in.
           </p>
           <div class="hero-actions">
             <a class="btn btn-dark" href="%VITE_APP_URL%">Start practicing</a>
@@ -65,76 +68,20 @@
           </div>
           <ul class="hero-chips">
             <li>◔ One nudge a day</li>
-            <li>⤓ Works offline</li>
+            <li>⤓ Installs to your home screen</li>
             <li>✎ Active recall</li>
           </ul>
         </div>
 
-        <div class="hero-mock" aria-hidden="true">
+        <div class="hero-mock">
           <div class="phone">
-            <div class="phone-screen">
-              <div class="phone-status">
-                <span>9:41</span><span class="dim">▪▪▪ ▮</span>
-              </div>
-
-              <div class="phone-body">
-                <div class="mock-head">
-                  <div>
-                    <div class="mock-title">Your Vocabulary</div>
-                    <div class="mock-mono">24 WORDS · 5 DUE TODAY</div>
-                  </div>
-                  <div class="mock-icons">
-                    <span class="mock-icon">⤓</span>
-                  </div>
-                </div>
-
-                <div class="mock-search">
-                  <span class="plus">+</span> Look up a new word…
-                </div>
-
-                <div class="mock-due">
-                  <div class="mock-mono">DUE FOR PRACTICE</div>
-                  <div class="mock-due-title">5 words are ready</div>
-                  <div class="mock-btn">Start practice session</div>
-                </div>
-
-                <div>
-                  <div class="mock-mono mock-section">ALL WORDS</div>
-                  <ul class="mock-list">
-                    <li>
-                      <span class="dot dot-due"></span>
-                      <div>
-                        <div class="mock-word">ephemeral <em>adj.</em></div>
-                        <div class="mock-def">
-                          lasting for a very short time
-                        </div>
-                      </div>
-                    </li>
-                    <li>
-                      <span class="dot"></span>
-                      <div>
-                        <div class="mock-word">ubiquitous <em>adj.</em></div>
-                        <div class="mock-def">present or found everywhere</div>
-                      </div>
-                    </li>
-                    <li>
-                      <span class="dot"></span>
-                      <div>
-                        <div class="mock-word">gregarious <em>adj.</em></div>
-                        <div class="mock-def">fond of company; sociable</div>
-                      </div>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-
-              <div class="phone-tabs">
-                <div class="tabs">
-                  <span class="tab tab-active">▪ Words</span>
-                  <span class="tab">▷ Practice</span>
-                </div>
-              </div>
-            </div>
+            <img
+              class="phone-screen"
+              src="/smartify-home.jpg"
+              width="1080"
+              height="2340"
+              fetchpriority="high"
+              alt="The smartify word list on a phone: 62 saved words with 10 due today, a search field to look up a new word, and a button to start a practice session." />
           </div>
         </div>
       </section>
@@ -149,8 +96,8 @@
           <div class="stat-label">PER DAILY REMINDER</div>
         </div>
         <div class="stat">
-          <div class="stat-value">0 accounts</div>
-          <div class="stat-label">NO SIGN-UP NEEDED</div>
+          <div class="stat-value">1 of 3 modes</div>
+          <div class="stat-label">OPEN WITHOUT SIGN-IN</div>
         </div>
       </section>
 
@@ -170,7 +117,8 @@
             <p>
               Search a word and get its senses grouped by part of speech, each
               with a definition and a real example sentence — not a wall of
-              every meaning at once.
+              every meaning at once. New lookups are written on the fly, so they
+              ask you to sign in first.
             </p>
           </article>
 
@@ -216,13 +164,30 @@
 
           <article class="card">
             <span class="card-icon">⤓</span>
-            <h3>Works offline</h3>
+            <h3>Installs like an app</h3>
             <p>
-              Download your vocabulary to the device and browse it with no
-              connection. Install it to the home screen and it opens like any
-              other app.
+              Add it to your home screen and it opens like anything else on the
+              phone — full screen, its own icon, no app store in the way.
             </p>
           </article>
+        </div>
+      </section>
+
+      <section class="section section-ruled">
+        <div class="note">
+          <div>
+            <p class="eyebrow">Still being built</p>
+            <h2>An early version, out in the open.</h2>
+          </div>
+          <div class="note-body">
+            <p class="note-lead">smartify is live, but it isn't finished.</p>
+            <p>
+              Everything described above works today. Things will still change:
+              screens get reworked, details behave differently as they settle,
+              and new features land as they're ready. If something looks
+              different from one visit to the next, that's the project moving.
+            </p>
+          </div>
         </div>
       </section>
 
@@ -230,21 +195,32 @@
         <div class="why">
           <div>
             <p class="eyebrow">Why I built it</p>
-            <h2>The story behind the project</h2>
+            <h2>The words a textbook leaves out.</h2>
           </div>
           <div class="why-body">
             <p class="why-lead">
-              [Placeholder — open with the problem you kept running into. Why
-              did existing tools fall short? What made you want to build your
-              own?]
+              I've always been pulled in by how people communicate. English
+              isn't my first language, so I got to learn it twice — once from
+              textbooks, and once from listening to how people actually talk.
             </p>
             <p>
-              [Placeholder — the second paragraph. Describe the insight or
-              principle behind the design: quiet, focused, respectful of
-              attention.]
+              The second lesson never really ends. My Irish colleagues don't try
+              to do something; they take a stab at it. Same meaning, but only
+              one of them sounds like a person. Those are the words I started
+              keeping — the rare ones, the phrases that don't survive a
+              word-for-word translation, the ones that let you say what you mean
+              exactly instead of approximately.
             </p>
             <p>
-              [Placeholder — an optional third paragraph, or a personal note.]
+              They work in the other direction too. Recognising the phrase
+              someone just chose is often the difference between following a
+              sentence and understanding what was meant by it — what got
+              implied, softened, or left between the lines.
+            </p>
+            <p>
+              So I built the thing I wanted for collecting them, with the
+              practice that works on me: guess the word from its definition, or
+              write it into a sentence and see what comes back.
             </p>
           </div>
         </div>
@@ -286,8 +262,8 @@
       <section id="cta" class="cta">
         <h2>Start with one word today.</h2>
         <p>
-          No account, no onboarding tour. Look something up and see whether it
-          sticks by Thursday.
+          No onboarding tour. Look something up and see whether it sticks by
+          Thursday.
         </p>
         <div class="cta-actions">
           <a class="btn btn-light" href="%VITE_APP_URL%">Start practicing</a>
@@ -296,10 +272,23 @@
       </section>
 
       <footer class="footer">
-        <span>smartify — your language sparring partner in your phone</span>
+        <div class="footer-brand">
+          <span>smartify — your language sparring partner in your phone</span>
+          <span class="footer-by">
+            Created by Leonid Kaida ·
+            <a href="https://github.com/leonidk14" target="_blank">GitHub</a> ·
+            <a
+              href="https://www.linkedin.com/in/leonid-k-108543182"
+              target="_blank"
+              >LinkedIn</a
+            >
+          </span>
+        </div>
         <div class="footer-links">
           <a href="#features">Features</a>
           <a href="#how">How it works</a>
+          <!-- TODO: replace with the real repository URL. -->
+          <a href="#">Source</a>
           <a href="%VITE_APP_URL%">Open the app</a>
         </div>
       </footer>

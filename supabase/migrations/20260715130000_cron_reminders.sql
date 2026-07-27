@@ -1,25 +1,38 @@
 -- Scheduled "Ready to practice?" reminders.
 --
+-- THE SCHEDULE IS LIVE AND IS NOT DEFINED HERE. It is configured in the Supabase
+-- dashboard (Integrations → Cron); this migration only installs the extensions
+-- that job depends on. Change the schedule there, not in this file — the
+-- commented block below is kept as a reference for the shape of the pg_net call
+-- and is NOT what runs today.
+--
 -- pg_cron only runs SQL inside Postgres; to actually run the send-reminders Edge
 -- Function it makes an outbound HTTP POST (via pg_net) to the function's public
 -- URL, with an `Authorization: Bearer` header. The anon key is enough here — it
 -- is a valid JWT (so it passes the function's verify_jwt gate), and the function
 -- does its DB work with its own service-role key internally. The anon key is not
--- secret (it already ships in the client bundle), so both values are inlined
--- below; replace them with this project's URL + anon key before enabling.
+-- secret (it already ships in the client bundle).
 --
--- For now reminders are triggered MANUALLY by POSTing to the function, e.g.:
+-- Whatever fires the job, the function sends only when the hour in Europe/Berlin
+-- equals REMINDER_HOUR (20) — see supabase/functions/send-reminders/index.ts. A
+-- schedule expressed in UTC therefore drifts off that gate at every DST change
+-- (20:00 Berlin is 18:00 UTC under CEST, 19:00 UTC under CET), and the function
+-- silently sends nothing on the days it misses. Re-check the two agree whenever
+-- the clocks move.
+--
+-- To trigger a send by hand, `force` skips the hour gate:
 --   curl -X POST "$VITE_SUPABASE_URL/functions/v1/send-reminders" \
---     -H "Authorization: Bearer $VITE_SUPABASE_ANON_KEY" -d '{}'
--- The daily schedule below stays commented until we go live.
+--     -H "Authorization: Bearer $VITE_SUPABASE_ANON_KEY" -d '{"force":true}'
 
 create extension if not exists pg_cron;
 create extension if not exists pg_net;
 
--- TODO: enable the daily reminder. 18:00 in UTC+2 == 16:00 UTC.
+-- Reference only — see the note above. Replace the URL and anon key with this
+-- project's values if the schedule is ever moved back into SQL.
 -- select cron.schedule(
 --   'send-reminders-daily',
---   '0 16 * * *',
+--   -- must land on 20:00 Europe/Berlin to clear REMINDER_HOUR; UTC shifts with DST
+--   '0 18 * * *',
 --   $$
 --   select net.http_post(
 --     url := 'https://<project-ref>.supabase.co/functions/v1/send-reminders',
