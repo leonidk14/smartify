@@ -17,7 +17,7 @@ import {
 import { notifications } from "@mantine/notifications";
 import { IconCloudOff, IconLogout, IconPlus } from "@tabler/icons-react";
 import { type StoredMeaning, type VocabularyEntry } from "./vocabulary";
-import { monoLabel } from "./typography";
+import { text } from "../../theme/typography";
 import { useAuth } from "../../lib/auth";
 
 interface VocabularyHomeProps {
@@ -67,10 +67,8 @@ export const VocabularyHome = ({
     <Stack gap={18} p={20} pb={96}>
       <Group justify="space-between" align="flex-start" wrap="nowrap">
         <Box>
-          <Title order={1} fw={400} style={{ fontSize: 26, lineHeight: 1.1 }}>
-            Your Vocabulary
-          </Title>
-          <Text ff="monospace" size="xs" c="dimmed" mt={5}>
+          <Title order={1}>Your Vocabulary</Title>
+          <Text {...text.meta} mt={5}>
             {isSignedIn
               ? `${wordCountLabel} · ${dueCount} due today`
               : `${wordCountLabel} · offline copy`}
@@ -133,23 +131,20 @@ export const VocabularyHome = ({
           color: "rgba(0,0,0,.42)",
         }}>
         <IconPlus size={18} />
-        <Text size="sm" c="dimmed">
+        <Text {...text.bodySm} c="dimmed">
           Look up a new word…
         </Text>
       </UnstyledButton>
 
       {!isSignedIn ? (
         <Paper radius={15} p={16} bg="var(--color-surface-inverse)">
-          <Text fw={600} fz={13.5} c="var(--color-text-on-inverse)">
+          <Text {...text.uiLabel} c="var(--color-text-on-inverse)">
             Unlock sentence practice
           </Text>
           <Text
+            {...text.bodyXs}
             mt={5}
-            fz={12.5}
-            style={{
-              lineHeight: 1.5,
-              color: "var(--color-text-on-inverse-dimmed)",
-            }}>
+            c="var(--color-text-on-inverse-dimmed)">
             Sign in to practice with generated sentences. Your saved words and
             guess-the-word practice stays available when signed out.
           </Text>
@@ -173,8 +168,8 @@ export const VocabularyHome = ({
             background: "var(--color-surface-warm)",
             border: "1px solid rgba(0,0,0,.08)",
           }}>
-          <Text {...monoLabel}>Due for practice</Text>
-          <Text className="serif" mt={6} style={{ fontSize: 19 }}>
+          <Text {...text.label}>Due for practice</Text>
+          <Text {...text.displaySm} mt={6}>
             {dueLabel}
           </Text>
           <Button
@@ -190,11 +185,11 @@ export const VocabularyHome = ({
       ) : null}
 
       <Box>
-        <Text {...monoLabel} mb={6}>
+        <Text {...text.label} mb={6}>
           {isSignedIn ? "All words" : "All words · browsable offline"}
         </Text>
         {total === 0 ? (
-          <Text size="sm" c="dimmed" py={16}>
+          <Text {...text.bodySm} c="dimmed" py={16}>
             No words yet. Look up a word to start building your vocabulary.
           </Text>
         ) : (
@@ -220,28 +215,23 @@ export const VocabularyHome = ({
                         borderRadius: "50%",
                         marginTop: 7,
                         flex: "none",
-                        // TODO: re-visit all colors and fonts and centralize them
+                        // TODO: tokenize the remaining black-alpha values (see theme/colors.md)
                         background: entry.shouldPracticeLater
                           ? "var(--color-warning)"
                           : "rgba(0,0,0,.2)",
                       }}
                     />
                     <Box flex={1} miw={0}>
-                      <Text className="serif" style={{ fontSize: 17 }}>
+                      <Text {...text.displaySm}>
                         {entry.display ?? word}
                         {entry.groups[0] ? (
-                          <Text
-                            span
-                            className="serif"
-                            c="dimmed"
-                            ml={6}
-                            style={{ fontStyle: "italic", fontSize: 12 }}>
+                          <Text {...text.annotation} span ml={6}>
                             {entry.groups[0].part_of_speech}
                           </Text>
                         ) : null}
                       </Text>
                       {sense ? (
-                        <Text size="xs" c="dimmed" mt={2} lineClamp={1}>
+                        <Text {...text.bodyXs} c="dimmed" mt={2} lineClamp={1}>
                           {sense.definition}
                         </Text>
                       ) : null}

@@ -8,6 +8,7 @@ import {
   isPushSupported,
   subscribeToPush,
 } from "../../lib/push";
+import { text } from "../../theme/typography";
 
 export const NotificationBanner = () => {
   const { isSignedIn } = useAuth();
@@ -57,10 +58,10 @@ export const NotificationBanner = () => {
           <IconBell size={17} />
         </ThemeIcon>
         <Box flex={1} miw={0}>
-          <Text fw={600} fz={13.5} c="dark.9">
+          <Text {...text.uiLabel} c="dark.9">
             Get practice reminders
           </Text>
-          <Text fz={12.5} lh={1.45} mt={3} c="rgba(0,0,0,.55)">
+          <Text {...text.bodyXs} mt={3} c="rgba(0,0,0,.55)">
             We’ll nudge you when words are due and drop you straight into a
             session.
           </Text>
@@ -70,17 +71,14 @@ export const NotificationBanner = () => {
               radius={11}
               h={38}
               px={16}
-              fz={13}
-              fw={600}
+              {...text.uiLabel}
               loading={isBusy}
               onClick={handleEnable}>
               Turn on reminders
             </Button>
             <Text
+              {...text.metaLg}
               component="button"
-              ff="monospace"
-              fz={12}
-              fw={600}
               c="rgba(0,0,0,.4)"
               bg="transparent"
               bd="none"

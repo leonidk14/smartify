@@ -16,7 +16,7 @@ import {
   IconPencil,
   IconQuestionMark,
 } from "@tabler/icons-react";
-import { monoLabel } from "../wordSearch/typography";
+import { text } from "../../theme/typography";
 import { NotificationBanner } from "./notificationBanner";
 import { useAuth } from "../../lib/auth";
 import type { PracticeMode } from "../../store/session";
@@ -67,10 +67,8 @@ export const PracticeStart = ({ total, markedCount }: PracticeStartProps) => {
   return (
     <Stack gap={22} p={20} pb={96}>
       <Box>
-        <Title order={1} fw={400} fz={26} lh={1.1}>
-          Practice
-        </Title>
-        <Text ff="monospace" size="xs" c="dimmed" mt={5}>
+        <Title order={1}>Practice</Title>
+        <Text {...text.meta} mt={5}>
           {markedCount} {markedCount === 1 ? "word" : "words"} marked for
           practice
         </Text>
@@ -78,16 +76,13 @@ export const PracticeStart = ({ total, markedCount }: PracticeStartProps) => {
 
       {!isSignedIn ? (
         <Paper radius={15} p={16} bg="var(--color-surface-inverse)">
-          <Text fw={600} fz={13.5} c="var(--color-text-on-inverse)">
+          <Text {...text.uiLabel} c="var(--color-text-on-inverse)">
             Sentence practice needs an account
           </Text>
           <Text
+            {...text.bodyXs}
             mt={5}
-            fz={12.5}
-            style={{
-              lineHeight: 1.5,
-              color: "var(--color-text-on-inverse-dimmed)",
-            }}>
+            c="var(--color-text-on-inverse-dimmed)">
             Rebuild-the-sentence modes are generated on the fly, so they need
             sign-in. Guess-the-word practice and your saved words stay available
             offline.
@@ -107,7 +102,7 @@ export const PracticeStart = ({ total, markedCount }: PracticeStartProps) => {
       <NotificationBanner />
 
       <Box>
-        <Text {...monoLabel} mb={10}>
+        <Text {...text.label} mb={10}>
           Choose a mode
         </Text>
         <Stack gap={10}>
@@ -141,10 +136,8 @@ export const PracticeStart = ({ total, markedCount }: PracticeStartProps) => {
                     {option.icon}
                   </Center>
                   <Box flex={1} miw={0}>
-                    <Text fw={600} fz={14}>
-                      {option.title}
-                    </Text>
-                    <Text size="xs" c="dimmed" mt={1}>
+                    <Text {...text.uiLabel}>{option.title}</Text>
+                    <Text {...text.bodyXs} c="dimmed" mt={1}>
                       {option.description}
                     </Text>
                   </Box>
@@ -167,7 +160,7 @@ export const PracticeStart = ({ total, markedCount }: PracticeStartProps) => {
       </Box>
 
       {total === 0 ? (
-        <Text size="sm" c="dimmed">
+        <Text {...text.bodySm} c="dimmed">
           No words saved yet. Look up words to build your vocabulary.
         </Text>
       ) : null}

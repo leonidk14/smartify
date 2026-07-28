@@ -21,7 +21,7 @@ import type { LookupResult, Typo } from "./actions";
 import type { GeneratedSentence } from "../practice/sentenceTypes";
 import { normalize } from "./normalize";
 import type { StoredMeaningGroup, VocabularyEntry } from "./vocabulary";
-import { monoLabel } from "./typography";
+import { text, textCss } from "../../theme/typography";
 import { useKeyboardInset } from "../../lib/useKeyboardInset";
 import { useAuth } from "../../lib/auth";
 
@@ -190,9 +190,7 @@ export const LookupPanel = ({
             onClick={onClose}>
             <IconChevronLeft size={22} />
           </ActionIcon>
-          <Text ff="monospace" size="sm" c="dimmed" fw={500}>
-            Look up
-          </Text>
+          <Text {...text.metaLg}>Look up</Text>
         </Group>
         <Group gap={8} align="stretch" wrap="nowrap">
           <TextInput
@@ -224,17 +222,17 @@ export const LookupPanel = ({
       <ScrollArea flex={1} mih={0} px={20} py={16}>
         {isLoading ? (
           <Group gap={8} justify="center" mt={40}>
-            <Text size="md">Searching for the meaning…</Text>
+            <Text {...text.body}>Searching for the meaning…</Text>
             <Loader size="sm" color="ink" />
           </Group>
         ) : hasResult && groups ? (
           <WordResult word={originalSearchItem ?? value} groups={groups} />
         ) : typo ? (
-          <Text size="md" ta="center" mt={40}>
+          <Text {...text.body} ta="center" mt={40}>
             Did you mean{" "}
             <Text
+              {...text.emphasis}
               span
-              fw={700}
               style={{ cursor: "pointer" }}
               onClick={() => commitSearch(typo.suggestion)}>
               {typo.suggestion}
@@ -242,16 +240,16 @@ export const LookupPanel = ({
             ?
           </Text>
         ) : isNothingFound ? (
-          <Text size="md" ta="center" mt={40}>
+          <Text {...text.body} ta="center" mt={40}>
             We couldn't find anything :(
           </Text>
         ) : isError ? (
-          <Text size="md" ta="center" mt={40}>
+          <Text {...text.body} ta="center" mt={40}>
             Something went wrong :(
           </Text>
         ) : suggestions.length > 0 ? (
           <Stack gap={0}>
-            <Text {...monoLabel} mb={8}>
+            <Text {...text.label} mb={8}>
               Suggestions
             </Text>
             {suggestions.map((suggestion) => {
@@ -269,9 +267,9 @@ export const LookupPanel = ({
                     borderBottom: "1px solid rgba(0,0,0,.06)",
                   }}>
                   <IconSearch size={16} color="rgba(0,0,0,.3)" />
-                  <Text size="md">
+                  <Text {...text.body}>
                     {suggestion.slice(0, matchStart)}
-                    <Text span fw={600}>
+                    <Text {...text.emphasis} span>
                       {suggestion.slice(matchStart, matchEnd)}
                     </Text>
                     {suggestion.slice(matchEnd)}
@@ -282,10 +280,10 @@ export const LookupPanel = ({
           </Stack>
         ) : isSignInRequired ? (
           <Stack align="center" gap={12} mt={40}>
-            <Text size="md" ta="center">
+            <Text {...text.body} ta="center">
               Sign in to look up new words
             </Text>
-            <Text size="sm" c="dimmed" ta="center" maw={260}>
+            <Text {...text.bodySm} c="dimmed" ta="center" maw={260}>
               New lookups are generated on the fly. Your saved words stay
               available offline.
             </Text>
@@ -341,17 +339,12 @@ const WordResult = ({
                 color="gray"
                 radius="xl"
                 styles={{
-                  label: {
-                    fontFamily: "var(--font-serif)",
-                    fontStyle: "italic",
-                    textTransform: "none",
-                    fontWeight: 400,
-                  },
+                  label: { ...textCss.annotation, textTransform: "none" },
                 }}>
                 {group.part_of_speech}
               </Badge>
               <Divider flex={1} />
-              <Text ff="monospace" size="xs" c="dimmed">
+              <Text {...text.meta}>
                 {senses.length} {senses.length === 1 ? "sense" : "senses"}
               </Text>
             </Group>
@@ -359,17 +352,14 @@ const WordResult = ({
               const example = sense.sentences?.[0]?.sentence;
               return (
                 <Group key={index} gap={12} align="flex-start" wrap="nowrap">
-                  <Text ff="monospace" size="sm" c="dimmed" pt={1}>
+                  <Text {...text.metaLg} pt={1}>
                     {index + 1}
                   </Text>
                   <Stack gap={6} flex={1}>
-                    <Text size="md">{sense.definition}</Text>
+                    <Text {...text.body}>{sense.definition}</Text>
                     {example?.original ? (
                       <Text
-                        className="serif"
-                        fs="italic"
-                        size="sm"
-                        c="dimmed"
+                        {...text.annotation}
                         pl={10}
                         style={{ borderLeft: "2px solid rgba(0,0,0,.15)" }}>
                         {formatExample(example)}

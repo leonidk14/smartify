@@ -10,7 +10,7 @@ import {
   ThemeIcon,
 } from "@mantine/core";
 import { IconCheck } from "@tabler/icons-react";
-import { monoLabel } from "../wordSearch/typography";
+import { text } from "../../theme/typography";
 import type { VocabularyEntry } from "../wordSearch/vocabulary";
 import {
   firstStepPath,
@@ -61,7 +61,7 @@ export const PracticeSelect = ({ words, mode }: PracticeSelectProps) => {
   if (words.length === 0) {
     return (
       <Flex direction="column" align="center" justify="center" flex={1} p={16}>
-        <Text size="lg" c="dimmed">
+        <Text {...text.body} c="dimmed">
           No words saved yet. Look up words to build your vocabulary.
         </Text>
       </Flex>
@@ -97,7 +97,7 @@ export const PracticeSelect = ({ words, mode }: PracticeSelectProps) => {
       </Group>
 
       <Box>
-        <Text {...monoLabel} mb={4}>
+        <Text {...text.label} mb={4}>
           {selected.length} selected
         </Text>
         <Stack gap={0}>
@@ -122,7 +122,7 @@ export const PracticeSelect = ({ words, mode }: PracticeSelectProps) => {
                   color={isSelected ? "dark" : "gray"}>
                   {isSelected ? <IconCheck size={13} /> : <span />}
                 </ThemeIcon>
-                <Text className="serif" size="lg">
+                <Text {...text.displaySm}>
                   {(entry.display?.toLowerCase() ?? word).replace(/^./, (c) =>
                     c.toUpperCase(),
                   )}

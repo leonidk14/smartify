@@ -3,6 +3,7 @@ import { Link, useBlocker, useNavigate } from "react-router";
 import { Box, Button, Flex, Group, Text } from "@mantine/core";
 import { IconCheck, IconX } from "@tabler/icons-react";
 import { useSessionStore } from "../store/session";
+import { text } from "../theme/typography";
 import { ActionBar } from "./practice/actionBar";
 
 const StepTag: Record<string, string> = {
@@ -42,7 +43,7 @@ export default function PracticeSummary() {
         flex={1}
         p={16}
         gap={16}>
-        <Text size="lg" c="dimmed">
+        <Text {...text.body} c="dimmed">
           No practice session to summarize.
         </Text>
         <Button
@@ -60,10 +61,8 @@ export default function PracticeSummary() {
   return (
     <Flex direction="column" p={20} pb={110} gap={18} flex={1}>
       <Box>
-        <Text className="serif" fz={26} lh={1.1}>
-          Session complete
-        </Text>
-        <Text ff="monospace" fw={500} fz={12} c="dimmed" mt={8}>
+        <Text {...text.displayLg}>Session complete</Text>
+        <Text {...text.meta} mt={8}>
           {correctCount} of {results.length} correct · nice work
         </Text>
       </Box>
@@ -71,12 +70,12 @@ export default function PracticeSummary() {
       <Group gap={10} grow>
         <StatTile
           value={correctCount}
-          label="CORRECT"
+          label="Correct"
           color="var(--color-text-success)"
         />
         <StatTile
           value={reviewCount}
-          label="REVIEW"
+          label="Review"
           color="var(--color-text-error)"
         />
       </Group>
@@ -103,13 +102,11 @@ export default function PracticeSummary() {
                 style={{ color: "var(--color-text-error)" }}
               />
             )}
-            <Text className="serif" fz={17} flex={1} tt="capitalize">
+            <Text {...text.displaySm} flex={1} tt="capitalize">
               {r.word}
             </Text>
             <Text
-              ff="monospace"
-              fw={500}
-              fz={11}
+              {...text.label}
               c={r.correct ? "dimmed" : "var(--color-text-error)"}>
               {StepTag[r.step]}
             </Text>
@@ -142,10 +139,10 @@ const StatTile = ({
   color: string;
 }) => (
   <Box p={12} ta="center" bd="1px solid var(--color-border)" bdrs={12}>
-    <Text className="serif" fz={24} c={color}>
+    <Text {...text.displayLg} c={color}>
       {value}
     </Text>
-    <Text ff="monospace" fw={500} fz={10} c="dimmed" mt={2}>
+    <Text {...text.label} mt={2}>
       {label}
     </Text>
   </Box>

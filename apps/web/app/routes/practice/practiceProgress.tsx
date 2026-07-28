@@ -2,7 +2,7 @@ import { ActionIcon, Flex, Group, Progress, Text } from "@mantine/core";
 import { IconX } from "@tabler/icons-react";
 import { useNavigate, useParams } from "react-router";
 import { useSessionStore } from "../../store/session";
-import { monoLabel } from "../wordSearch/typography";
+import { text } from "../../theme/typography";
 
 export type ProgressTone = "neutral" | "correct" | "wrong";
 
@@ -46,7 +46,7 @@ export const PracticeProgress = ({
 
       {single ? (
         <Flex flex={1} justify="center">
-          <Text {...monoLabel}>Single word</Text>
+          <Text {...text.label}>Single word</Text>
         </Flex>
       ) : (
         <>
@@ -58,7 +58,7 @@ export const PracticeProgress = ({
             radius="xl"
             transitionDuration={250}
           />
-          <Text ff="monospace" fw={600} fz={12} c="dimmed">
+          <Text {...text.meta}>
             {current} / {total}
           </Text>
         </>

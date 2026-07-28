@@ -4,7 +4,7 @@ import { useNavigate, useNavigation } from "react-router";
 import { normalize } from "../wordSearch/normalize";
 import { nextWord, useSessionStore } from "../../store/session";
 import { useKeyboardInset } from "../../lib/useKeyboardInset";
-import { monoLabel } from "../wordSearch/typography";
+import { text } from "../../theme/typography";
 import { PracticeProgress } from "./practiceProgress";
 import { ActionBar } from "./actionBar";
 import { FeedbackHeader } from "./feedbackHeader";
@@ -22,11 +22,8 @@ type View = "input" | "correct" | "wrong";
 
 const PartOfSpeechPill = ({ children }: { children: React.ReactNode }) => (
   <Text
+    {...text.annotation}
     span
-    className="serif"
-    fs="italic"
-    fz={13}
-    c="dimmed"
     display="inline-block"
     px={11}
     py={4}
@@ -144,15 +141,13 @@ export const PracticeWord = ({
       {view === "input" && (
         <>
           <Box>
-            <Text {...monoLabel}>Guess the word</Text>
+            <Text {...text.label}>Guess the word</Text>
             <Box mt={14}>
               <PartOfSpeechPill>{partOfSpeech}</PartOfSpeechPill>
             </Box>
             <Text
+              {...text.prose}
               ref={definitionRef}
-              className="serif"
-              fz={25}
-              lh={1.35}
               mt={16}
               style={{ scrollMarginTop: 16 }}>
               {definition}
@@ -183,18 +178,18 @@ export const PracticeWord = ({
               p="12px 14px"
               bd="1px solid rgba(0,0,0,.08)"
               bdrs={12}>
-              <Text {...monoLabel} mb={8}>
+              <Text {...text.label} mb={8}>
                 One of these words
               </Text>
               <Group gap={10}>
                 {hints.map((h, i) => (
                   <Group key={h} gap={10} align="center">
                     {i > 0 && (
-                      <Text c="dimmed" fz={14}>
+                      <Text {...text.bodySm} c="dimmed">
                         ·
                       </Text>
                     )}
-                    <Text className="serif" fz={16} tt="capitalize">
+                    <Text {...text.proseSm} tt="capitalize">
                       {h}
                     </Text>
                   </Group>
@@ -235,10 +230,10 @@ export const PracticeWord = ({
         <>
           <FeedbackHeader tone="correct" />
           <Box p={16} bd="1px solid var(--color-border)" bdrs={14}>
-            <Text className="serif" fz={26} tt="capitalize">
+            <Text {...text.displayLg} tt="capitalize">
               {display}
             </Text>
-            <Text fz={14} lh={1.5} c="dimmed" mt={10}>
+            <Text {...text.bodySm} c="dimmed" mt={10}>
               {definition}
             </Text>
           </Box>
@@ -267,28 +262,23 @@ export const PracticeWord = ({
             bg="var(--color-surface-error)"
             bd="1.5px solid var(--color-border-error)"
             bdrs={14}>
-            <Text
-              ff="monospace"
-              fw={500}
-              fz={10}
-              c="var(--color-text-error)"
-              mb={6}>
-              YOUR ANSWER
+            <Text {...text.label} c="var(--color-text-error)" mb={6}>
+              Your answer
             </Text>
-            <Text className="serif" fz={15} lh={1.5} tt="capitalize">
+            <Text {...text.proseSm} tt="capitalize">
               {answer.trim()}
             </Text>
           </Box>
 
           {revealWord && (
             <Box p={16} bdrs={14} bd="1px solid var(--color-border)">
-              <Text ff="monospace" fw={500} fz={10} c="dimmed" mb={6}>
-                ANSWER
+              <Text {...text.label} mb={6}>
+                Answer
               </Text>
-              <Text className="serif" fz={22} tt="capitalize">
+              <Text {...text.displayMd} tt="capitalize">
                 {word}
               </Text>
-              <Text fz={14} lh={1.5} c="dimmed" mt={8}>
+              <Text {...text.bodySm} c="dimmed" mt={8}>
                 {definition}
               </Text>
             </Box>

@@ -11,7 +11,7 @@ import {
 } from "@mantine/core";
 import type { ShouldRevalidateFunctionArgs } from "react-router";
 import { IconBook, IconChevronLeft, IconPlayerPlay } from "@tabler/icons-react";
-import { monoLabel } from "./wordSearch/typography";
+import { text } from "../theme/typography";
 import { readVocabulary } from "./wordSearch/vocabulary";
 
 const MODE_LABELS: Record<string, string> = {
@@ -84,11 +84,8 @@ export default function Layout() {
               <IconChevronLeft size={22} />
             </ActionIcon>
             <Box>
-              <Text {...monoLabel}>{MODE_LABELS[selectMode]}</Text>
-              <Text
-                className="serif"
-                mt={2}
-                style={{ fontSize: 20, lineHeight: 1.1 }}>
+              <Text {...text.label}>{MODE_LABELS[selectMode]}</Text>
+              <Text {...text.displayMd} mt={2}>
                 Which words?
               </Text>
             </Box>

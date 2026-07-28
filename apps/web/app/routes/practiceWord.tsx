@@ -4,6 +4,7 @@ import { Button, Center, Stack, Text } from "@mantine/core";
 import { PracticeWord } from "./practice/practiceWord";
 import { useBlockBack } from "../lib/useBlockBack";
 import { useVocabulary } from "./wordSearch/useVocabulary";
+import { text } from "../theme/typography";
 import type { VocabularyStore } from "./wordSearch/vocabulary";
 import type { Route } from "./+types/practiceWord";
 
@@ -78,7 +79,7 @@ export default function PracticeWordRoute({ params }: Route.ComponentProps) {
     return (
       <Center flex={1} p={24}>
         <Stack align="center" gap={12}>
-          <Text size="md" c="dimmed">
+          <Text {...text.body} c="dimmed">
             Word not found
           </Text>
           <Button component={Link} to="/practice" variant="light" radius="md">

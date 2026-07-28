@@ -1,5 +1,6 @@
 import { Center, Stack, Text } from "@mantine/core";
 import { IconCheck, IconX } from "@tabler/icons-react";
+import { text } from "../../theme/typography";
 
 type FeedbackTone = "correct" | "wrong";
 
@@ -37,11 +38,11 @@ export const FeedbackHeader = ({ tone, note }: FeedbackHeaderProps) => {
         bdrs="50%">
         {t.icon}
       </Center>
-      <Text fw={600} fz={22} c={t.color}>
+      <Text {...text.headline} c={t.color}>
         {t.label}
       </Text>
       {note ? (
-        <Text ff="monospace" fw={500} fz={11} c={t.color}>
+        <Text {...text.meta} c={t.color}>
           {note}
         </Text>
       ) : null}

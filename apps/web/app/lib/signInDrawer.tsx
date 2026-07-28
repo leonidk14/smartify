@@ -13,18 +13,9 @@ import { useForm } from "@mantine/form";
 import { notifications } from "@mantine/notifications";
 import { useAuth } from "./auth";
 import { useKeyboardInset } from "./useKeyboardInset";
+import { text, textCss } from "../theme/typography";
 
-const labelStyles = {
-  label: {
-    fontFamily: "var(--mantine-font-family-monospace)",
-    textTransform: "uppercase" as const,
-    fontSize: 10,
-    letterSpacing: ".5px",
-    fontWeight: 500,
-    color: "var(--mantine-color-dimmed)",
-    marginBottom: 5,
-  },
-};
+const labelStyles = { label: { ...textCss.label, marginBottom: 5 } };
 
 export function SignInDrawer() {
   const { isSignInOpen, closeSignIn, signIn } = useAuth();
@@ -77,10 +68,8 @@ export function SignInDrawer() {
       }}>
       <Stack gap={16}>
         <Box>
-          <Title order={2} fw={400} style={{ fontSize: 24, lineHeight: 1.1 }}>
-            Welcome back
-          </Title>
-          <Text size="sm" c="dimmed" mt={5}>
+          <Title order={1}>Welcome back</Title>
+          <Text {...text.bodySm} c="dimmed" mt={5}>
             Sign in to look up words and practice.
           </Text>
         </Box>
@@ -107,7 +96,7 @@ export function SignInDrawer() {
             />
 
             {formError ? (
-              <Text size="sm" c="var(--color-text-error)">
+              <Text {...text.bodySm} c="var(--color-text-error)">
                 {formError}
               </Text>
             ) : null}

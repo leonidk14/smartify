@@ -4,6 +4,7 @@ import { Flex, Loader, Text } from "@mantine/core";
 import { readVocabulary } from "./wordSearch/vocabulary";
 import { useBlockBack } from "../lib/useBlockBack";
 import { PracticeSentence } from "./practice/practiceSentence";
+import { text } from "../theme/typography";
 import { evaluateSentence, generateSentence } from "./practice/sentenceActions";
 import type { SentenceEvaluation } from "./practice/sentenceTypes";
 import type { Route } from "./+types/practiceSentence";
@@ -121,7 +122,7 @@ function BuildingSentence() {
   return (
     <Flex direction="column" align="center" justify="center" gap={16} flex={1}>
       <Loader color="dark" size="lg" />
-      <Text size="md" c="dimmed">
+      <Text {...text.body} c="dimmed">
         Building your sentence…
       </Text>
     </Flex>

@@ -1,8 +1,10 @@
 import {
   createTheme,
+  rem,
   type CSSVariablesResolver,
   type MantineColorsTuple,
 } from "@mantine/core";
+import { fontSize, fontStack, fontWeight, lineHeight } from "./theme/typography";
 
 const ink: MantineColorsTuple = [
   "#f5f5f4",
@@ -44,19 +46,45 @@ const colors = {
   textOnInverseDimmed: "rgba(240, 238, 233, 0.65)",
 };
 
+const headingStyle = (size: number) => ({
+  fontSize: rem(size),
+  lineHeight: String(lineHeight.tight),
+  fontWeight: String(fontWeight.regular),
+});
+
 export const theme = createTheme({
   white: "#ffffff",
   black: "#1a1a1a",
   primaryColor: "ink",
   primaryShade: 9,
   colors: { ink },
-  fontFamilyMonospace: "ui-monospace, Menlo, Consolas, monospace",
-  headings: { fontFamily: "var(--font-serif)" },
+  fontFamily: fontStack.sans,
+  fontFamilyMonospace: fontStack.mono,
+  // Aligns Mantine's `size=` scale (controls, inputs) with the typography scale
+  // in theme/typography.ts, so the app has one set of sizes rather than two.
+  fontSizes: {
+    xs: rem(fontSize.sm),
+    sm: rem(fontSize.lg),
+    md: rem(fontSize.xl),
+    lg: rem(fontSize.display3),
+    xl: rem(fontSize.display2),
+  },
+  headings: {
+    fontFamily: fontStack.serif,
+    sizes: {
+      h1: headingStyle(fontSize.display1),
+      h2: headingStyle(fontSize.display2),
+      h3: headingStyle(fontSize.display3),
+    },
+  },
   other: colors,
 });
 
 export const cssVariablesResolver: CSSVariablesResolver = () => ({
   variables: {
+    "--font-family-sans": fontStack.sans,
+    "--font-family-serif": fontStack.serif,
+    "--font-family-mono": fontStack.mono,
     "--color-text": colors.text,
     "--color-text-success": colors.textSuccess,
     "--color-text-error": colors.textError,

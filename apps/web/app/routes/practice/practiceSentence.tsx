@@ -13,7 +13,7 @@ import { IconRefresh } from "@tabler/icons-react";
 import { NEAR_PERFECT_THRESHOLD } from "./constants";
 import type { SentenceEvaluation } from "./sentenceTypes";
 import { nextWord, useSessionStore } from "../../store/session";
-import { monoLabel } from "../wordSearch/typography";
+import { text, textCss } from "../../theme/typography";
 import { PracticeProgress } from "./practiceProgress";
 import { ActionBar } from "./actionBar";
 import { FeedbackHeader } from "./feedbackHeader";
@@ -34,11 +34,17 @@ function escapeRegExp(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-const UnderlineWord = ({ text, word }: { text: string; word: string }) => {
+const UnderlineWord = ({
+  sentence,
+  word,
+}: {
+  sentence: string;
+  word: string;
+}) => {
   if (!word) {
-    return <>{text}</>;
+    return <>{sentence}</>;
   }
-  const parts = text.split(new RegExp(`(${escapeRegExp(word)})`, "ig"));
+  const parts = sentence.split(new RegExp(`(${escapeRegExp(word)})`, "ig"));
   return (
     <>
       {parts.map((part, i) =>
@@ -91,16 +97,12 @@ const Section = ({
           : "1px solid var(--color-border)"
     }>
     <Text
-      ff="monospace"
-      fw={500}
-      fz={10}
+      {...text.label}
       c={tint === "red" ? "var(--color-text-error)" : "dimmed"}
       mb={6}>
       {label}
     </Text>
-    <Text className="serif" fz={15} lh={1.5}>
-      {children}
-    </Text>
+    <Text {...text.proseSm}>{children}</Text>
   </Box>
 );
 
@@ -158,7 +160,7 @@ export const PracticeSentence = ({
         <PracticeProgress />
 
         <Box>
-          <Text {...monoLabel}>Rebuild the sentence</Text>
+          <Text {...text.label}>Rebuild the sentence</Text>
         </Box>
 
         <Box
@@ -172,20 +174,18 @@ export const PracticeSentence = ({
             wrap="nowrap"
             c="var(--color-text-error-strong)">
             <Center
+              {...text.bodyXs}
+              {...text.emphasis}
               w={22}
               h={22}
-              fz={13}
-              fw={700}
               flex="none"
               bd="1.5px solid var(--color-text-error-strong)"
               bdrs="50%">
               !
             </Center>
-            <Text fw={600} fz={13}>
-              Couldn’t build this exercise
-            </Text>
+            <Text {...text.uiLabel}>Couldn’t build this exercise</Text>
           </Group>
-          <Text fz={13} lh={1.5} c="dimmed" mt={10}>
+          <Text {...text.bodyXs} c="dimmed" mt={10}>
             We couldn’t generate a sentence to rephrase right now. Check your
             connection and try again.
           </Text>
@@ -212,11 +212,10 @@ export const PracticeSentence = ({
         </Box>
 
         <Box
+          {...text.body}
           flex={1}
           p="14px 15px"
           c="dimmed"
-          fz={15}
-          lh={1.5}
           bd="1.5px dashed rgba(0,0,0,.12)"
           bdrs={14}>
           Your answer field is unavailable until the exercise loads.
@@ -232,13 +231,13 @@ export const PracticeSentence = ({
       {!evaluation ? (
         <>
           <Box>
-            <Text {...monoLabel}>Rebuild the sentence</Text>
-            <Text fz={14} c="dimmed" mt={12}>
+            <Text {...text.label}>Rebuild the sentence</Text>
+            <Text {...text.bodySm} c="dimmed" mt={12}>
               Rewrite this sentence.
             </Text>
           </Box>
 
-          <Section label="REPHRASED" warm>
+          <Section label="Rephrased" warm>
             {simplified}
           </Section>
 
@@ -258,14 +257,14 @@ export const PracticeSentence = ({
             enterKeyHint="send"
             disabled={isSubmitting}
             styles={{
-              input: { padding: "14px 15px", fontSize: 15, lineHeight: 1.5 },
+              input: { padding: "14px 15px", ...textCss.body },
             }}
             bd="1.5px dashed rgba(0,0,0,.22)"
             bdrs={14}
           />
 
           {evalError ? (
-            <Text size="md" c="red">
+            <Text {...text.body} c="red">
               We couldn't grade that — please try again.
             </Text>
           ) : null}
@@ -306,41 +305,41 @@ export const PracticeSentence = ({
           />
 
           <Box p={16} bd="1px solid var(--color-border)" bdrs={14}>
-            <Text className="serif" fz={22} tt="capitalize">
+            <Text {...text.displayMd} tt="capitalize">
               {word}
             </Text>
-            <Text fz={14} lh={1.5} c="dimmed" mt={8}>
+            <Text {...text.bodySm} c="dimmed" mt={8}>
               {meaning}
             </Text>
           </Box>
 
-          <Section label="REPHRASED" warm>
+          <Section label="Rephrased" warm>
             {simplified}
           </Section>
 
-          <Section label={generated ? "EXAMPLE" : "ORIGINAL"}>
-            <UnderlineWord text={original} word={word} />
+          <Section label={generated ? "Example" : "Original"}>
+            <UnderlineWord sentence={original} word={word} />
             {source ? (
-              <Text span c="dimmed" fs="italic" fz={13} display="block" mt={4}>
+              <Text {...text.annotation} span display="block" mt={4}>
                 — {source}
               </Text>
             ) : null}
             {generated ? (
-              <Text span c="dimmed" fs="italic" fz={13} display="block" mt={4}>
+              <Text {...text.annotation} span display="block" mt={4}>
                 Generated example — not from a published source.
               </Text>
             ) : null}
           </Section>
 
-          <Section label="YOUR SENTENCE" tint={correct ? undefined : "red"}>
+          <Section label="Your sentence" tint={correct ? undefined : "red"}>
             {value.trim()}
           </Section>
 
           {evaluation.segments && evaluation.segments.length > 0 ? (
-            <Section label="CORRECTIONS">
+            <Section label="Corrections">
               {evaluation.segments.map((segment, i) =>
                 segment.changed ? (
-                  <Text key={i} span fw={700} bg="yellow.2" px={2}>
+                  <Text key={i} {...text.emphasis} span bg="yellow.2" px={2}>
                     {segment.text}
                   </Text>
                 ) : (
@@ -351,7 +350,7 @@ export const PracticeSentence = ({
               )}
             </Section>
           ) : evaluation.correctedSentence ? (
-            <Section label="CORRECTIONS">
+            <Section label="Corrections">
               {evaluation.correctedSentence}
             </Section>
           ) : null}
