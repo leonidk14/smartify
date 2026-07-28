@@ -284,12 +284,16 @@ ul {
 /* ── Feature cards ───────────────────────────────────────────────────────── */
 
 .cards {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
   gap: 22px;
 }
 
+/* 46px rather than 2 × the 22px gap: the 2px of slack keeps three cards on a
+   row when sub-pixel rounding nudges a basis up, and space-around absorbs it. */
 .card {
+  flex: 0 1 calc((100% - 46px) / 3);
   position: relative;
   background: var(--card);
   border: 1px solid var(--rule);
@@ -315,7 +319,8 @@ ul {
   transition: opacity 0.22s;
 }
 
-.card:hover .card-face {
+.card:hover .card-face,
+.card:has(.demo-play:focus-visible) .card-face {
   opacity: 0;
 }
 
@@ -359,8 +364,12 @@ ul {
   transition: opacity 0.22s;
 }
 
-.card:hover .card-demo {
+/* :focus-visible, not :focus-within — a mouse click on the play button focuses
+   it, and :focus-within would then hold the card open after the pointer left. */
+.card:hover .card-demo,
+.card:has(.demo-play:focus-visible) .card-demo {
   opacity: 1;
+  pointer-events: auto;
 }
 
 .demo-head {
@@ -401,6 +410,49 @@ ul {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.demo-play {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font: inherit;
+  background: rgba(20, 18, 16, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.demo-play:focus-visible {
+  outline: 2px solid var(--bg);
+  outline-offset: -4px;
+}
+
+.demo-play-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(240, 238, 233, 0.92);
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  padding-left: 3px;
+  transition: transform 0.18s;
+}
+
+.demo-play:hover .demo-play-icon {
+  transform: scale(1.08);
+}
+
+.card.is-playing .demo-play {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .demo-placeholder {
@@ -655,9 +707,12 @@ ul {
     font-size: 26px;
   }
 
-  .cards,
   .steps {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .card {
+    flex-basis: calc((100% - 24px) / 2);
   }
 
   .nav-links {
@@ -678,10 +733,13 @@ ul {
     padding: 0 20px;
   }
 
-  .cards,
   .steps,
   .stats {
     grid-template-columns: 1fr;
+  }
+
+  .card {
+    flex-basis: 100%;
   }
 
   .hero h1 {
@@ -689,8 +747,9 @@ ul {
   }
 }
 
-/* Removing the box is also what stops the demo gifs from ever being fetched
-   on touch devices — these rules are load-bearing, not cosmetic. */
+/* The demo clips are preload="none" until a card is hovered, so a touch device
+   — which never hovers — fetches none of them. Removing the box keeps that
+   honest: these rules are load-bearing, not cosmetic. */
 @media (hover: none) {
   .card {
     min-height: 0;
@@ -705,11 +764,17 @@ ul {
 @media (prefers-reduced-motion: reduce) {
   .card,
   .card-face,
-  .card-demo {
+  .card-demo,
+  .demo-play,
+  .demo-play-icon {
     transition: none;
   }
 
   .card:hover {
+    transform: none;
+  }
+
+  .demo-play:hover .demo-play-icon {
     transform: none;
   }
 }

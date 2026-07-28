@@ -23,7 +23,7 @@ Two independent apps under `apps/*`, with shared infra at the root.
 | Path | What |
 | --- | --- |
 | `apps/web` | the PWA (React Router v7 SPA, Mantine). Workspace name `smartify`. |
-| `apps/landing` | the public marketing page. Plain HTML + CSS on Vite, **ships zero JS** — never add a framework or a runtime dependency to it. Workspace name `smartify-landing`. |
+| `apps/landing` | the public marketing page. Plain HTML + CSS on Vite — **never add a framework or a runtime dependency to it**. The one exception is a ~15-line inline script in `index.html` driving the feature-card demo players; keep any further JS inline, vanilla, and this small. Workspace name `smartify-landing`. |
 | `supabase/` `scripts/` `data/` `.env` | root-level, shared. Their commands run from the root unchanged. |
 
 The root `package.json` has **no dependencies** — it is workspace wiring plus script

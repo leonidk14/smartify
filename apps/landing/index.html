@@ -105,7 +105,7 @@
         <div class="section-head">
           <h2>What it does</h2>
           <p>
-            Six small things, each built to remove a reason to stop: looking up
+            Five small things, each built to remove a reason to stop: looking up
             a word, keeping it, and meeting it again.
           </p>
         </div>
@@ -123,25 +123,30 @@
               </p>
               <div class="card-watch">
                 <span class="card-watch-dot">▶</span>
-                <span class="card-watch-label">Hover to preview →</span>
+                <span class="card-watch-label">Hover, then play →</span>
               </div>
             </div>
 
-            <div class="card-demo" aria-hidden="true">
-              <div class="demo-head">
+            <div class="card-demo">
+              <div class="demo-head" aria-hidden="true">
                 <span class="demo-title">LOOK UP ANY WORD</span>
-                <span class="demo-loop">LOOPING</span>
+                <span class="demo-loop">PLAYS ONCE</span>
               </div>
               <div class="demo-frame">
-                <!-- <div class="demo-placeholder">
-                  <span class="demo-placeholder-icon">▶</span>
-                  <span>Drop phone gif<br />Phone screen · silent loop</span>
-                </div> -->
-                <img
+                <!-- #t=0.001 is what makes the first frame stand in for a poster
+                     image, so each demo needs nothing but its .mp4. -->
+                <video
                   class="demo-media"
-                  src="/demos/lookup.gif"
-                  alt=""
-                  loading="lazy" />
+                  src="/demos/lookup.mp4#t=0.001"
+                  preload="none"
+                  playsinline
+                  muted></video>
+                <button
+                  class="demo-play"
+                  type="button"
+                  aria-label="Play the “Look up any word” demo">
+                  <span class="demo-play-icon" aria-hidden="true">▶</span>
+                </button>
               </div>
             </div>
           </article>
@@ -157,21 +162,28 @@
               </p>
               <div class="card-watch">
                 <span class="card-watch-dot">▶</span>
-                <span class="card-watch-label">Hover to preview →</span>
+                <span class="card-watch-label">Hover, then play →</span>
               </div>
             </div>
 
-            <div class="card-demo" aria-hidden="true">
-              <div class="demo-head">
+            <div class="card-demo">
+              <div class="demo-head" aria-hidden="true">
                 <span class="demo-title">SAVE IT IN A TAP</span>
-                <span class="demo-loop">LOOPING</span>
+                <span class="demo-loop">PLAYS ONCE</span>
               </div>
               <div class="demo-frame">
-                <div class="demo-placeholder">
-                  <span class="demo-placeholder-icon">▶</span>
-                  <span>Drop phone gif<br />Phone screen · silent loop</span>
-                </div>
-                <!-- demo: <img class="demo-media" src="/demos/save.gif" alt="" loading="lazy" /> -->
+                <video
+                  class="demo-media"
+                  src="/demos/save.mp4#t=0.001"
+                  preload="none"
+                  playsinline
+                  muted></video>
+                <button
+                  class="demo-play"
+                  type="button"
+                  aria-label="Play the “Mark for practice” demo">
+                  <span class="demo-play-icon" aria-hidden="true">▶</span>
+                </button>
               </div>
             </div>
           </article>
@@ -187,21 +199,28 @@
               </p>
               <div class="card-watch">
                 <span class="card-watch-dot">▶</span>
-                <span class="card-watch-label">Hover to preview →</span>
+                <span class="card-watch-label">Hover, then play →</span>
               </div>
             </div>
 
-            <div class="card-demo" aria-hidden="true">
-              <div class="demo-head">
+            <div class="card-demo">
+              <div class="demo-head" aria-hidden="true">
                 <span class="demo-title">GUESS THE WORD</span>
-                <span class="demo-loop">LOOPING</span>
+                <span class="demo-loop">PLAYS ONCE</span>
               </div>
               <div class="demo-frame">
-                <div class="demo-placeholder">
-                  <span class="demo-placeholder-icon">▶</span>
-                  <span>Drop phone gif<br />Phone screen · silent loop</span>
-                </div>
-                <!-- demo: <img class="demo-media" src="/demos/guess.gif" alt="" loading="lazy" /> -->
+                <video
+                  class="demo-media"
+                  src="/demos/practice-word.mp4#t=0.001"
+                  preload="none"
+                  playsinline
+                  muted></video>
+                <button
+                  class="demo-play"
+                  type="button"
+                  aria-label="Play the “Guess word” demo">
+                  <span class="demo-play-icon" aria-hidden="true">▶</span>
+                </button>
               </div>
             </div>
           </article>
@@ -217,21 +236,28 @@
               </p>
               <div class="card-watch">
                 <span class="card-watch-dot">▶</span>
-                <span class="card-watch-label">Hover to preview →</span>
+                <span class="card-watch-label">Hover, then play →</span>
               </div>
             </div>
 
-            <div class="card-demo" aria-hidden="true">
-              <div class="demo-head">
+            <div class="card-demo">
+              <div class="demo-head" aria-hidden="true">
                 <span class="demo-title">REBUILD THE SENTENCE</span>
-                <span class="demo-loop">LOOPING</span>
+                <span class="demo-loop">PLAYS ONCE</span>
               </div>
               <div class="demo-frame">
-                <div class="demo-placeholder">
-                  <span class="demo-placeholder-icon">▶</span>
-                  <span>Drop phone gif<br />Phone screen · silent loop</span>
-                </div>
-                <!-- demo: <img class="demo-media" src="/demos/rebuild.gif" alt="" loading="lazy" /> -->
+                <video
+                  class="demo-media"
+                  src="/demos/practice-sentence.mp4#t=0.001"
+                  preload="none"
+                  playsinline
+                  muted></video>
+                <button
+                  class="demo-play"
+                  type="button"
+                  aria-label="Play the “Practice sentence” demo">
+                  <span class="demo-play-icon" aria-hidden="true">▶</span>
+                </button>
               </div>
             </div>
           </article>
@@ -239,7 +265,7 @@
           <article class="card">
             <div class="card-face">
               <span class="card-icon">◔</span>
-              <h3>A nudge at 20:00</h3>
+              <h3>A nudge</h3>
               <p>
                 One notification a day with five words waiting. The words stay
                 out of the message — a lock screen is no place for vocabulary —
@@ -247,50 +273,29 @@
               </p>
               <div class="card-watch">
                 <span class="card-watch-dot">▶</span>
-                <span class="card-watch-label">Hover to preview →</span>
+                <span class="card-watch-label">Hover, then play →</span>
               </div>
             </div>
 
-            <div class="card-demo" aria-hidden="true">
-              <div class="demo-head">
-                <span class="demo-title">A NUDGE AT 20:00</span>
-                <span class="demo-loop">LOOPING</span>
+            <div class="card-demo">
+              <div class="demo-head" aria-hidden="true">
+                <span class="demo-title">A NUDGE</span>
+                <span class="demo-loop">PLAYS ONCE</span>
               </div>
               <div class="demo-frame">
-                <div class="demo-placeholder">
-                  <span class="demo-placeholder-icon">▶</span>
-                  <span>Drop phone gif<br />Phone screen · silent loop</span>
-                </div>
-                <!-- demo: <img class="demo-media" src="/demos/nudge.gif" alt="" loading="lazy" /> -->
-              </div>
-            </div>
-          </article>
-
-          <article class="card">
-            <div class="card-face">
-              <span class="card-icon">⤓</span>
-              <h3>Installs like an app</h3>
-              <p>
-                Add it to your home screen and it opens like anything else on
-                the phone — full screen, its own icon, no app store in the way.
-              </p>
-              <div class="card-watch">
-                <span class="card-watch-dot">▶</span>
-                <span class="card-watch-label">Hover to preview →</span>
-              </div>
-            </div>
-
-            <div class="card-demo" aria-hidden="true">
-              <div class="demo-head">
-                <span class="demo-title">INSTALLS LIKE AN APP</span>
-                <span class="demo-loop">LOOPING</span>
-              </div>
-              <div class="demo-frame">
-                <div class="demo-placeholder">
-                  <span class="demo-placeholder-icon">▶</span>
-                  <span>Drop phone gif<br />Phone screen · silent loop</span>
-                </div>
-                <!-- demo: <img class="demo-media" src="/demos/install.gif" alt="" loading="lazy" /> -->
+                <video
+                  class="demo-media"
+                  src="/demos/reminders.mp4#t=0.001"
+                  data-speed="2"
+                  preload="none"
+                  playsinline
+                  muted></video>
+                <button
+                  class="demo-play"
+                  type="button"
+                  aria-label="Play the “Reminders” demo">
+                  <span class="demo-play-icon" aria-hidden="true">▶</span>
+                </button>
               </div>
             </div>
           </article>
@@ -418,5 +423,35 @@
         </div>
       </footer>
     </div>
+
+    <script>
+      for (const card of document.querySelectorAll(".card")) {
+        const video = card.querySelector(".demo-media");
+        const playButton = card.querySelector(".demo-play");
+        if (!video || !playButton) {
+          continue;
+        }
+        card.addEventListener("pointerenter", () => {
+          if (video.preload === "none") {
+            video.preload = "metadata";
+            video.load();
+          }
+        });
+        playButton.addEventListener("click", () => {
+          card.classList.add("is-playing");
+          video.currentTime = 0;
+          video.playbackRate = Number(video.dataset.speed) || 1;
+          video.play().catch(() => card.classList.remove("is-playing"));
+        });
+        video.addEventListener("ended", () => {
+          card.classList.remove("is-playing");
+        });
+        card.addEventListener("pointerleave", () => {
+          video.pause();
+          video.currentTime = 0;
+          card.classList.remove("is-playing");
+        });
+      }
+    </script>
   </body>
 </html>
