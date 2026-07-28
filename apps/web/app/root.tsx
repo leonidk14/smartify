@@ -15,6 +15,7 @@ import { ColorSchemeScript, MantineProvider } from "@mantine/core";
 import { Notifications } from "@mantine/notifications";
 import { cssVariablesResolver, theme } from "./theme";
 import { AuthProvider } from "./lib/auth";
+import { DesktopNoticeModal } from "./lib/desktopNoticeModal";
 
 export const links: Route.LinksFunction = () => [
   { rel: "icon", href: "/favicon.ico" },
@@ -64,6 +65,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           defaultColorScheme="light"
         >
           <Notifications position="top-center" />
+          <DesktopNoticeModal />
           <AuthProvider>{children}</AuthProvider>
         </MantineProvider>
         <ScrollRestoration />
