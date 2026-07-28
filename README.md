@@ -1,5 +1,56 @@
 # smartify
 
+**A quieter way to grow the words you actually use.**
+
+[Live app](https://smartify-web-beige.vercel.app/) · [Landing page](https://smartify-landing.vercel.app/)
+
+Look up a word, keep it, and practise it in short bursts — guess it from its definition, or
+rebuild a sentence around it. One nudge a day, and the words you've saved stay open whether or
+not you're signed in.
+
+It's an installable PWA: a React Router SPA in front of Supabase Edge Functions, with Claude
+doing the dictionary lookups, the example sentences, and the corrections.
+
+## Screenshots
+
+|                                                                  Your words                                                                   |                                                                          Look up a word                                                                           |                                                                        Rebuild a sentence                                                                         |
+| :-------------------------------------------------------------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------: |
+| <img src="docs/screenshots/home.jpg" alt="The saved word list: 78 words, 14 due today, and a button to start a practice session" width="260"> | <img src="docs/screenshots/lookup.jpg" alt="A lookup for &quot;industrious&quot;: two adjective senses, each with a definition and a quoted example" width="260"> | <img src="docs/screenshots/practice-sentence.jpg" alt="Sentence practice: a rephrased sentence above an empty field to rewrite it in your own words" width="260"> |
+
+## Features
+
+- **Look up a word or phrase.** Senses grouped by part of speech, each with a definition and a
+  real quoted example rather than every meaning at once. Misspellings are caught and returned
+  as a suggestion — the dictionary never silently autocorrects what you typed.
+- **Keep the ones worth keeping.** Anything you look up lands in your list with its
+  definitions attached, newest first. Hit **Practice later** on the ones you fumbled and they
+  earn two things: a one-tap **Marked** filter when you pick words to practise, and first place
+  in the evening reminder.
+- **Three practice modes.** Guess the word from its definition (with a hint if you stall),
+  rebuild a sentence around it and get yours back with the corrections highlighted, or do both
+  — a combined run does the guessing step for every word, then the sentence step.
+- **Sentences that don't repeat.** Up to three sentences are cached per meaning and rotated
+  least-used-first, so a word you practise often keeps giving you a different context. Haiku
+  writes them; Sonnet picks up the ones Haiku can't.
+- **One nudge a day.** 20:00 Europe/Berlin, five words, the marked ones first. The words stay
+  out of the notification text — a lock screen is no place for vocabulary — and travel in the
+  link instead, which opens the session already loaded.
+- **Open by default, gated where it costs.** Reading your vocabulary needs no account. Every
+  write and every model call verifies a signed-in user's token server-side.
+
+## Tech stack
+
+| Layer       |                                                                                                                                                               |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **App**     | React 19 · React Router v7 (SPA, `ssr: false`) · TypeScript · Vite 8 · Mantine 9 · Tabler icons · Zustand · Dexie (IndexedDB) · Tailwind 4 (base layout only) |
+| **Backend** | Supabase — Postgres + migrations, Auth, Edge Functions (Deno), Storage, `pg_cron`                                                                             |
+| **AI**      | Anthropic Claude via `@anthropic-ai/sdk` — Haiku 4.5 by default, Sonnet 5 as the generation fallback, JSON-schema structured output                           |
+| **PWA**     | Web app manifest · Workbox-generated service worker · Web Push + VAPID                                                                                        |
+| **Landing** | Plain HTML + CSS on Vite — zero JavaScript shipped                                                                                                            |
+| **Tooling** | npm workspaces · Vercel (each app deployed on its own)                                                                                                        |
+
+## Repository layout
+
 An npm-workspaces monorepo with two independent apps:
 
 | Path           | What                                          | Dev                           | Build output            |
@@ -7,160 +58,21 @@ An npm-workspaces monorepo with two independent apps:
 | `apps/web`     | the PWA — React Router v7 SPA                 | `npm run dev` (:5173)         | `apps/web/build/client` |
 | `apps/landing` | the marketing page — static HTML + CSS, no JS | `npm run landing:dev` (:5174) | `apps/landing/dist`     |
 
-`supabase/`, `scripts/`, `data/` and `.env` stay at the root and are shared; every
-command below runs from the repo root.
+`supabase/`, `scripts/`, `data/` and `.env` stay at the root and are shared; every command
+below runs from the repo root.
 
-## LLM mode toggles (mock vs. real)
-
-Every edge function that calls Anthropic has its own runtime toggle. Unset — or
-set to anything other than `real` — means the function returns mock data
-and spends no tokens. Mock is the default, so a fresh deploy can never start
-billing by accident.
-
-| Function            | Secret          | Mock data                                      |
-| ------------------- | --------------- | ---------------------------------------------- |
-| `lookup`            | `LOOKUP_MODE`   | `supabase/functions/lookup/mock.ts`            |
-| `generate-sentence` | `GENERATE_MODE` | `supabase/functions/generate-sentence/mock.ts` |
-| `evaluate-sentence` | `EVALUATE_MODE` | `supabase/functions/evaluate-sentence/mock.ts` |
-
-The three are deliberately independent, so real sentence generation can be
-enabled without also paying for real lookups.
-
-```bash
-# turn one on (real Anthropic calls)
-supabase secrets set EVALUATE_MODE=real
-
-# turn it back off (mock)
-supabase secrets unset EVALUATE_MODE
-
-# see what is currently set
-supabase secrets list
-
-# all three at once
-supabase secrets set LOOKUP_MODE=real GENERATE_MODE=real EVALUATE_MODE=real
-```
-
-A modern, production-ready template for building full-stack React applications using React Router.
-
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/remix-run/react-router-templates/tree/main/default)
-
-## Features
-
-- 🚀 Server-side rendering
-- ⚡️ Hot Module Replacement (HMR)
-- 📦 Asset bundling and optimization
-- 🔄 Data loading and mutations
-- 🔒 TypeScript by default
-- 🎉 TailwindCSS for styling
-- 📖 [React Router docs](https://reactrouter.com/)
-
-## Getting Started
-
-### Installation
-
-Install the dependencies:
+## Getting started
 
 ```bash
 npm install
+npm run dev        # the app at http://localhost:5173
+npm run typecheck
+npm run build      # → apps/web/build/client (+ the service worker)
 ```
 
-### Development
-
-Start the app's dev server with HMR:
-
-```bash
-npm run dev
-```
-
-The app will be available at `http://localhost:5173`.
-
-The landing page is a separate workspace and runs on its own port — both can be up at
-the same time:
+The landing page is a separate workspace on its own port — both can be up at the same time:
 
 ```bash
 npm run landing:dev     # http://localhost:5174
 npm run landing:build   # → apps/landing/dist
 ```
-
-See [apps/landing/README.md](apps/landing/README.md) for how to point its CTAs at a
-deployed app URL.
-
-## Vocabulary data & seeding
-
-App data (the vocabulary) lives in Supabase: the `vocabulary` Postgres table,
-accessed via the `vocabulary-*` edge functions. The device's IndexedDB is only
-an on-demand offline snapshot (header download button).
-
-`vocabulary-list` is readable by anyone; the two write functions require a
-signed-in user's access token and reject anonymous callers with a 401.
-
-Seed data comes from `data/vocabulary.json` (a `VocabularyStore` snapshot). A
-copy of it is kept in the private `seeds` Storage bucket as
-`seeds/vocabulary.json`, serving as a fallback/restore source.
-
-```bash
-# one-time setup: apply migrations and deploy the functions
-supabase db push
-supabase functions deploy vocabulary-list vocabulary-save vocabulary-mark-practice
-
-# seed: uploads data/vocabulary.json to the seeds bucket AND upserts all words
-node --env-file=.env scripts/seed-vocabulary.mjs
-
-# restore the table from the Storage copy instead of the local file
-node --env-file=.env scripts/seed-vocabulary.mjs --from-storage
-```
-
-The seed script requires `SUPABASE_URL` (or `VITE_SUPABASE_URL`) and
-`SUPABASE_SERVICE_ROLE_KEY` in `.env` (see `.env.example`). The service-role
-key bypasses RLS — keep it out of `VITE_`-prefixed vars.
-
-## Practice reminders (push)
-
-Subscribed devices get one push per day at **20:00 Europe/Berlin** — _"Ready to
-practice? / 5 words are waiting."_ — carrying 5 words chosen from the vocabulary:
-the ones marked for practice first, topped up with other saved words. The words
-themselves stay out of the notification text (a lock screen is not the place for
-vocabulary) and ride in the link instead.
-
-Tapping it opens `/practice/session?mode=both&words=…`, which rebuilds the
-session queue from the URL and drops the user on the first word; the run does
-the word step for all 5, then the sentence step for all 5.
-
-### Sending one by hand
-
-```bash
-# `force` bypasses the 20:00 window — without it, a send outside that hour
-# is skipped exactly like the scheduler's off-hour run
-curl -X POST "$VITE_SUPABASE_URL/functions/v1/send-reminders" \
-  -H "Authorization: Bearer $VITE_SUPABASE_ANON_KEY" \
-  -H "apikey: $VITE_SUPABASE_ANON_KEY" \
-  -H "x-reminders-secret: $REMINDERS_SECRET" \
-  -H "Content-Type: application/json" \
-  -d '{"force":true}'
-```
-
-In Postman: `POST {{supabase_url}}/functions/v1/send-reminders`, the same three
-headers, body raw/JSON.
-
-`x-reminders-secret` is required — the function is cron-triggered and never
-called by the SPA, so it is gated on a shared secret rather than a user token.
-The anon key alone must not be enough to push to every subscriber. Set it with
-`supabase secrets set REMINDERS_SECRET=...` and add the same header to the cron
-job (Supabase dashboard → Integrations → Cron); the nightly send starts failing
-silently if the two ever disagree.
-
-## Building for Production
-
-Create a production build:
-
-```bash
-npm run build
-```
-
-## Styling
-
-This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever CSS framework you prefer.
-
----
-
-Built with ❤️ using React Router.
