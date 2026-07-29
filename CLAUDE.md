@@ -80,6 +80,9 @@ Reference examples: [apps/web/app/routes/practice/practiceStart.tsx](apps/web/ap
 - **Always brace `if` bodies.** Even a single-line guard clause with a pure return
   gets curly braces — write `if (a) { return null; }`, never `if (a) return null;`.
   Applies equally to `continue` / `break` / `throw` guard clauses.
+- **Always `===` / `!==`, never `==` / `!=`.** No exceptions — not even the
+  `x != null` idiom for "null or undefined". Say what you mean:
+  `x !== null && x !== undefined`, or restructure so the distinction isn't needed.
 - **Explicit beats clever — don't make changes land via shared references.** Never
   mutate a nested node and rely on that silently updating a root object you save
   elsewhere (`chosen.usageCount += 1` … later … `save(tree)`). The reader has to

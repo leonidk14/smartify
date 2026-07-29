@@ -5,6 +5,7 @@ import {
   Badge,
   Box,
   Button,
+  CloseButton,
   Divider,
   Flex,
   Group,
@@ -52,7 +53,6 @@ export const LookupPanel = ({
   const practiceFetcher = useFetcher<{ success: boolean }>();
   const [value, setValue] = useState(initialQuery ?? "");
   const [committedQuery, setCommittedQuery] = useState(initialQuery ?? "");
-  const [markedForPractice, setMarkedForPractice] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const keyboardInset = useKeyboardInset();
   const { isSignedIn, openSignIn } = useAuth();
@@ -82,7 +82,6 @@ export const LookupPanel = ({
     inputRef.current?.blur();
     setValue(term);
     setCommittedQuery(term);
-    setMarkedForPractice(false);
     // A new word needs the LLM lookup, which requires a signed-in user; the
     // sign-in-required view below handles the signed-out case.
     if (!findCached(term) && isSignedIn) {
@@ -136,22 +135,27 @@ export const LookupPanel = ({
   const isMarkingForPractice =
     practiceFetcher.state === "submitting" ||
     practiceFetcher.state === "loading";
-  const isAddedForPractice = data?.shouldPracticeLater || markedForPractice;
+  const isAddedForPractice = isMarkingForPractice
+    ? practiceFetcher.formData?.get("shouldPracticeLater") === "true"
+    : (data?.shouldPracticeLater ?? false);
 
-  useEffect(() => {
-    if (practiceFetcher.data?.success) {
-      setMarkedForPractice(true);
-    }
-  }, [practiceFetcher.data]);
-
-  const handlePracticeLater = () => {
+  const handleTogglePracticeLater = () => {
     if (!originalSearchItem) {
       return;
     }
     practiceFetcher.submit(
-      { intent: "practice", word: originalSearchItem },
+      {
+        intent: "practice",
+        word: originalSearchItem,
+        shouldPracticeLater: String(!isAddedForPractice),
+      },
       { method: "post" },
     );
+  };
+
+  const handleClearSearch = () => {
+    setValue("");
+    inputRef.current?.focus();
   };
 
   const suggestions =
@@ -203,8 +207,19 @@ export const LookupPanel = ({
             size="md"
             radius="md"
             leftSection={<IconSearch size={16} />}
+            rightSection={
+              value.length > 0 ? (
+                <CloseButton
+                  size="sm"
+                  aria-label="Clear search"
+                  onClick={handleClearSearch}
+                />
+              ) : null
+            }
+            rightSectionPointerEvents="all"
             flex={1}
-            type="search"
+            type="text"
+            enterKeyHint="search"
             autoComplete="off"
           />
           <Button
@@ -301,12 +316,11 @@ export const LookupPanel = ({
             size="lg"
             radius="md"
             type="button"
-            onClick={handlePracticeLater}
-            disabled={
-              !isSignedIn || isMarkingForPractice || isAddedForPractice
-            }
+            variant={isAddedForPractice ? "outline" : "filled"}
+            onClick={handleTogglePracticeLater}
+            disabled={isMarkingForPractice || !isSignedIn}
             loading={isMarkingForPractice}>
-            {isAddedForPractice ? "Added for practice" : "Practice later"}
+            {isAddedForPractice ? "Don't practice" : "Practice later"}
           </Button>
         </Box>
       ) : null}

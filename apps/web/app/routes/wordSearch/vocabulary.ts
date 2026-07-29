@@ -82,9 +82,16 @@ export async function saveWord({
   return entry;
 }
 
-export async function markForPractice(word: string): Promise<void> {
+export async function setPracticeLater({
+  word,
+  shouldPracticeLater,
+}: {
+  word: string;
+  shouldPracticeLater: boolean;
+}): Promise<void> {
   await postFunction("vocabulary-mark-practice", {
     word: word.trim().toLowerCase(),
+    shouldPracticeLater,
   });
 }
 

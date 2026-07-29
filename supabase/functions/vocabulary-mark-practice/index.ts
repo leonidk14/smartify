@@ -9,6 +9,7 @@ import { createAdminClient } from "../_shared/supabase.ts";
 
 interface MarkPracticeBody {
   word?: unknown;
+  shouldPracticeLater?: unknown;
 }
 
 serveFunction(async (req) => {
@@ -33,10 +34,18 @@ serveFunction(async (req) => {
     return errorResponse("Expected { word: string }");
   }
 
+  const shouldPracticeLater = body.shouldPracticeLater;
+  if (
+    shouldPracticeLater !== undefined &&
+    typeof shouldPracticeLater !== "boolean"
+  ) {
+    return errorResponse("Expected { shouldPracticeLater?: boolean }");
+  }
+
   const supabase = createAdminClient();
   const { error } = await supabase
     .from("vocabulary")
-    .update({ should_practice_later: true })
+    .update({ should_practice_later: shouldPracticeLater ?? true })
     .eq("word", word.trim().toLowerCase());
 
   if (error) {

@@ -3,9 +3,9 @@ import type { Route } from "./+types/home";
 import { lookupWord } from "./wordSearch/actions";
 import { normalize } from "./wordSearch/normalize";
 import {
-  markForPractice,
   readVocabulary,
   saveWord,
+  setPracticeLater,
 } from "./wordSearch/vocabulary";
 import { useVocabulary } from "./wordSearch/useVocabulary";
 import { WordSearch } from "./wordSearch/wordSearch";
@@ -16,7 +16,10 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 
   if (intent === "practice") {
     const word = String(formData.get("word"));
-    await markForPractice(normalize(word));
+    await setPracticeLater({
+      word: normalize(word),
+      shouldPracticeLater: formData.get("shouldPracticeLater") === "true",
+    });
     return { success: true };
   }
 
