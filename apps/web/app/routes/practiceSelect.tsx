@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useSearchParams } from "react-router";
-import { PracticeSelect } from "./practice/practiceSelect";
+import { PracticeSelect, parsePreselect } from "./practice/practiceSelect";
 import { parsePracticeMode } from "../store/session";
 import { useVocabulary } from "./wordSearch/useVocabulary";
 
@@ -20,6 +20,7 @@ export default function PracticeSelectRoute() {
   );
 
   const mode = parsePracticeMode(searchParams.get("mode"));
+  const preselect = parsePreselect(searchParams.get("preselect"));
 
-  return <PracticeSelect words={words} mode={mode} />;
+  return <PracticeSelect words={words} mode={mode} preselect={preselect} />;
 }

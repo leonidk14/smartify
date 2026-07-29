@@ -174,7 +174,7 @@ export const VocabularyHome = ({
           </Text>
           <Button
             component={Link}
-            to="/practice"
+            to={`/practice/select?mode=${isSignedIn ? "both" : "word"}&preselect=marked`}
             fullWidth
             mt={14}
             size="md"
