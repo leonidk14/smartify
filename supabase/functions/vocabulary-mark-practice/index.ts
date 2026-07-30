@@ -5,7 +5,8 @@ import {
   INTERNAL_ERROR,
   jsonResponse,
 } from "../_shared/http.ts";
-import { createAdminClient } from "../_shared/supabase.ts";
+import { createUserClient } from "../_shared/supabase.ts";
+import { ensureOwnedWord } from "../_shared/vocabularyAccess.ts";
 
 interface MarkPracticeBody {
   word?: unknown;
@@ -42,11 +43,20 @@ serveFunction(async (req) => {
     return errorResponse("Expected { shouldPracticeLater?: boolean }");
   }
 
-  const supabase = createAdminClient();
+  const key = word.trim().toLowerCase();
+  const supabase = createUserClient(req);
+
+  // Marking a public word is a write, so it forks a private copy rather than flipping
+  // the flag for everyone who can see that word.
+  const owned = await ensureOwnedWord({ supabase, userId: user.id, word: key });
+  if (owned === null) {
+    return errorResponse(`Unknown word "${key}"`, 404);
+  }
+
   const { error } = await supabase
     .from("vocabulary")
     .update({ should_practice_later: shouldPracticeLater ?? true })
-    .eq("word", word.trim().toLowerCase());
+    .eq("word", key);
 
   if (error) {
     console.error(error);

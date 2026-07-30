@@ -94,24 +94,51 @@ Reference examples: [apps/web/app/routes/practice/practiceStart.tsx](apps/web/ap
 
 ## Vocabulary data & seeding
 
-Vocabulary lives in the Supabase Postgres table `vocabulary` (one row per word:
-`word` PK, `groups` jsonb, `should_practice_later`, `saved_at`), accessed by the
-SPA exclusively through the `vocabulary-*` edge functions
+Vocabulary lives in the Supabase Postgres table `vocabulary`, **one row per word
+per user**: primary key `(user_id, word)`, plus `groups` jsonb,
+`should_practice_later`, `saved_at`, `display`, `is_public`. The SPA reaches it
+through the `vocabulary-*` edge functions
 (`supabase/functions/vocabulary-{list,save,mark-practice}`). IndexedDB
 (`smartify-vocabulary`, via [apps/web/app/lib/offlineCache.ts](apps/web/app/lib/offlineCache.ts))
 is only an on-demand offline snapshot, not a source of truth.
 
-`vocabulary-list` is deliberately public; every **write** function calls
-`getRequestUser` and 401s anonymous callers. Any new function that mutates the
-database must do the same — the anon key is published in the client bundle, so
-it is not a credential.
+**Visibility is enforced by RLS, not by JavaScript.** The policies in
+`20260730120000_vocabulary_ownership.sql` say `is_public or user_id = auth.uid()`,
+so the vocabulary functions use `createUserClient(req)` (the caller's JWT
+forwarded to Postgres) rather than `createAdminClient()`, and carry no `.eq()`
+filter of their own. Two consequences:
+
+- The table is also readable straight over PostgREST with the published anon key —
+  which returns exactly what `vocabulary-list` returns, since the same policies
+  apply. Do not "fix" this by re-adding JS filters; add policies instead.
+- `is_public` is withheld from the `authenticated` update grant, so only a
+  migration or the service role can publish a word. `user_id` **is** in that
+  grant, because PostgREST compiles upserts into `on conflict do update set
+  <every column sent>` — the update policy is what pins it to `auth.uid()`.
+
+A write must never land on a public row the caller does not own. Route every such
+write through `ensureOwnedWord` in
+[supabase/functions/_shared/vocabularyAccess.ts](supabase/functions/_shared/vocabularyAccess.ts),
+which forks a private copy on first write; `preferOwnRows` from the same module is
+how a fork shadows the public original wherever rows are read.
+
+`vocabulary-list` is still callable anonymously — the policy, not the function,
+decides that an anonymous caller sees only the public words. Every **write**
+function calls `getRequestUser` and 401s anonymous callers; any new function that
+mutates the database must do the same, since the anon key is published in the
+client bundle and is not a credential.
+
+`send-reminders` is the exception to all of this: it runs from cron with no user
+JWT, so it stays on `createAdminClient()` and spells the visibility rule out
+explicitly, per subscriber.
 
 Seed data:
 
 - **Local seed file:** [data/vocabulary.json](data/vocabulary.json) — a full
   `VocabularyStore` snapshot (`{ [word]: { groups, shouldPracticeLater, savedAt } }`,
   see [apps/web/app/routes/wordSearch/vocabulary.ts](apps/web/app/routes/wordSearch/vocabulary.ts)
-  for the types).
+  for the types), plus an optional `isPublic: true` per entry that the seed script
+  maps onto the `is_public` column.
 - **Cloud fallback copy:** the same file is stored in the private Supabase
   Storage bucket `seeds` as `seeds/vocabulary.json` (bucket created by the
   vocabulary migration).
@@ -119,6 +146,9 @@ Seed data:
 To seed (or re-seed; upserts are idempotent):
 
 ```bash
+# print what would be written and exit — the local file can lag behind the table
+node --env-file=.env scripts/seed-vocabulary.mjs --dry-run
+
 # uploads data/vocabulary.json to the seeds bucket AND upserts all words
 node --env-file=.env scripts/seed-vocabulary.mjs
 
@@ -128,8 +158,11 @@ node --env-file=.env scripts/seed-vocabulary.mjs --from-storage
 
 Requires in `.env`: `SUPABASE_URL` (or `VITE_SUPABASE_URL`) and
 `SUPABASE_SERVICE_ROLE_KEY` (server secret — bypasses RLS, never expose via a
-`VITE_` var). The migration must be applied first (`supabase db push`), since
-the script needs the table and the `seeds` bucket to exist.
+`VITE_` var). Every row needs an owner, resolved by email from `SEED_OWNER_EMAIL`
+(defaults to `leonid.kaida@outlook.com`); that account must already exist, since
+`enable_signup = false` means users are created by hand in the dashboard. The
+migrations must be applied first (`supabase db push`), since the script needs the
+table and the `seeds` bucket to exist.
 
 ## Edge functions (Deno)
 

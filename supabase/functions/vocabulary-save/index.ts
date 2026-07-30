@@ -5,7 +5,7 @@ import {
   INTERNAL_ERROR,
   jsonResponse,
 } from "../_shared/http.ts";
-import { createAdminClient } from "../_shared/supabase.ts";
+import { createUserClient } from "../_shared/supabase.ts";
 import { rowToEntry, type VocabularyRow } from "../_shared/vocabularyRows.ts";
 
 interface SaveBody {
@@ -40,7 +40,11 @@ serveFunction(async (req) => {
   }
 
   const key = word.trim().toLowerCase();
-  const row: VocabularyRow = {
+  // `is_public` is left out on purpose. It defaults to false, and sending it would put
+  // it in the upsert's `on conflict do update set` list — a column clients have no
+  // update privilege on, which would fail every re-save of an own public word.
+  const row: Omit<VocabularyRow, "is_public"> = {
+    user_id: user.id,
     word: key,
     display:
       typeof display === "string" && display.trim()
@@ -51,10 +55,10 @@ serveFunction(async (req) => {
     saved_at: new Date().toISOString(),
   };
 
-  const supabase = createAdminClient();
+  const supabase = createUserClient(req);
   const { error } = await supabase
     .from("vocabulary")
-    .upsert(row, { onConflict: "word" });
+    .upsert(row, { onConflict: "user_id,word" });
 
   if (error) {
     console.error(error);

@@ -2,13 +2,10 @@ import Anthropic from "npm:@anthropic-ai/sdk@0.110.0";
 import { getRequestUser } from "../_shared/auth.ts";
 import { requireEnv } from "../_shared/env.ts";
 import { serveFunction } from "../_shared/handler.ts";
-import {
-  errorResponse,
-  INTERNAL_ERROR,
-  jsonResponse,
-} from "../_shared/http.ts";
-import { createAdminClient } from "../_shared/supabase.ts";
+import { errorResponse, jsonResponse } from "../_shared/http.ts";
+import { createUserClient } from "../_shared/supabase.ts";
 import { buildTokenUsage, type TokenUsage } from "../_shared/usage.ts";
+import { ensureOwnedWord } from "../_shared/vocabularyAccess.ts";
 import {
   generateFresh,
   simplifySentence,
@@ -50,7 +47,6 @@ function respond({
   return jsonResponse({ sentence, usage, source });
 }
 
-// TODO(auth): scope to the authenticated user once auth exists.
 serveFunction(async (req) => {
   // POST, not GET like the sibling `lookup`: this endpoint writes on nearly
   // every call (bumps usageCount, or appends a generated sentence), and a
@@ -110,25 +106,18 @@ serveFunction(async (req) => {
         : "auto";
 
   const client = new Anthropic({ apiKey: requireEnv("ANTHROPIC_API_KEY") });
-  const supabase = createAdminClient();
+  const supabase = createUserClient(req);
 
-  const { data, error } = await supabase
-    .from("vocabulary")
-    .select("groups")
-    .eq("word", key)
-    .maybeSingle();
+  // The sentence cache is written back into `groups`, so a caller practising a public
+  // word gets their own fork of it rather than filling a shared row's cache.
+  const owned = await ensureOwnedWord({ supabase, userId: user.id, word: key });
 
-  if (error) {
-    console.error(error);
-    return errorResponse(INTERNAL_ERROR, 500);
-  }
-
-  if (!data) {
+  if (owned === null) {
     console.warn(`[generate-sentence] "${key}" is not in the vocabulary`);
     return errorResponse(`Unknown word "${key}"`, 404);
   }
 
-  const groups = data.groups as StoredMeaningGroup[];
+  const groups = owned.groups as StoredMeaningGroup[];
   const sentences = getSentences({ groups, meaningId });
 
   const writeUpdatedWordGroups = async (updated: StoredMeaningGroup[]) => {

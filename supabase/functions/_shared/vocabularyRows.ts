@@ -10,14 +10,20 @@ export interface VocabularyEntry {
 export type VocabularyStore = Record<string, VocabularyEntry>;
 
 export interface VocabularyRow {
+  user_id: string;
   word: string;
   display: string | null;
   groups: unknown[];
   should_practice_later: boolean;
   saved_at: string;
+  is_public: boolean;
 }
 
-export function rowToEntry(row: VocabularyRow): VocabularyEntry {
+// Takes only the columns it reads, so callers holding a row that has not been written
+// yet (and so has no server-assigned is_public) don't have to invent one.
+export function rowToEntry(
+  row: Omit<VocabularyRow, "user_id" | "is_public">,
+): VocabularyEntry {
   return {
     groups: row.groups,
     display: row.display ?? row.word,
@@ -34,27 +40,3 @@ export function rowsToStore(rows: VocabularyRow[]): VocabularyStore {
   return store;
 }
 
-export function entryToRow(
-  word: string,
-  entry: VocabularyEntry,
-): VocabularyRow {
-  return {
-    word,
-    display: entry.display ?? word,
-    groups: entry.groups,
-    should_practice_later: entry.shouldPracticeLater,
-    saved_at: entry.savedAt,
-  };
-}
-
-export function isEntry(value: unknown): value is VocabularyEntry {
-  if (typeof value !== "object" || value === null) {
-    return false;
-  }
-  const entry = value as Partial<VocabularyEntry>;
-  return (
-    Array.isArray(entry.groups) &&
-    typeof entry.shouldPracticeLater === "boolean" &&
-    typeof entry.savedAt === "string"
-  );
-}

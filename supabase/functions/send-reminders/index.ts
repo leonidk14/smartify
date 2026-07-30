@@ -1,4 +1,5 @@
 import webpush from "npm:web-push@3";
+import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
 import { requireEnv } from "../_shared/env.ts";
 import { serveFunction } from "../_shared/handler.ts";
 import {
@@ -7,17 +8,26 @@ import {
   jsonResponse,
 } from "../_shared/http.ts";
 import { createAdminClient } from "../_shared/supabase.ts";
+import { preferOwnRows } from "../_shared/vocabularyAccess.ts";
 
 interface Subscription {
   endpoint: string;
   p256dh: string;
   auth: string;
+  user_id: string;
 }
 
 interface WordRow {
+  user_id: string;
   word: string;
   groups: unknown;
   should_practice_later: boolean;
+}
+
+interface Delivery {
+  userId: string;
+  words: string[];
+  sent: number;
 }
 
 type PracticeMode = "word" | "sentence" | "both";
@@ -124,6 +134,44 @@ function pickWords({ rows, count }: { rows: WordRow[]; count: number }) {
     .map((row) => row.word);
 }
 
+// Cron carries no user JWT, so RLS cannot narrow this — the visibility rule is spelled
+// out here instead: the subscriber's own words plus the public ones.
+async function readWordsForUser({
+  supabase,
+  userId,
+  count,
+}: {
+  supabase: SupabaseClient;
+  userId: string;
+  count: number;
+}): Promise<string[]> {
+  const { data, error } = await supabase
+    .from("vocabulary")
+    .select("user_id, word, groups, should_practice_later")
+    .or(`is_public.eq.true,user_id.eq.${userId}`)
+    .returns<WordRow[]>();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return pickWords({
+    rows: preferOwnRows({ visibleRows: data ?? [], userId }),
+    count,
+  });
+}
+
+function groupByUser(subscriptions: Subscription[]): Map<string, Subscription[]> {
+  const byUser = new Map<string, Subscription[]>();
+  for (const subscription of subscriptions) {
+    byUser.set(subscription.user_id, [
+      ...(byUser.get(subscription.user_id) ?? []),
+      subscription,
+    ]);
+  }
+  return byUser;
+}
+
 function buildPayload({
   words,
   title,
@@ -148,6 +196,10 @@ function buildPayload({
 // so it is gated on a shared secret rather than a user token. Without it, anyone
 // holding the bundled anon key could push arbitrary text to every subscriber
 // (`force` also skips the hour gate below).
+//
+// Words are picked per subscriber so a reminder never names someone else's private
+// word. The `words` override is exempt: it is an operator tool behind the secret,
+// and goes to every subscriber verbatim.
 serveFunction(async (req) => {
   if (req.method !== "POST") {
     return errorResponse("Method not allowed", 405);
@@ -179,28 +231,9 @@ serveFunction(async (req) => {
 
   const supabase = createAdminClient();
 
-  let words = options.words;
-  if (words === null) {
-    const { data, error } = await supabase
-      .from("vocabulary")
-      .select("word, groups, should_practice_later")
-      .returns<WordRow[]>();
-
-    if (error) {
-      console.error(error);
-      return errorResponse(INTERNAL_ERROR, 500);
-    }
-
-    words = pickWords({ rows: data ?? [], count: options.count });
-  }
-
-  if (words.length === 0) {
-    return jsonResponse({ skipped: true, reason: "No words to practice" });
-  }
-
   const { data: subscriptions, error } = await supabase
     .from("push_subscriptions")
-    .select("endpoint, p256dh, auth")
+    .select("endpoint, p256dh, auth, user_id")
     .returns<Subscription[]>();
 
   if (error) {
@@ -208,38 +241,54 @@ serveFunction(async (req) => {
     return errorResponse(INTERNAL_ERROR, 500);
   }
 
-  const body = options.body ?? defaultBody(words.length);
-  const payload = buildPayload({
-    words,
-    title: options.title,
-    body,
-    mode: options.mode,
-  });
-
   const expiredEndpoints: string[] = [];
-  let sent = 0;
+  const deliveries: Delivery[] = [];
 
-  await Promise.all(
-    (subscriptions ?? []).map(async (sub) => {
-      try {
-        await webpush.sendNotification(
-          {
-            endpoint: sub.endpoint,
-            keys: { p256dh: sub.p256dh, auth: sub.auth },
-          },
-          payload,
-        );
-        sent += 1;
-      } catch (err) {
-        const statusCode = (err as { statusCode?: number }).statusCode;
-        if (statusCode === 404 || statusCode === 410) {
-          expiredEndpoints.push(sub.endpoint);
-        } else {
-          console.error(`Push failed for ${sub.endpoint}:`, err);
+  for (const [userId, userSubscriptions] of groupByUser(subscriptions ?? [])) {
+    const words =
+      options.words ??
+      (await readWordsForUser({ supabase, userId, count: options.count }));
+
+    if (words.length === 0) {
+      continue;
+    }
+
+    const payload = buildPayload({
+      words,
+      title: options.title,
+      body: options.body ?? defaultBody(words.length),
+      mode: options.mode,
+    });
+
+    const results = await Promise.all(
+      userSubscriptions.map(async (sub) => {
+        try {
+          await webpush.sendNotification(
+            {
+              endpoint: sub.endpoint,
+              keys: { p256dh: sub.p256dh, auth: sub.auth },
+            },
+            payload,
+          );
+          return true;
+        } catch (err) {
+          const statusCode = (err as { statusCode?: number }).statusCode;
+          if (statusCode === 404 || statusCode === 410) {
+            expiredEndpoints.push(sub.endpoint);
+          } else {
+            console.error(`Push failed for ${sub.endpoint}:`, err);
+          }
+          return false;
         }
-      }
-    }),
-  );
+      }),
+    );
+
+    deliveries.push({
+      userId,
+      words,
+      sent: results.filter(Boolean).length,
+    });
+  }
 
   if (expiredEndpoints.length > 0) {
     await supabase
@@ -248,13 +297,16 @@ serveFunction(async (req) => {
       .in("endpoint", expiredEndpoints);
   }
 
+  if (deliveries.length === 0) {
+    return jsonResponse({ skipped: true, reason: "No words to practice" });
+  }
+
   return jsonResponse({
     total: subscriptions?.length ?? 0,
-    sent,
+    sent: deliveries.reduce((count, delivery) => count + delivery.sent, 0),
     pruned: expiredEndpoints.length,
-    words,
+    deliveries,
     mode: options.mode,
     title: options.title,
-    body,
   });
 });

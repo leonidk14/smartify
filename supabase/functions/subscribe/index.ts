@@ -44,7 +44,10 @@ serveFunction(async (req) => {
   const supabase = createAdminClient();
   const { error } = await supabase
     .from("push_subscriptions")
-    .upsert({ endpoint, p256dh, auth }, { onConflict: "endpoint" });
+    .upsert(
+      { endpoint, p256dh, auth, user_id: user.id },
+      { onConflict: "endpoint" },
+    );
 
   if (error) {
     console.error(error);
