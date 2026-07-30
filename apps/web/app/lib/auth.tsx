@@ -7,8 +7,8 @@ import {
   type ReactNode,
 } from "react";
 import type { AuthError, Session, User } from "@supabase/supabase-js";
-import { notifications } from "@mantine/notifications";
 import { supabase } from "./supabaseClient";
+import { clearSnapshot } from "./offlineCache";
 import { SignInDrawer } from "./signInDrawer";
 
 interface AuthContextValue {
@@ -68,6 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
       signOut: async () => {
         await supabase.auth.signOut();
+        await clearSnapshot();
       },
       openSignIn: () => setIsSignInOpen(true),
       closeSignIn: () => setIsSignInOpen(false),

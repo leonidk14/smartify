@@ -71,7 +71,7 @@ export const VocabularyHome = ({
           <Text {...text.meta} mt={5}>
             {isSignedIn
               ? `${wordCountLabel} · ${dueCount} due today`
-              : `${wordCountLabel} · offline copy`}
+              : `${wordCountLabel} · sample`}
           </Text>
         </Box>
         <Group gap={8} wrap="nowrap" align="center">
@@ -139,14 +139,14 @@ export const VocabularyHome = ({
       {!isSignedIn ? (
         <Paper radius={15} p={16} bg="var(--color-surface-inverse)">
           <Text {...text.uiLabel} c="var(--color-text-on-inverse)">
-            Unlock sentence practice
+            Unlock your vocabulary
           </Text>
           <Text
             {...text.bodyXs}
             mt={5}
             c="var(--color-text-on-inverse-dimmed)">
-            Sign in to practice with generated sentences. Your saved words and
-            guess-the-word practice stays available when signed out.
+            These are sample words. Sign in to see the words you saved and to
+            practice with generated sentences.
           </Text>
           <Button
             variant="white"
@@ -186,7 +186,7 @@ export const VocabularyHome = ({
 
       <Box>
         <Text {...text.label} mb={6}>
-          {isSignedIn ? "All words" : "All words · browsable offline"}
+          {isSignedIn ? "All words" : "Sample words"}
         </Text>
         {total === 0 ? (
           <Text {...text.bodySm} c="dimmed" py={16}>

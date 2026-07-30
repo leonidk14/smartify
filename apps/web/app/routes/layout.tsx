@@ -1,5 +1,11 @@
 import { useEffect } from "react";
-import { Outlet, useLocation, useNavigate, Link } from "react-router";
+import {
+  Outlet,
+  useLocation,
+  useNavigate,
+  useRevalidator,
+  Link,
+} from "react-router";
 import {
   ActionIcon,
   Box,
@@ -12,6 +18,7 @@ import {
 import type { ShouldRevalidateFunctionArgs } from "react-router";
 import { IconBook, IconChevronLeft, IconPlayerPlay } from "@tabler/icons-react";
 import { text } from "../theme/typography";
+import { supabase } from "../lib/supabaseClient";
 import { readVocabulary } from "./wordSearch/vocabulary";
 
 const MODE_LABELS: Record<string, string> = {
@@ -25,9 +32,18 @@ export async function clientLoader() {
 }
 
 export function shouldRevalidate({
+  currentUrl,
+  nextUrl,
   formMethod,
   actionResult,
 }: ShouldRevalidateFunctionArgs) {
+  // An explicit revalidator.revalidate() — the auth-change refetch below — arrives
+  // with no formMethod and an unchanged URL. The guard that follows would otherwise
+  // swallow it. Submissions still fall through, so their own checks still apply.
+  if (formMethod === undefined && currentUrl.href === nextUrl.href) {
+    return true;
+  }
+
   // The layout loads the whole vocabulary once and only needs to refetch after a
   // mutation. Without this, React Router's default revalidation refetches it on
   // every search-param change (e.g. the ?mode added when opening /practice/select).
@@ -45,6 +61,19 @@ export function shouldRevalidate({
 export default function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
+  const revalidator = useRevalidator();
+
+  useEffect(() => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_IN" || event === "SIGNED_OUT") {
+        void revalidator.revalidate();
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [revalidator]);
 
   useEffect(() => {
     if (!("serviceWorker" in navigator)) {

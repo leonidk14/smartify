@@ -42,3 +42,9 @@ export async function readSnapshot(): Promise<VocabularyStore> {
 export async function hasSnapshot(): Promise<boolean> {
   return (await db.words.count()) > 0;
 }
+
+// The snapshot holds one user's words, so it has to go when they sign out —
+// otherwise the next person to sign in on this device reads them offline.
+export async function clearSnapshot(): Promise<void> {
+  await db.words.clear();
+}

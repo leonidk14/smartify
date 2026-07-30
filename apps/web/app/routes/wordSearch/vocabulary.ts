@@ -1,3 +1,4 @@
+import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
 import { readSnapshot, saveSnapshot } from "../../lib/offlineCache";
 import { postFunction } from "../../lib/supabaseFunctions";
@@ -56,7 +57,12 @@ export async function readVocabulary(): Promise<{
       "vocabulary-list",
     );
     return { store, isFromOfflineCopy: false };
-  } catch {
+  } catch (error) {
+    // A response means the server was reached and refused — an error page is honest,
+    // where the snapshot below would render a silently empty vocabulary instead.
+    if (axios.isAxiosError(error) && error.response !== undefined) {
+      throw error;
+    }
     // Supabase unreachable (offline) — fall back to the downloaded snapshot.
     return { store: await readSnapshot(), isFromOfflineCopy: true };
   }

@@ -5,7 +5,10 @@ import { PracticeWord } from "./practice/practiceWord";
 import { useBlockBack } from "../lib/useBlockBack";
 import { useVocabulary } from "./wordSearch/useVocabulary";
 import { text } from "../theme/typography";
-import type { VocabularyStore } from "./wordSearch/vocabulary";
+import type {
+  VocabularyEntry,
+  VocabularyStore,
+} from "./wordSearch/vocabulary";
 import type { Route } from "./+types/practiceWord";
 
 interface WordView {
@@ -15,6 +18,10 @@ interface WordView {
   partOfSpeech: string;
   hints: string[];
   display?: string;
+}
+
+function shuffle<T>(items: T[]): T[] {
+  return [...items].sort(() => Math.random() - 0.5);
 }
 
 function buildWordView(store: VocabularyStore, word: string): WordView | null {
@@ -36,15 +43,24 @@ function buildWordView(store: VocabularyStore, word: string): WordView | null {
 
   const selected = allMeanings[Math.floor(Math.random() * allMeanings.length)];
 
-  const otherWords = Object.entries(store).filter(
-    ([key, v]) => key !== word && v.groups.length > 0,
+  const otherWords = shuffle(
+    Object.entries(store).filter(
+      ([key, v]) => key !== word && v.groups.length > 0,
+    ),
   );
-  const samePos = otherWords.filter(([, v]) =>
-    v.groups.some((g) => g.part_of_speech === selected.partOfSpeech),
-  );
+  const isSamePartOfSpeech = ([, candidate]: [string, VocabularyEntry]) =>
+    candidate.groups.some((g) => g.part_of_speech === selected.partOfSpeech);
 
-  const shuffled = [...samePos].sort(() => Math.random() - 0.5);
-  const decoys = shuffled.slice(0, 2).map(([key]) => key);
+  // A decoy sharing the part of speech can't be ruled out on grammar alone, so those
+  // come first — but a small vocabulary may not hold two of them (signed out, the
+  // store is just the sample words), and a quiz with fewer than three options is
+  // worse than one with a mismatched decoy.
+  const decoys = [
+    ...otherWords.filter(isSamePartOfSpeech),
+    ...otherWords.filter((item) => !isSamePartOfSpeech(item)),
+  ]
+    .slice(0, 2)
+    .map(([key]) => key);
   const hints = buildHints({ correct: word, decoys });
 
   return {
