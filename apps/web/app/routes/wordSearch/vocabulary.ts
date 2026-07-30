@@ -19,6 +19,7 @@ export interface StoredMeaningGroup {
 export interface VocabularyEntry {
   groups: StoredMeaningGroup[];
   display?: string;
+  typed?: string;
   shouldPracticeLater: boolean;
   savedAt: string;
 }
@@ -71,10 +72,12 @@ export async function readVocabulary(): Promise<{
 export async function saveWord({
   word,
   display,
+  typed,
   groups,
 }: {
   word: string;
   display: string;
+  typed: string;
   groups: MeaningGroup[];
 }): Promise<VocabularyEntry> {
   const { entry } = await postFunction<{ entry: VocabularyEntry }>(
@@ -82,6 +85,7 @@ export async function saveWord({
     {
       word: word.trim().toLowerCase(),
       display: display.trim().toLowerCase(),
+      typed: typed.trim().toLowerCase(),
       groups: toStoredGroups(groups),
     },
   );

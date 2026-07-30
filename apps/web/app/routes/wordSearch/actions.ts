@@ -27,6 +27,7 @@ export interface Typo {
 
 export interface DictionaryResult {
   groups: MeaningGroup[];
+  normalized: string;
   typo?: Typo;
 }
 
@@ -34,6 +35,7 @@ export type LookupResult = {
   dictionary: DictionaryResult;
   usage: TokenUsage;
   originalSearchItem?: string;
+  normalizedDisplay?: string;
   shouldPracticeLater?: boolean;
 };
 

@@ -20,7 +20,7 @@ import {
 import { IconChevronLeft, IconSearch } from "@tabler/icons-react";
 import type { LookupResult, Typo } from "./actions";
 import type { GeneratedSentence } from "../practice/sentenceTypes";
-import { normalize } from "./normalize";
+import { toKey } from "./normalize";
 import type { StoredMeaningGroup, VocabularyEntry } from "./vocabulary";
 import { text, textCss } from "../../theme/typography";
 import { useKeyboardInset } from "../../lib/useKeyboardInset";
@@ -33,6 +33,7 @@ type SearchResult = Omit<LookupResult, "dictionary"> & {
 type PanelResult = {
   dictionary?: { groups: StoredMeaningGroup[]; typo?: Typo };
   originalSearchItem?: string;
+  normalizedDisplay?: string;
   shouldPracticeLater?: boolean;
 };
 
@@ -59,13 +60,14 @@ export const LookupPanel = ({
 
   const findCached = useCallback(
     (term: string): PanelResult | undefined => {
-      const entry = savedWords.find(([word]) => word === normalize(term))?.[1];
+      const entry = savedWords.find(([word]) => word === toKey(term))?.[1];
       if (!entry || entry.groups.length === 0) {
         return undefined;
       }
       return {
         dictionary: { groups: entry.groups },
         originalSearchItem: term,
+        normalizedDisplay: entry.display ?? toKey(term),
         shouldPracticeLater: entry.shouldPracticeLater,
       };
     },
@@ -131,6 +133,7 @@ export const LookupPanel = ({
     !cachedResult;
 
   const originalSearchItem = data?.originalSearchItem;
+  const normalizedDisplay = data?.normalizedDisplay;
 
   const isMarkingForPractice =
     practiceFetcher.state === "submitting" ||
@@ -140,13 +143,14 @@ export const LookupPanel = ({
     : (data?.shouldPracticeLater ?? false);
 
   const handleTogglePracticeLater = () => {
-    if (!originalSearchItem) {
+    const practiceWord = normalizedDisplay ?? originalSearchItem;
+    if (!practiceWord) {
       return;
     }
     practiceFetcher.submit(
       {
         intent: "practice",
-        word: originalSearchItem,
+        word: practiceWord,
         shouldPracticeLater: String(!isAddedForPractice),
       },
       { method: "post" },
@@ -241,7 +245,10 @@ export const LookupPanel = ({
             <Loader size="sm" color="ink" />
           </Group>
         ) : hasResult && groups ? (
-          <WordResult word={originalSearchItem ?? value} groups={groups} />
+          <WordResult
+            word={normalizedDisplay ?? originalSearchItem ?? value}
+            groups={groups}
+          />
         ) : typo ? (
           <Text {...text.body} ta="center" mt={40}>
             Did you mean{" "}

@@ -115,6 +115,14 @@ filter of their own. Two consequences:
   migration or the service role can publish a word. `user_id` **is** in that
   grant, because PostgREST compiles upserts into `on conflict do update set
   <every column sent>` — the update policy is what pins it to `auth.uid()`.
+- **That UPDATE grant is column-scoped** (the explicit list in
+  `20260730120000_vocabulary_ownership.sql`). So **any new client-writable column
+  on `vocabulary` needs its own `grant update (<col>) on public.vocabulary to
+  authenticated;` in a migration** — otherwise, because Postgres checks column
+  privileges when it *plans* the upsert's `on conflict do update set`, **every**
+  save fails with `42501 permission denied` (not just conflicting ones). INSERT is
+  table-wide, so only UPDATE needs the per-column grant. Withhold the grant only
+  when the column is meant to be immutable to clients, as `is_public` is.
 
 A write must never land on a public row the caller does not own. Route every such
 write through `ensureOwnedWord` in

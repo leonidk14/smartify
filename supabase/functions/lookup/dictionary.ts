@@ -24,6 +24,7 @@ export interface Typo {
 
 export interface DictionaryResult {
   groups: MeaningGroup[];
+  normalized: string;
   typo?: Typo;
 }
 
@@ -52,16 +53,27 @@ Rules for valid words:
 4. If the input is a well-known phrase or idiom, treat it as a single unit under the part of speech "phrase" or "idiom".
 5. If the word is spelled correctly but has no recognized meaning, return an empty groups array.
 
-Always return a JSON object with ALL of "error", "input", "suggestion", and "groups" present.
-- Valid word: set "error", "input", and "suggestion" to empty strings and fill "groups".
-- Typo: set "error" to "typo", "input" to the misspelled input, "suggestion" to the closest correct word, and "groups" to an empty array.
-- Correctly spelled but no recognized meaning: empty strings for "error"/"input"/"suggestion" and an empty "groups" array.
+Normalization ("normalized" field):
+- For a valid word, also return a single canonical, lowercase headword for the input. This is separate from typo detection — never correct spelling here.
+- Verbs → infinitive with "to": "applied"/"applies"/"applying"/"apply" → "to apply" (includes phrasal verbs and idioms).
+- Nouns → singular, drop a leading article: "a car"/"cars"/"the cars" → "car".
+- Adjectives/adverbs → base positive form: "happier" → "happy"; leave already-base forms unchanged ("oblivious" → "oblivious").
+- Persona/possessive words inside a phrase → placeholders: personal pronouns and possessives (his/her/their/my/your/one's/someone's) → "sb" or "sb's"; an object slot → "sth". "pulled his leg" → "to pull sb's leg".
+- Include obligatory particles/complements when the phrase is incomplete without them: "take advantage" → "to take advantage of sb/sth". Never enumerate optional particles for a word that stands alone: "look" → "to look" (not "look for"/"look after").
+- Interjections and fixed exclamations stay as-is: "crikey" → "crikey".
+- When the word has multiple parts of speech, normalize per the first (most common) group.
+- For a typo or a correctly-spelled word with no recognized meaning, set "normalized" to an empty string.
+
+Always return a JSON object with ALL of "error", "input", "suggestion", "normalized", and "groups" present.
+- Valid word: set "error", "input", and "suggestion" to empty strings, fill "normalized" and "groups".
+- Typo: set "error" to "typo", "input" to the misspelled input, "suggestion" to the closest correct word, "normalized" to "", and "groups" to an empty array.
+- Correctly spelled but no recognized meaning: empty strings for "error"/"input"/"suggestion"/"normalized" and an empty "groups" array.
 
 Success shape:
-{"error": "", "input": "", "suggestion": "", "groups": [{"part_of_speech": "noun", "meanings": [{"definition": "...", "example": {"original": "...", "source": "Author, Title", "generated": false}}]}]}
+{"error": "", "input": "", "suggestion": "", "normalized": "to apply", "groups": [{"part_of_speech": "verb", "meanings": [{"definition": "...", "example": {"original": "...", "source": "Author, Title", "generated": false}}]}]}
 
 Typo shape:
-{"error": "typo", "input": "the misspelled input", "suggestion": "the closest correct word", "groups": []}`;
+{"error": "typo", "input": "the misspelled input", "suggestion": "the closest correct word", "normalized": "", "groups": []}`;
 
 export const DICTIONARY_OUTPUT_FORMAT = {
   type: "json_schema",
@@ -72,6 +84,7 @@ export const DICTIONARY_OUTPUT_FORMAT = {
       error: { type: "string" },
       input: { type: "string" },
       suggestion: { type: "string" },
+      normalized: { type: "string" },
       groups: {
         type: "array",
         items: {
@@ -105,7 +118,7 @@ export const DICTIONARY_OUTPUT_FORMAT = {
         },
       },
     },
-    required: ["error", "input", "suggestion", "groups"],
+    required: ["error", "input", "suggestion", "normalized", "groups"],
   },
 } as const;
 
@@ -131,8 +144,13 @@ export function parseDictionaryResponse(text: string): DictionaryResult {
     if (typeof input !== "string" || typeof suggestion !== "string") {
       throw new Error('Typo response missing "input" or "suggestion" string');
     }
-    return { groups: [], typo: { input, suggestion } };
+    return { groups: [], normalized: "", typo: { input, suggestion } };
   }
+
+  const normalized =
+    typeof (parsed as { normalized?: unknown }).normalized === "string"
+      ? (parsed as { normalized: string }).normalized
+      : "";
 
   if (!Array.isArray((parsed as DictionaryResult).groups)) {
     throw new Error('Response missing "groups" array');
@@ -173,5 +191,5 @@ export function parseDictionaryResponse(text: string): DictionaryResult {
     };
   });
 
-  return { groups };
+  return { groups, normalized };
 }

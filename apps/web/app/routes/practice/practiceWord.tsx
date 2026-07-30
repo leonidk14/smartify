@@ -276,7 +276,7 @@ export const PracticeWord = ({
                 Answer
               </Text>
               <Text {...text.displayMd} tt="capitalize">
-                {word}
+                {display ?? word}
               </Text>
               <Text {...text.bodySm} c="dimmed" mt={8}>
                 {definition}

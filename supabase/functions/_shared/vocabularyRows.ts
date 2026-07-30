@@ -3,6 +3,7 @@
 export interface VocabularyEntry {
   groups: unknown[];
   display?: string;
+  typed?: string;
   shouldPracticeLater: boolean;
   savedAt: string;
 }
@@ -13,6 +14,7 @@ export interface VocabularyRow {
   user_id: string;
   word: string;
   display: string | null;
+  typed: string | null;
   groups: unknown[];
   should_practice_later: boolean;
   saved_at: string;
@@ -27,6 +29,7 @@ export function rowToEntry(
   return {
     groups: row.groups,
     display: row.display ?? row.word,
+    typed: row.typed ?? undefined,
     shouldPracticeLater: row.should_practice_later,
     savedAt: row.saved_at,
   };

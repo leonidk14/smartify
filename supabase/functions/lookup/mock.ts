@@ -3,21 +3,24 @@ import { type LookupResponse, type MeaningGroup } from "./dictionary.ts";
 
 function entry({
   groups,
+  normalized = "",
   inputTokens,
   outputTokens,
 }: {
   groups: MeaningGroup[];
+  normalized?: string;
   inputTokens: number;
   outputTokens: number;
 }): LookupResponse {
   return {
-    dictionary: { groups },
+    dictionary: { groups, normalized },
     usage: buildTokenUsage({ inputTokens, outputTokens }),
   };
 }
 
 const MOCK_RESPONSES: Record<string, LookupResponse> = {
   oblivious: entry({
+    normalized: "oblivious",
     groups: [
       {
         part_of_speech: "adjective",
@@ -49,6 +52,7 @@ const MOCK_RESPONSES: Record<string, LookupResponse> = {
   }),
 
   impudence: entry({
+    normalized: "impudence",
     groups: [
       {
         part_of_speech: "noun",
@@ -81,6 +85,7 @@ const MOCK_RESPONSES: Record<string, LookupResponse> = {
   }),
 
   precarious: entry({
+    normalized: "precarious",
     groups: [
       {
         part_of_speech: "adjective",
@@ -113,6 +118,7 @@ const MOCK_RESPONSES: Record<string, LookupResponse> = {
   }),
 
   perilously: entry({
+    normalized: "perilously",
     groups: [
       {
         part_of_speech: "adverb",
@@ -144,6 +150,7 @@ const MOCK_RESPONSES: Record<string, LookupResponse> = {
   }),
 
   stridency: entry({
+    normalized: "stridency",
     groups: [
       {
         part_of_speech: "noun",
@@ -176,6 +183,7 @@ const MOCK_RESPONSES: Record<string, LookupResponse> = {
   }),
 
   apoplectic: entry({
+    normalized: "apoplectic",
     groups: [
       {
         part_of_speech: "adjective",
@@ -208,6 +216,7 @@ const MOCK_RESPONSES: Record<string, LookupResponse> = {
   }),
 
   swell: entry({
+    normalized: "to swell",
     groups: [
       {
         part_of_speech: "verb",
@@ -302,6 +311,7 @@ const MOCK_RESPONSES: Record<string, LookupResponse> = {
   }),
 
   plunge: entry({
+    normalized: "to plunge",
     groups: [
       {
         part_of_speech: "verb",
@@ -388,6 +398,7 @@ const MOCK_RESPONSES_TYPO: Record<string, LookupResponse> = {
   apopletic: {
     dictionary: {
       groups: [],
+      normalized: "",
       typo: { input: "apopletic", suggestion: "apoplectic" },
     },
     usage: buildTokenUsage({ inputTokens: 562, outputTokens: 31 }),

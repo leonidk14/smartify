@@ -11,6 +11,7 @@ import { rowToEntry, type VocabularyRow } from "../_shared/vocabularyRows.ts";
 interface SaveBody {
   word?: unknown;
   display?: unknown;
+  typed?: unknown;
   groups?: unknown;
 }
 
@@ -33,6 +34,7 @@ serveFunction(async (req) => {
 
   const word = body.word;
   const display = body.display;
+  const typed = body.typed;
   const groups = body.groups;
 
   if (typeof word !== "string" || !word.trim() || !Array.isArray(groups)) {
@@ -50,6 +52,10 @@ serveFunction(async (req) => {
       typeof display === "string" && display.trim()
         ? display.trim().toLowerCase()
         : key,
+    typed:
+      typeof typed === "string" && typed.trim()
+        ? typed.trim().toLowerCase()
+        : null,
     groups,
     should_practice_later: false,
     saved_at: new Date().toISOString(),

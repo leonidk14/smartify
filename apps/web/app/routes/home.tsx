@@ -1,11 +1,12 @@
 import { useMemo } from "react";
 import type { Route } from "./+types/home";
 import { lookupWord } from "./wordSearch/actions";
-import { normalize } from "./wordSearch/normalize";
+import { toKey } from "./wordSearch/normalize";
 import {
   readVocabulary,
   saveWord,
   setPracticeLater,
+  type VocabularyEntry,
 } from "./wordSearch/vocabulary";
 import { useVocabulary } from "./wordSearch/useVocabulary";
 import { WordSearch } from "./wordSearch/wordSearch";
@@ -17,7 +18,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
   if (intent === "practice") {
     const word = String(formData.get("word"));
     await setPracticeLater({
-      word: normalize(word),
+      word: toKey(word),
       shouldPracticeLater: formData.get("shouldPracticeLater") === "true",
     });
     return { success: true };
@@ -30,16 +31,18 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     return null;
   }
 
-  const key = normalize(searchItem);
-  const { store } = await readVocabulary();
-  const cached = store[key];
+  const toCachedResult = (entry: VocabularyEntry) => ({
+    dictionary: { groups: entry.groups },
+    originalSearchItem: searchItem,
+    normalizedDisplay: entry.display ?? toKey(searchItem),
+    shouldPracticeLater: entry.shouldPracticeLater,
+  });
 
-  if (cached && cached.groups.length > 0) {
-    return {
-      dictionary: { groups: cached.groups },
-      originalSearchItem: searchItem,
-      shouldPracticeLater: cached.shouldPracticeLater,
-    };
+  const { store } = await readVocabulary();
+
+  const preCached = store[toKey(searchItem)];
+  if (preCached && preCached.groups.length > 0) {
+    return toCachedResult(preCached);
   }
 
   const result = await lookupWord(searchItem);
@@ -52,9 +55,20 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     };
   }
 
+  const normalizedDisplay = (result.dictionary.normalized || searchItem)
+    .trim()
+    .toLowerCase();
+  const key = toKey(normalizedDisplay);
+
+  const existing = store[key];
+  if (existing && existing.groups.length > 0) {
+    return toCachedResult(existing);
+  }
+
   const saved = await saveWord({
     word: key,
-    display: searchItem.trim().toLowerCase(),
+    display: normalizedDisplay,
+    typed: searchItem,
     groups: result.dictionary.groups,
   });
 
@@ -62,6 +76,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     ...result,
     dictionary: { ...result.dictionary, groups: saved.groups },
     originalSearchItem: searchItem,
+    normalizedDisplay,
     shouldPracticeLater: false,
   };
 }
