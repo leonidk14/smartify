@@ -2,20 +2,67 @@
 
 **A quieter way to grow the words you actually use.**
 
-[Live app](https://smartify-web-beige.vercel.app/) · [Landing page](https://smartify-landing.vercel.app/)
+[Live app](https://smartify-web-beige.vercel.app/)
 
-Look up a word, keep it, and practise it in short bursts — guess it from its definition, or
-rebuild a sentence around it. One nudge a day, and the words you've saved stay open whether or
-not you're signed in.
+## Why I built this
 
-It's an installable PWA: a React Router SPA in front of Supabase Edge Functions, with Claude
-doing the dictionary lookups, the example sentences, and the corrections.
+I consume a lot of information in English (reading books, watching video content) and I was
+always fascinated by the diversity of this language. The variety of words and phrases which might
+describe different things and the regional differences between the way the same thing might be
+described were always interesting to me and caught my attention. So I built a small app to level
+up my English by learning and practicing using those words and phrases the way it works for me.
+
+## How it works
+
+The core of the app is practising a new word or phrase by building a sentence with it, with the
+help of Claude. The loop:
+
+```mermaid
+flowchart TD
+    A["Input: a word + the meaning to practise<br/>"] --> B{"Cached sentence<br/>for this meaning?"}
+    B -- yes --> D
+    B -- no --> C["Claude finds a real published quotation<br/>(Haiku, then Sonnet as fallback)<br/>— writes its own only if none exists"]
+    C --> D["Rephrase in plain words,<br/>target word swapped for a highlighted phrase"]
+    D --> E["User rebuilds the sentence<br/>using the target word"]
+    E --> F["Claude grades the word's fit<br/>— sense + naturalness, 0–10"]
+    F -- "below 9.5" --> G["Minimal correction,<br/>changed spans highlighted"]
+    F -- "9.5 or above" --> H["Clean — no correction needed"]
+```
 
 ## Screenshots
 
-|                                                                  Your words                                                                   |                                                                          Look up a word                                                                           |                                                                        Rebuild a sentence                                                                         |
-| :-------------------------------------------------------------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------: |
-| <img src="docs/screenshots/home.jpg" alt="The saved word list: 78 words, 14 due today, and a button to start a practice session" width="260"> | <img src="docs/screenshots/lookup.jpg" alt="A lookup for &quot;industrious&quot;: two adjective senses, each with a definition and a quoted example" width="260"> | <img src="docs/screenshots/practice-sentence.jpg" alt="Sentence practice: a rephrased sentence above an empty field to rewrite it in your own words" width="260"> |
+|                                                                  Your words                                                                   |                                                                                 Look up a word                                                                                 |                                                                        Rebuild a sentence                                                                         |
+| :-------------------------------------------------------------------------------------------------------------------------------------------: | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------: |
+| <img src="docs/screenshots/home.jpg" alt="The saved word list: 96 words, 14 due today, and a button to start a practice session" width="260"> | <img src="docs/screenshots/lookup.jpg" alt="A lookup for &quot;to get along&quot;: a phrasal verb with three senses, each with a definition and a quoted example" width="260"> | <img src="docs/screenshots/practice-sentence.jpg" alt="Sentence practice: a rephrased sentence above an empty field to rewrite it in your own words" width="260"> |
+
+## Decisions & priorities
+
+Some decisions I made along the way:
+
+- **Vocabulary service:** I picked the Claude Haiku model instead of the Oxford API to look
+  up new words. The goal here is to cut the cost of a single lookup. The alternative I checked —
+  [Oxford Dictionaries pricing](https://account.oxforddictionaries.com/pricing) — costs £0.05 per
+  call, while an average lookup using Haiku is around $0.01 at the moment of research. The
+  potential deviation from the gold standard (the Oxford dictionary) is consciously accepted.
+- **Platform:** I went with a PWA because I wanted to leverage push notifications for the
+  reminders to practice, but I didn't want the overkill of developing a separate app and dealing
+  with all the infrastructure (need to use Expo to build the app, etc.). The compromise here is
+  not the smoothest UX and no proper native feeling, and this compromise was taken consciously as
+  the target user (me) wouldn't spend a lot of time in the app.
+- **Visuals:** to not spend too much time on coming up with a fresh design, I gave freedom to
+  Claude Design, which came up with lean frames for core screens which served the purpose, and I
+  iterated on the skeleton Claude built when fine-tuning the features.
+- **The building process:** most of the time I spend goes into defining the goal and
+  reviewing/iterating on the plan Claude Code came up with. After that, lots of time I spend on
+  reviewing and fine-tuning the code changes. The app is still in MVP stage and has only 1 user
+  (me), so I didn't invest time into covering it with tests thoroughly since the app and its behaviour change
+  quite a lot.
+- **Cost control:** every function that calls Claude is gated behind its own
+  mock-mode toggle, so the default path spends no tokens until I flip it on. Generation runs Haiku
+  first and only falls back to Sonnet when Haiku can't produce a sentence. Results are cached to
+  avoid repeat calls: a word you've already looked up is served from your saved vocabulary instead
+  of a fresh lookup, and each meaning keeps up to three sentences, so
+  practising a word again rarely triggers a fresh model call.
 
 ## Features
 
@@ -46,20 +93,18 @@ doing the dictionary lookups, the example sentences, and the corrections.
 | **Backend** | Supabase — Postgres + migrations, Auth, Edge Functions (Deno), Storage, `pg_cron`                                                                             |
 | **AI**      | Anthropic Claude via `@anthropic-ai/sdk` — Haiku 4.5 by default, Sonnet 5 as the generation fallback, JSON-schema structured output                           |
 | **PWA**     | Web app manifest · Workbox-generated service worker · Web Push + VAPID                                                                                        |
-| **Landing** | Plain HTML + CSS on Vite — zero JavaScript shipped                                                                                                            |
-| **Tooling** | npm workspaces · Vercel (each app deployed on its own)                                                                                                        |
+| **Tooling** | npm workspaces · Vercel                                                                                                                                       |
 
 ## Repository layout
 
-An npm-workspaces monorepo with two independent apps:
+An npm-workspaces monorepo. The app lives in `apps/web`; `supabase/`, `scripts/`, `data/` and
+`.env` stay at the root and are shared.
 
-| Path           | What                                          | Dev                           | Build output            |
-| -------------- | --------------------------------------------- | ----------------------------- | ----------------------- |
-| `apps/web`     | the PWA — React Router v7 SPA                 | `npm run dev` (:5173)         | `apps/web/build/client` |
-| `apps/landing` | the marketing page — static HTML + CSS, no JS | `npm run landing:dev` (:5174) | `apps/landing/dist`     |
+| Path       | What                          | Dev                   | Build output            |
+| ---------- | ----------------------------- | --------------------- | ----------------------- |
+| `apps/web` | the PWA — React Router v7 SPA | `npm run dev` (:5173) | `apps/web/build/client` |
 
-`supabase/`, `scripts/`, `data/` and `.env` stay at the root and are shared; every command
-below runs from the repo root.
+Every command below runs from the repo root.
 
 ## Getting started
 
@@ -68,11 +113,4 @@ npm install
 npm run dev        # the app at http://localhost:5173
 npm run typecheck
 npm run build      # → apps/web/build/client (+ the service worker)
-```
-
-The landing page is a separate workspace on its own port — both can be up at the same time:
-
-```bash
-npm run landing:dev     # http://localhost:5174
-npm run landing:build   # → apps/landing/dist
 ```

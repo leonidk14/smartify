@@ -20,3 +20,5 @@ apps/web/app/theme/colors.md
 
 dev-dist/
 dist/
+
+docs/screenshots/raw/*.jpg

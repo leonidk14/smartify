@@ -20,11 +20,11 @@ them so decisions rest on facts and real needs rather than vibes or intuition.
 
 Two independent apps under `apps/*`, with shared infra at the root.
 
-| Path | What |
-| --- | --- |
-| `apps/web` | the PWA (React Router v7 SPA, Mantine). Workspace name `smartify`. |
-| `apps/landing` | the public marketing page. Plain HTML + CSS on Vite — **never add a framework or a runtime dependency to it**. The one exception is a ~15-line inline script in `index.html` driving the feature-card demo players; keep any further JS inline, vanilla, and this small. Workspace name `smartify-landing`. |
-| `supabase/` `scripts/` `data/` `.env` | root-level, shared. Their commands run from the root unchanged. |
+| Path                                  | What                                                                                                                                                                                                                                                                                                        |
+| ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `apps/web`                            | the PWA (React Router v7 SPA, Mantine). Workspace name `smartify`.                                                                                                                                                                                                                                          |
+| `apps/landing`                        | the public marketing page. Plain HTML + CSS on Vite — **never add a framework or a runtime dependency to it**. The one exception is a ~15-line inline script in `index.html` driving the feature-card demo players; keep any further JS inline, vanilla, and this small. Workspace name `smartify-landing`. |
+| `supabase/` `scripts/` `data/` `.env` | root-level, shared. Their commands run from the root unchanged.                                                                                                                                                                                                                                             |
 
 The root `package.json` has **no dependencies** — it is workspace wiring plus script
 aliases. Add dependencies to the owning app, never to the root. This holds for dev
@@ -66,12 +66,12 @@ about. Finish instead with the manual steps you want exercised and the expected 
 of each, and say plainly which parts of the change stay unverified until I have done
 them.
 
-| Stage | Command | Fix with |
-| --- | --- | --- |
-| Types | `npm run typecheck` | by hand |
-| Lint | `npm run lint` | `npm run lint:fix`, then by hand |
-| Format | `npm run format:check` | `npm run format` |
-| Edge functions | `npm run deno:check` | `npm run deno:fmt` |
+| Stage          | Command                | Fix with                         |
+| -------------- | ---------------------- | -------------------------------- |
+| Types          | `npm run typecheck`    | by hand                          |
+| Lint           | `npm run lint`         | `npm run lint:fix`, then by hand |
+| Format         | `npm run format:check` | `npm run format`                 |
+| Edge functions | `npm run deno:check`   | `npm run deno:fmt`               |
 
 Ownership is split by runtime, and the split is deliberate:
 
@@ -211,12 +211,12 @@ filter of their own. Two consequences:
 - `is_public` is withheld from the `authenticated` update grant, so only a
   migration or the service role can publish a word. `user_id` **is** in that
   grant, because PostgREST compiles upserts into `on conflict do update set
-  <every column sent>` — the update policy is what pins it to `auth.uid()`.
+<every column sent>` — the update policy is what pins it to `auth.uid()`.
 - **That UPDATE grant is column-scoped** (the explicit list in
   `20260730120000_vocabulary_ownership.sql`). So **any new client-writable column
   on `vocabulary` needs its own `grant update (<col>) on public.vocabulary to
-  authenticated;` in a migration** — otherwise, because Postgres checks column
-  privileges when it *plans* the upsert's `on conflict do update set`, **every**
+authenticated;` in a migration** — otherwise, because Postgres checks column
+  privileges when it _plans_ the upsert's `on conflict do update set`, **every**
   save fails with `42501 permission denied` (not just conflicting ones). INSERT is
   table-wide, so only UPDATE needs the per-column grant. Withhold the grant only
   when the column is meant to be immutable to clients, as `is_public` is.
@@ -310,6 +310,32 @@ flag, since each guards a different cost.
 (matched case-insensitively): `real` runs the default Haiku→Sonnet fallback,
 `sonnet` pins generation to Sonnet only, and `haiku` pins it to Haiku only.
 Any other value (or unset) is still mock.
+
+## README screenshots
+
+The three images in the README live in `docs/screenshots/*.jpg`. They are cropped
+from full-resolution phone captures by `scripts/crop-screenshots.sh` — macOS
+`sips` only, no dependencies. The script strips the top system status bar and the
+bottom Android navigation bar while keeping the app's own UI, calibrated for
+`1080x2340` captures with a 3-button nav bar (`TOP_CROP=120`, `BOTTOM_CROP=170`,
+giving `1080x2050`); anything not matching `1080x2340` is skipped rather than
+mis-cropped.
+
+Raw captures go in `docs/screenshots/raw/` — **git-ignored on purpose**
+(`docs/screenshots/raw/*.jpg`), an internal staging area; only the cropped outputs
+are committed, and a `.gitkeep` keeps the otherwise-empty folder tracked. The
+script always reads from `raw/` and writes to `docs/screenshots/`, so re-running
+never double-crops.
+
+To regenerate (the capture step is the user's — I can't drive the phone):
+
+1. The user takes fresh full-resolution screenshots on the device and drops them
+   into `docs/screenshots/raw/`, reusing the filenames the README references
+   (`home.jpg`, `lookup.jpg`, `practice-sentence.jpg`).
+2. Run `./scripts/crop-screenshots.sh` to write the cropped versions.
+3. If the visible content changed (word counts, the looked-up word, its senses),
+   update the matching `alt` text in the README table so it still describes the
+   image.
 
 ## Design references
 
