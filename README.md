@@ -55,8 +55,9 @@ Some decisions I made along the way:
 - **The building process:** most of the time I spend goes into defining the goal and
   reviewing/iterating on the plan Claude Code came up with. After that, lots of time I spend on
   reviewing and fine-tuning the code changes. The app is still in MVP stage and has only 1 user
-  (me), so I didn't invest time into covering it with tests thoroughly since the app and its behaviour change
-  quite a lot.
+  (me), so I didn't invest time into covering it with tests thoroughly since the app and its
+  behaviour change quite a lot. At the moment the focus is on getting value from the app and solving the problem
+  now, rather than on perfect production readiness.
 - **Cost control:** every function that calls Claude is gated behind its own
   mock-mode toggle, so the default path spends no tokens until I flip it on. Generation runs Haiku
   first and only falls back to Sonnet when Haiku can't produce a sentence. Results are cached to
