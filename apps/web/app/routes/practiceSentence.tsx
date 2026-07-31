@@ -15,6 +15,7 @@ interface SentenceData {
   original: string;
   source: string;
   simplified: string | null;
+  rephraseTarget: string | null;
   generated: boolean;
   generationFailed: boolean;
 }
@@ -24,6 +25,7 @@ const failedSentence = (meaning: string): SentenceData => ({
   original: "",
   source: "",
   simplified: "",
+  rephraseTarget: "",
   generated: false,
   generationFailed: true,
 });
@@ -87,6 +89,7 @@ export async function clientLoader({
         original: sentence.original,
         source: sentence.source,
         simplified: sentence.simplified ?? null,
+        rephraseTarget: sentence.rephraseTarget ?? null,
         generated: sentence.generated ?? false,
         generationFailed: false,
       };
@@ -148,6 +151,7 @@ export default function PracticeSentenceRoute({
             original={sentence.original}
             source={sentence.source}
             simplified={sentence.simplified}
+            rephraseTarget={sentence.rephraseTarget}
             generated={sentence.generated}
             generationFailed={sentence.generationFailed}
           />

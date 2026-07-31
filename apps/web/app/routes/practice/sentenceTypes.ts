@@ -10,6 +10,8 @@ export interface GeneratedSentence {
   source: string;
   /** Null on a sentence seeded from a dictionary example, until backfilled. */
   simplified: string | null;
+  /** Null on a sentence seeded from a dictionary example, until backfilled. */
+  rephraseTarget?: string | null;
   /** Set only when the meaning used differs from the requested one. */
   meaning?: string;
   /** True when the sentence was written by the model, not a real quotation. */

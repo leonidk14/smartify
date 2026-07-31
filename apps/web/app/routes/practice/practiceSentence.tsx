@@ -17,6 +17,7 @@ import { text, textCss } from "../../theme/typography";
 import { PracticeProgress } from "./practiceProgress";
 import { ActionBar } from "./actionBar";
 import { FeedbackHeader } from "./feedbackHeader";
+import { HighlightPhrase, Section, UnderlineWord } from "./SentenceHelpers";
 
 interface PracticeSentenceProps {
   word: string;
@@ -24,87 +25,12 @@ interface PracticeSentenceProps {
   original: string;
   source: string;
   simplified: string | null;
+  rephraseTarget: string | null;
   generated: boolean;
   generationFailed: boolean;
 }
 
 type ActionData = SentenceEvaluation | { error: true };
-
-function escapeRegExp(s: string): string {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-const UnderlineWord = ({
-  sentence,
-  word,
-}: {
-  sentence: string;
-  word: string;
-}) => {
-  if (!word) {
-    return <>{sentence}</>;
-  }
-  const parts = sentence.split(new RegExp(`(${escapeRegExp(word)})`, "ig"));
-  return (
-    <>
-      {parts.map((part, i) =>
-        part.toLowerCase() === word.toLowerCase() ? (
-          <Text
-            key={i}
-            span
-            style={{
-              textDecoration: "underline",
-              textDecorationColor: "var(--color-text-success)",
-            }}>
-            {part}
-          </Text>
-        ) : (
-          <Text key={i} span>
-            {part}
-          </Text>
-        ),
-      )}
-    </>
-  );
-};
-
-const Section = ({
-  label,
-  warm = false,
-  tint,
-  children,
-}: {
-  label: string;
-  warm?: boolean;
-  tint?: "red";
-  children: React.ReactNode;
-}) => (
-  <Box
-    p="14px 15px"
-    bg={
-      warm
-        ? "var(--color-surface-warm)"
-        : tint === "red"
-          ? "var(--color-surface-error)"
-          : undefined
-    }
-    bdrs={14}
-    bd={
-      tint === "red"
-        ? "1.5px solid var(--color-border-error)"
-        : warm
-          ? "1px solid rgba(0,0,0,.08)"
-          : "1px solid var(--color-border)"
-    }>
-    <Text
-      {...text.label}
-      c={tint === "red" ? "var(--color-text-error)" : "dimmed"}
-      mb={6}>
-      {label}
-    </Text>
-    <Text {...text.proseSm}>{children}</Text>
-  </Box>
-);
 
 export const PracticeSentence = ({
   word,
@@ -112,6 +38,7 @@ export const PracticeSentence = ({
   original,
   source,
   simplified,
+  rephraseTarget,
   generated,
   generationFailed,
 }: PracticeSentenceProps) => {
@@ -240,9 +167,10 @@ export const PracticeSentence = ({
             </Text>
           </Box>
 
-          <Section label="Rephrased" warm>
-            {simplified}
-          </Section>
+          <HighlightPhrase
+            simplified={simplified}
+            rephrasedTarget={rephraseTarget}
+          />
 
           <Textarea
             variant="unstyled"

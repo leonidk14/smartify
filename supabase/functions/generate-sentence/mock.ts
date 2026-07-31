@@ -23,6 +23,7 @@ const MOCK_GENERATIONS: Record<string, SentenceGeneration> = {
       source:
         "Steve Irwin, The Crocodile Hunter (television series and associated media)",
       simplified: "Wow, friend, that's a huge crocodile!",
+      rephraseTarget: "Wow",
       meaning: "An exclamation of surprise, alarm, or astonishment.",
     },
     inputTokens: 878,
@@ -35,6 +36,7 @@ const MOCK_GENERATIONS: Record<string, SentenceGeneration> = {
       source: "",
       simplified:
         "The harsh, piercing quality of the sound woke him up suddenly.",
+      rephraseTarget: "The harsh, piercing quality",
       meaning:
         "The quality of being strident; harshness or shrillness of sound.",
       generated: true,
@@ -49,6 +51,7 @@ const DEFAULT_MOCK_GENERATION: SentenceGeneration = generation({
     original: "The light was ephemeral.",
     source: "Kazuo Ishiguro, The Remains of the Day",
     simplified: "The light lasted only a very short time.",
+    rephraseTarget: "ephemeral",
   },
   inputTokens: 280,
   outputTokens: 90,

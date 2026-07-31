@@ -24,15 +24,16 @@ Always return a JSON object with ALL of these fields present:
 1. "original": a short (ideally 10 words or fewer) sentence in which the WORD is used in the chosen MEANING. When "generated" is false, this must be a genuine quotation taken verbatim from REAL published material (journalism, a book, an essay, a famous speech) that you can confidently attribute — never invent, paraphrase, or approximate one. When "generated" is true, this is a natural sentence you wrote yourself. Either way, give the sentence text ONLY — do NOT wrap it in quotation marks and do NOT append the author or source here. On failure, set this to an empty string.
 2. "source": when "generated" is false, the confident attribution — the author and work, or the publication, e.g. Kazuo Ishiguro, The Remains of the Day; it must be a real, specific source, never made up. When "generated" is true, set this to an empty string. On failure, set this to an empty string.
 3. "simplified": a plain-language paraphrase of the sentence (without the attribution) that keeps the same idea but uses only simple, common words — AND does NOT contain the WORD or any obvious inflection of it. Replace the word with a plain description of its sense, so the learner can reinstate the word themselves. On failure, set this to an empty string.
-4. "meaning": the exact meaning string you actually used, copied verbatim from the MEANINGS list (whether or not it matches the REQUESTED one). On failure, set this to an empty string.
-5. "generated": true when you wrote the sentence yourself because no genuine quotation could be found; false when "original" is a real published quotation.
-6. "error": on success, an empty string. Only when you cannot produce a sentence at all, a short plain explanation of why, with "original", "source", "simplified", and "meaning" all set to empty strings.
+4. "rephraseTarget": the exact word-for-word substring of "simplified" — copied verbatim, identical casing, spacing and punctuation — that stands in for the WORD; the plain description the learner must rephrase back into the WORD. It MUST appear inside "simplified" exactly as written. On failure, set to an empty string.
+5. "meaning": the exact meaning string you actually used, copied verbatim from the MEANINGS list (whether or not it matches the REQUESTED one). On failure, set this to an empty string.
+6. "generated": true when you wrote the sentence yourself because no genuine quotation could be found; false when "original" is a real published quotation.
+7. "error": on success, an empty string. Only when you cannot produce a sentence at all, a short plain explanation of why, with "original", "source", "simplified", and "meaning" all set to empty strings.
 
 Rules:
 - On success, all of "original", "source" (if present), and "simplified" convey the same situation and meaning.
-- Real quotation: {"original": "...", "source": "...", "simplified": "...", "meaning": "...", "generated": false, "error": ""}
-- Generated fallback: {"original": "...", "source": "", "simplified": "...", "meaning": "...", "generated": true, "error": ""}
-- Failure: {"original": "", "source": "", "simplified": "", "meaning": "", "generated": false, "error": "..."}`;
+- Real quotation: {"original": "...", "source": "...", "simplified": "...", "rephraseTarget": "...", "meaning": "...", "generated": false, "error": ""}
+- Generated fallback: {"original": "...", "source": "", "simplified": "...", "rephraseTarget": "...", "meaning": "...", "generated": true, "error": ""}
+- Failure: {"original": "", "source": "", "simplified": "", "rephraseTarget": "", "meaning": "", "generated": false, "error": "..."}`;
 
 const GENERATION_OUTPUT_FORMAT = {
   type: "json_schema",
@@ -43,6 +44,7 @@ const GENERATION_OUTPUT_FORMAT = {
       original: { type: "string" },
       source: { type: "string" },
       simplified: { type: "string" },
+      rephraseTarget: { type: "string" },
       meaning: { type: "string" },
       generated: { type: "boolean" },
       error: { type: "string" },
@@ -54,6 +56,7 @@ const GENERATION_OUTPUT_FORMAT = {
       "meaning",
       "generated",
       "error",
+      "rephraseTarget",
     ],
   },
 } as const;
@@ -63,11 +66,12 @@ const SIMPLIFICATION_SYSTEM_PROMPT =
 
 Always return a JSON object with ALL of these fields present:
 1. "simplified": a plain-language paraphrase of the SENTENCE (without any attribution) that keeps the same idea but uses only simple, common words — AND does NOT contain the WORD or any obvious inflection of it. Replace the word with a plain description of its sense, so the learner can reinstate the word themselves. On failure, set this to an empty string.
-2. "error": on success, an empty string. Only when you cannot paraphrase the sentence at all, a short plain explanation of why, with "simplified" set to an empty string.
+2. "rephraseTarget": the exact word-for-word substring of "simplified" — copied verbatim, identical casing, spacing and punctuation — that stands in for the WORD; the plain description the learner must rephrase back into the WORD. It MUST appear inside "simplified" exactly as written. On failure, set to an empty string.
+3. "error": on success, an empty string. Only when you cannot paraphrase the sentence at all, a short plain explanation of why, with "simplified" set to an empty string.
 
 Rules:
-- Success: {"simplified": "...", "error": ""}
-- Failure: {"simplified": "", "error": "..."}`;
+- Success: {"simplified": "...", "rephraseTarget": "...", "error": ""}
+- Failure: {"simplified": "", "rephraseTarget": "", "error": "..."}`;
 
 const SIMPLIFICATION_OUTPUT_FORMAT = {
   type: "json_schema",
@@ -76,9 +80,10 @@ const SIMPLIFICATION_OUTPUT_FORMAT = {
     additionalProperties: false,
     properties: {
       simplified: { type: "string" },
+      rephraseTarget: { type: "string" },
       error: { type: "string" },
     },
-    required: ["simplified", "error"],
+    required: ["simplified", "error", "rephraseTarget"],
   },
 } as const;
 
@@ -97,6 +102,20 @@ function stripFences(text: string): string {
     .replace(/^```(?:json)?\s*/i, "")
     .replace(/\s*```$/i, "")
     .trim();
+}
+
+function isRephraseTargetValid({
+  simplified,
+  rephraseTarget,
+}: {
+  simplified: string;
+  rephraseTarget: unknown;
+}) {
+  return Boolean(
+    typeof rephraseTarget === "string" &&
+      rephraseTarget.length > 0 &&
+      simplified.toLowerCase().includes(rephraseTarget.toLowerCase()),
+  );
 }
 
 // Models with thinking enabled (e.g. Sonnet 5, which thinks by default) put
@@ -118,18 +137,32 @@ export function parseGenerationResponse(text: string): GeneratedSentence {
     throw new Error("Response is not a JSON object");
   }
 
-  const { original, source, simplified, meaning, generated, error } =
-    parsed as {
-      original?: unknown;
-      source?: unknown;
-      simplified?: unknown;
-      meaning?: unknown;
-      generated?: unknown;
-      error?: unknown;
-    };
+  const {
+    original,
+    source,
+    simplified,
+    rephraseTarget,
+    meaning,
+    generated,
+    error,
+  } = parsed as {
+    original?: unknown;
+    source?: unknown;
+    simplified?: unknown;
+    rephraseTarget?: unknown;
+    meaning?: unknown;
+    generated?: unknown;
+    error?: unknown;
+  };
 
   if (typeof error === "string" && error.trim()) {
-    return { original: "", source: "", simplified: "", error };
+    return {
+      original: "",
+      source: "",
+      rephraseTarget: "",
+      simplified: "",
+      error,
+    };
   }
 
   if (typeof original !== "string" || typeof simplified !== "string") {
@@ -140,20 +173,27 @@ export function parseGenerationResponse(text: string): GeneratedSentence {
     original,
     source: typeof source === "string" ? source : "",
     simplified,
+    ...(isRephraseTargetValid({ simplified, rephraseTarget })
+      ? { rephraseTarget: String(rephraseTarget) }
+      : {}),
     ...(typeof meaning === "string" && meaning.trim() ? { meaning } : {}),
     ...(generated === true ? { generated: true } : {}),
   };
 }
 
-export function parseSimplificationResponse(text: string): string {
+export function parseSimplificationResponse(text: string): {
+  simplified: string;
+  rephraseTarget?: string;
+} {
   const parsed = JSON.parse(stripFences(text));
 
   if (typeof parsed !== "object" || parsed === null) {
     throw new Error("Response is not a JSON object");
   }
 
-  const { simplified, error } = parsed as {
+  const { simplified, rephraseTarget, error } = parsed as {
     simplified?: unknown;
+    rephraseTarget?: unknown;
     error?: unknown;
   };
 
@@ -165,7 +205,12 @@ export function parseSimplificationResponse(text: string): string {
     throw new Error('Response missing a non-empty "simplified" string');
   }
 
-  return simplified;
+  return {
+    simplified,
+    ...(isRephraseTargetValid({ simplified, rephraseTarget })
+      ? { rephraseTarget: String(rephraseTarget) }
+      : {}),
+  };
 }
 
 async function runPrompt({
@@ -280,7 +325,7 @@ export async function simplifySentence({
   word: string;
   meaning: string;
   original: string;
-}): Promise<{ simplified: string; usage: TokenUsage }> {
+}): Promise<{ simplified: string; rephraseTarget: string; usage: TokenUsage }> {
   const { text, usage } = await runPrompt({
     client,
     pricing: "haiku",
@@ -289,5 +334,7 @@ export async function simplifySentence({
     userContent: `Word: ${word}\nMeaning: ${meaning}\nSentence: ${original}`,
   });
 
-  return { simplified: parseSimplificationResponse(text), usage };
+  const { simplified, rephraseTarget } = parseSimplificationResponse(text);
+
+  return { simplified, rephraseTarget: String(rephraseTarget), usage };
 }

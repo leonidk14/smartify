@@ -174,19 +174,25 @@ serveFunction(async (req) => {
     });
   }
 
-  const { simplified, usage } = await simplifySentence({
+  const { simplified, rephraseTarget, usage } = await simplifySentence({
     client,
     word: key,
     meaning: meaningDefinition,
     original: cached.original,
   });
   await writeUpdatedWordGroups(
-    setSimplified({ groups: counted, meaningId, sentenceIndex, simplified }),
+    setSimplified({
+      groups: counted,
+      meaningId,
+      sentenceIndex,
+      simplified,
+      rephraseTarget,
+    }),
   );
 
   return respond({
     word: key,
-    sentence: { ...cached, simplified },
+    sentence: { ...cached, simplified, rephraseTarget },
     usage,
     source: "cache+simplify",
   });

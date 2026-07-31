@@ -10,6 +10,7 @@ export interface GeneratedSentence {
   source: string;
   /** Null on a sentence seeded from a dictionary example, until backfilled. */
   simplified: string | null;
+  rephraseTarget?: string | null;
   meaning?: string;
   generated?: boolean;
   error?: string;
@@ -130,11 +131,13 @@ export function setSimplified({
   meaningId,
   sentenceIndex,
   simplified,
+  rephraseTarget,
 }: {
   groups: StoredMeaningGroup[];
   meaningId: string;
   sentenceIndex: number;
   simplified: string;
+  rephraseTarget: string;
 }): StoredMeaningGroup[] {
   const updated = structuredClone(groups);
   const meaning = findMeaning({ groups: updated, meaningId });
@@ -145,5 +148,6 @@ export function setSimplified({
     );
   }
   target.sentence.simplified = simplified;
+  target.sentence.rephraseTarget = rephraseTarget;
   return updated;
 }
