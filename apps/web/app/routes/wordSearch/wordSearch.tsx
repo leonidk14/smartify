@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useState } from "react";
 import { VocabularyHome } from "./vocabularyHome";
 import { LookupPanel } from "./lookupPanel";
 import type { VocabularyEntry } from "./vocabulary";
-import { NavigationType, useBlocker, type BlockerFunction } from "react-router";
+import { useLocation, useNavigate, useSearchParams } from "react-router";
+
+const LOOKUP_PARAM = "lookup";
 
 interface WordSearchProps {
   words: [string, VocabularyEntry][];
@@ -17,25 +18,25 @@ export const WordSearch = ({
   dueCount,
   isFromOfflineCopy,
 }: WordSearchProps) => {
-  const [lookup, setLookup] = useState<{ open: boolean; query?: string }>({
-    open: false,
-  });
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  const shouldBlock = useCallback<BlockerFunction>(
-    ({ historyAction }) => {
-      return lookup.open && historyAction === NavigationType.Pop;
-    },
-    [lookup.open],
-  );
+  const isLookupOpen = searchParams.has(LOOKUP_PARAM);
+  const lookupQuery = searchParams.get(LOOKUP_PARAM) ?? undefined;
 
-  const blocker = useBlocker(shouldBlock);
+  const openLookup = (query?: string) => {
+    const search = new URLSearchParams({ [LOOKUP_PARAM]: query ?? "" });
+    void navigate({ pathname: "/", search: `?${search.toString()}` });
+  };
 
-  useEffect(() => {
-    if (blocker.state === "blocked") {
-      setLookup({ open: false });
-      blocker.reset();
+  const closeLookup = () => {
+    if (location.key === "default") {
+      void navigate("/", { replace: true });
+      return;
     }
-  }, [blocker]);
+    void navigate(-1);
+  };
 
   return (
     <>
@@ -44,13 +45,13 @@ export const WordSearch = ({
         total={total}
         dueCount={dueCount}
         isFromOfflineCopy={isFromOfflineCopy}
-        onOpenLookup={(query) => setLookup({ open: true, query })}
+        onOpenLookup={openLookup}
       />
-      {lookup.open ? (
+      {isLookupOpen ? (
         <LookupPanel
           savedWords={words}
-          initialQuery={lookup.query}
-          onClose={() => setLookup({ open: false })}
+          initialQuery={lookupQuery}
+          onClose={closeLookup}
         />
       ) : null}
     </>

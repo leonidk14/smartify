@@ -58,6 +58,14 @@ hooks, so this command is the only thing standing between a mistake and `main`.
 npm run verify     # typecheck -> eslint -> prettier -> deno, in that order
 ```
 
+**`npm run verify` is the whole of what you run.** Anything that requires driving the
+app — clicking through a flow, starting a dev server, installing the PWA, testing on a
+phone, checking offline behaviour — **I run manually**. Do not launch the app or a
+browser, and never report a behavioural claim as verified when it was only reasoned
+about. Finish instead with the manual steps you want exercised and the expected result
+of each, and say plainly which parts of the change stay unverified until I have done
+them.
+
 | Stage | Command | Fix with |
 | --- | --- | --- |
 | Types | `npm run typecheck` | by hand |
@@ -97,18 +105,26 @@ rot quietly.
 
 ### Suppressions
 
-Rules are configured to fit the codebase rather than suppressed at the call site, so
-reach for a rule change before an `eslint-disable`. When a disable is genuinely right —
-the rule's precondition does not hold and the code is correct — it must be
-`eslint-disable-next-line <rule>` naming the single rule, with a comment saying why.
-Never disable a whole preset, never use a file-level disable, and never widen an
-existing disable to cover a new finding.
+A finding means the code is wrong. Fix the code.
 
-The existing ones are all of this kind: mount-only effects and a deliberately
-`store`-independent `useMemo` (`react-hooks/exhaustive-deps`), reacting to the router's
-blocker (`react-hooks/set-state-in-effect`), the token-cost table
-(`no-console`), and a browser-support guard the DOM lib types as unreachable
-(`@typescript-eslint/no-unnecessary-condition`).
+`eslint-disable` at the call site is banned — there is no approved form of it. Not a
+single-rule disable, not one with a comment explaining itself, not "just this once". If
+a rule fires, the answer is a change to the code that makes it stop firing honestly.
+
+Editing a rule in `eslint.config.js` is a different act and is allowed for exactly one
+reason: **the rule is wrong about what the code means here** — it reports another rule's
+finding under a second name, or it reasons from a type or an assumption that
+misdescribes this project's runtime. It is never allowed because a finding is
+inconvenient or expensive to fix. Every such entry carries a comment saying which case
+it is: the `@eslint-react` block is the duplicate-finding kind, `only-throw-error`'s
+`Response` allowance the wrong-about-the-framework kind.
+
+Two `eslint-disable` sites predate this rule and **have been reviewed and accepted as
+they stand**: the mount-only effects in
+`apps/web/app/routes/wordSearch/lookupPanel.tsx` (`react-hooks/exhaustive-deps`) and the
+storage-API guard in `apps/web/app/entry.client.tsx`
+(`@typescript-eslint/no-unnecessary-condition`), where the DOM lib types an optional API
+as always present. They are grandfathered, not a precedent — do not add a third.
 
 ## Styling (Mantine)
 
