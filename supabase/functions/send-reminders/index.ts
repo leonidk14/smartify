@@ -161,7 +161,9 @@ async function readWordsForUser({
   });
 }
 
-function groupByUser(subscriptions: Subscription[]): Map<string, Subscription[]> {
+function groupByUser(
+  subscriptions: Subscription[],
+): Map<string, Subscription[]> {
   const byUser = new Map<string, Subscription[]>();
   for (const subscription of subscriptions) {
     byUser.set(subscription.user_id, [
@@ -205,7 +207,9 @@ serveFunction(async (req) => {
     return errorResponse("Method not allowed", 405);
   }
 
-  if (req.headers.get("x-reminders-secret") !== requireEnv("REMINDERS_SECRET")) {
+  if (
+    req.headers.get("x-reminders-secret") !== requireEnv("REMINDERS_SECRET")
+  ) {
     return errorResponse("Unauthorized", 401);
   }
 
@@ -219,7 +223,8 @@ serveFunction(async (req) => {
   if (!options.isForced && hour !== REMINDER_HOUR) {
     return jsonResponse({
       skipped: true,
-      reason: `${hour}:00 in ${REMINDER_TIMEZONE}, reminders go out at ${REMINDER_HOUR}:00`,
+      reason:
+        `${hour}:00 in ${REMINDER_TIMEZONE}, reminders go out at ${REMINDER_HOUR}:00`,
     });
   }
 
@@ -245,8 +250,7 @@ serveFunction(async (req) => {
   const deliveries: Delivery[] = [];
 
   for (const [userId, userSubscriptions] of groupByUser(subscriptions ?? [])) {
-    const words =
-      options.words ??
+    const words = options.words ??
       (await readWordsForUser({ supabase, userId, count: options.count }));
 
     if (words.length === 0) {

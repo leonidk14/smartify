@@ -42,4 +42,3 @@ export function rowsToStore(rows: VocabularyRow[]): VocabularyStore {
   }
   return store;
 }
-

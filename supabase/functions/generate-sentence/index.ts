@@ -8,18 +8,18 @@ import { buildTokenUsage, type TokenUsage } from "../_shared/usage.ts";
 import { ensureOwnedWord } from "../_shared/vocabularyAccess.ts";
 import {
   generateFresh,
-  simplifySentence,
   type GenerationModel,
+  simplifySentence,
 } from "./generation.ts";
 import { generateMock } from "./mock.ts";
 import {
   addSentence,
+  type GeneratedSentence,
   getSentences,
   incrementUsageCount,
   leastUsedIndex,
   SENTENCES_IN_CACHE_SIZE,
   setSimplified,
-  type GeneratedSentence,
   type StoredMeaningGroup,
 } from "./sentenceCache.ts";
 
@@ -98,12 +98,11 @@ serveFunction(async (req) => {
     return respond({ word: key, ...mock, source: "mock" });
   }
 
-  const generationModel: GenerationModel =
-    generateMode === "sonnet"
-      ? "sonnet"
-      : generateMode === "haiku"
-        ? "haiku"
-        : "auto";
+  const generationModel: GenerationModel = generateMode === "sonnet"
+    ? "sonnet"
+    : generateMode === "haiku"
+    ? "haiku"
+    : "auto";
 
   const client = new Anthropic({ apiKey: requireEnv("ANTHROPIC_API_KEY") });
   const supabase = createUserClient(req);

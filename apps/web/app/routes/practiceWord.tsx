@@ -5,10 +5,7 @@ import { PracticeWord } from "./practice/practiceWord";
 import { useBlockBack } from "../lib/useBlockBack";
 import { useVocabulary } from "./wordSearch/useVocabulary";
 import { text } from "../theme/typography";
-import type {
-  VocabularyEntry,
-  VocabularyStore,
-} from "./wordSearch/vocabulary";
+import type { VocabularyEntry, VocabularyStore } from "./wordSearch/vocabulary";
 import type { Route } from "./+types/practiceWord";
 
 interface WordView {
@@ -37,11 +34,10 @@ function buildWordView(store: VocabularyStore, word: string): WordView | null {
       partOfSpeech: g.part_of_speech,
     })),
   );
-  if (allMeanings.length === 0) {
+  const selected = allMeanings[Math.floor(Math.random() * allMeanings.length)];
+  if (!selected) {
     return null;
   }
-
-  const selected = allMeanings[Math.floor(Math.random() * allMeanings.length)];
 
   const otherWords = shuffle(
     Object.entries(store).filter(
@@ -89,7 +85,11 @@ function buildHints({
 export default function PracticeWordRoute({ params }: Route.ComponentProps) {
   useBlockBack("You can't go back during practice.");
   const { store } = useVocabulary();
-  const view = useMemo(() => buildWordView(store, params.word), [params.word]);
+
+  const view = useMemo(
+    () => buildWordView(store, params.word),
+    [params.word, store],
+  );
 
   if (!view) {
     return (

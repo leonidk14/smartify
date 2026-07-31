@@ -4,7 +4,12 @@ import {
   type CSSVariablesResolver,
   type MantineColorsTuple,
 } from "@mantine/core";
-import { fontSize, fontStack, fontWeight, lineHeight } from "./theme/typography";
+import {
+  fontSize,
+  fontStack,
+  fontWeight,
+  lineHeight,
+} from "./theme/typography";
 
 const ink: MantineColorsTuple = [
   "#f5f5f4",

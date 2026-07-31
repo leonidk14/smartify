@@ -5,9 +5,12 @@
   "scripts": {
     "dev": "VITE_APP_URL=${VITE_APP_URL:-http://localhost:5173} vite --port 5174",
     "build": "VITE_APP_URL=${VITE_APP_URL:-http://localhost:5173} vite build",
-    "preview": "vite preview --port 5174"
+    "preview": "vite preview --port 5174",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "devDependencies": {
+    "prettier": "^3.9.6",
     "vite": "^8.0.3"
   }
 }

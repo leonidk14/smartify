@@ -27,16 +27,88 @@ Two independent apps under `apps/*`, with shared infra at the root.
 | `supabase/` `scripts/` `data/` `.env` | root-level, shared. Their commands run from the root unchanged. |
 
 The root `package.json` has **no dependencies** — it is workspace wiring plus script
-aliases. Add dependencies to the owning app, never to the root.
+aliases. Add dependencies to the owning app, never to the root. This holds for dev
+tooling too: ESLint and Prettier are devDependencies of `apps/web`, and Prettier alone
+of `apps/landing` (a devDependency is not the "runtime dependency" that app forbids).
 
 ```bash
 npm run dev / build / serve / typecheck   # apps/web, on :5173
 npm run landing:dev / landing:build       # apps/landing, on :5174
+npm run verify                            # run after every change — see Verification
 ```
+
+Only `.prettierrc.json` is shared from the root, since Prettier resolves config by
+walking up from each file. The **`.prettierignore` files are per workspace and must
+stay that way**: Prettier resolves ignore files relative to the CWD, so a root-level
+one is invisible to `prettier --check .` running inside `apps/web`, and the generated
+`.react-router/types/**` and `build/` trees would get reformatted.
 
 `apps/web/vite.config.ts` sets `envDir: "../../"` so the app reads the root `.env` —
 if `VITE_*` values ever come back undefined, check that first. The build's SW step
 resolves as `node ../../scripts/generate-sw.mjs` from the `apps/web` CWD.
+
+## Verification
+
+**Run `npm run verify` after finishing any piece of work, and do not report the work
+as done until it passes.** This is not conditional on the change looking small or
+type-only — it is the definition of finished here. There is no CI and there are no git
+hooks, so this command is the only thing standing between a mistake and `main`.
+
+```bash
+npm run verify     # typecheck -> eslint -> prettier -> deno, in that order
+```
+
+| Stage | Command | Fix with |
+| --- | --- | --- |
+| Types | `npm run typecheck` | by hand |
+| Lint | `npm run lint` | `npm run lint:fix`, then by hand |
+| Format | `npm run format:check` | `npm run format` |
+| Edge functions | `npm run deno:check` | `npm run deno:fmt` |
+
+Ownership is split by runtime, and the split is deliberate:
+
+- **`apps/web`** — ESLint (flat config in `apps/web/eslint.config.js`) plus Prettier.
+  Linting is **type-aware** (`projectService`), so `npm run lint` chains
+  `react-router typegen` first; without the generated `./+types/*` modules the type
+  information is missing and the run is meaningless.
+- **`apps/landing`** — Prettier only. There is no JS to lint; the inline `<script>`
+  in `index.html` gets formatted but not linted.
+- **`supabase/functions`** — Deno owns both formatting and linting (`deno fmt`,
+  `deno lint`). Node-based ESLint cannot resolve its `npm:` specifiers or `Deno`
+  globals, so **do not** add these files to the ESLint or Prettier scope.
+- **`scripts/*.mjs` and root Markdown/JSON are checked by nothing.** Known gap, not an
+  oversight — the tooling is per workspace and those files are outside every workspace.
+
+**Errors gate; warnings do not.** `npm run lint` deliberately does not pass
+`--max-warnings`, so warnings are a real advisory tier — a rule sits at `warn` when it
+is worth surfacing but not worth blocking on (`no-console`,
+`react-hooks/set-state-in-effect`, most of the `@eslint-react` set). The exception is
+the `@eslint-react/web-api-no-leaked-*` family, held at `error` on purpose: an effect
+that registers a listener, timer, or observer without tearing it down leaks for the
+whole session in a PWA, and that is not a judgement call.
+
+That makes a passing run weaker than it looks, so **read the warnings before calling
+work done** rather than trusting the exit code alone. If a warning is genuinely
+acceptable, the fix is to say so — either move the rule to `off` in the config with a
+reason, or suppress that one site — not to leave it accumulating. The one thing that
+does still fail is a suppression whose finding no longer exists
+(`reportUnusedDisableDirectives: "error"`), so stale `eslint-disable` comments cannot
+rot quietly.
+
+### Suppressions
+
+Rules are configured to fit the codebase rather than suppressed at the call site, so
+reach for a rule change before an `eslint-disable`. When a disable is genuinely right —
+the rule's precondition does not hold and the code is correct — it must be
+`eslint-disable-next-line <rule>` naming the single rule, with a comment saying why.
+Never disable a whole preset, never use a file-level disable, and never widen an
+existing disable to cover a new finding.
+
+The existing ones are all of this kind: mount-only effects and a deliberately
+`store`-independent `useMemo` (`react-hooks/exhaustive-deps`), reacting to the router's
+blocker (`react-hooks/set-state-in-effect`), the token-cost table
+(`no-console`), and a browser-support guard the DOM lib types as unreachable
+(`@typescript-eslint/no-unnecessary-condition`).
 
 ## Styling (Mantine)
 
@@ -61,6 +133,15 @@ Reference examples: [apps/web/app/routes/practice/practiceStart.tsx](apps/web/ap
 [apps/web/app/routes/practice/practiceSelect.tsx](apps/web/app/routes/practice/practiceSelect.tsx).
 
 ## Code style
+
+Formatting is Prettier's job — do not hand-format, just run `npm run format`. The one
+non-default setting is `bracketSameLine: true` (a multi-line JSX opening tag closes its
+`>` on the last attribute), which is how this codebase was already written.
+
+Two rules below are now enforced by ESLint rather than by review — **always brace `if`
+bodies** (`curly`) and **always `===` / `!==`** (`eqeqeq`, configured to reject
+`x == null` as well). The rest are still yours to uphold; `react-hooks/refs` covers only
+part of the ref rule.
 
 - **Comments only in exceptional cases.** Code should be self-explanatory. Write a
   comment only to: leave a `TODO`, explain a rare/non-obvious edge case, explain

@@ -1,0 +1,126 @@
+import js from "@eslint/js";
+import eslintReact from "@eslint-react/eslint-plugin";
+import prettierConfig from "eslint-config-prettier";
+import reactHooks from "eslint-plugin-react-hooks";
+import reactRefresh from "eslint-plugin-react-refresh";
+import globals from "globals";
+import tseslint from "typescript-eslint";
+
+export default tseslint.config(
+  { ignores: ["build/", ".react-router/"] },
+  {
+    // Warnings are advisory here (the lint script does not cap them), but a
+    // suppression for a finding that no longer exists is simply wrong, so it
+    // fails rather than joining the advisory pile.
+    linterOptions: { reportUnusedDisableDirectives: "error" },
+  },
+  {
+    files: ["**/*.{ts,tsx}"],
+    extends: [
+      js.configs.recommended,
+      tseslint.configs.strictTypeChecked,
+      reactHooks.configs.flat.recommended,
+      reactRefresh.configs.vite,
+      eslintReact.configs["recommended-type-checked"],
+    ],
+    languageOptions: {
+      globals: globals.browser,
+      parserOptions: {
+        projectService: true,
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+    rules: {
+      eqeqeq: ["error", "always"],
+      "no-console": ["warn", { allow: ["warn", "error"] }],
+      "react-hooks/exhaustive-deps": "error",
+      "react-hooks/set-state-in-effect": "warn",
+
+      // Promoted out of the advisory tier: each of these catches an effect that
+      // registers something and never tears it down, which in a PWA the user
+      // keeps open leaks for the whole session. Cheap to fix at write time and
+      // painful to find later, so they block.
+      "@eslint-react/web-api-no-leaked-event-listener": "error",
+      "@eslint-react/web-api-no-leaked-fetch": "error",
+      "@eslint-react/web-api-no-leaked-interval": "error",
+      "@eslint-react/web-api-no-leaked-intersection-observer": "error",
+      "@eslint-react/web-api-no-leaked-resize-observer": "error",
+      "@eslint-react/web-api-no-leaked-timeout": "error",
+
+      // Renders `${...}` as literal text instead of interpolating it.
+      "@eslint-react/jsx-no-leaked-dollar": "error",
+      "@typescript-eslint/no-confusing-void-expression": [
+        "error",
+        { ignoreArrowShorthand: true },
+      ],
+      "@typescript-eslint/restrict-template-expressions": [
+        "error",
+        { allowNumber: true },
+      ],
+
+      // Throwing a Response is how a React Router route module raises a 404.
+      "@typescript-eslint/only-throw-error": [
+        "error",
+        { allow: [{ from: "lib", name: "Response" }] },
+      ],
+
+      // Every list this fires on renders a static, stateless run of <Text span>
+      // (a split sentence, correction segments, an append-only results list).
+      // Nothing reorders, so the index is the item's identity; the synthetic
+      // keys needed to satisfy the rule would be the index in disguise.
+      "@eslint-react/no-array-index-key": "off",
+
+      // eslint-plugin-react-hooks is authoritative for the hooks and React
+      // Compiler rule family; these @eslint-react rules are the same checks
+      // under a second name and would report every finding twice.
+      "@eslint-react/error-boundaries": "off",
+      "@eslint-react/exhaustive-deps": "off",
+      "@eslint-react/purity": "off",
+      "@eslint-react/rules-of-hooks": "off",
+      "@eslint-react/set-state-in-effect": "off",
+      "@eslint-react/set-state-in-render": "off",
+      "@eslint-react/static-components": "off",
+      "@eslint-react/unsupported-syntax": "off",
+      "@eslint-react/use-memo": "off",
+    },
+  },
+  {
+    files: ["app/root.tsx", "app/routes/**/*.tsx"],
+    rules: {
+      "react-refresh/only-export-components": [
+        "error",
+        {
+          allowExportNames: [
+            "meta",
+            "links",
+            "headers",
+            "handle",
+            "loader",
+            "clientLoader",
+            "action",
+            "clientAction",
+            "shouldRevalidate",
+            "ErrorBoundary",
+            "HydrateFallback",
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ["public/push-sw.js"],
+    extends: [js.configs.recommended],
+    languageOptions: {
+      sourceType: "script",
+      globals: { ...globals.browser, ...globals.serviceworker },
+    },
+  },
+  prettierConfig,
+  {
+    // Must come after eslint-config-prettier, which switches `curly` off
+    // wholesale. Only its "multi-line"/"multi-or-nest" options actually fight
+    // Prettier; "all" does not, and CLAUDE.md requires braces everywhere.
+    files: ["**/*.{ts,tsx,js}"],
+    rules: { curly: ["error", "all"] },
+  },
+);

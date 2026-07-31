@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Box, Button, Group, Paper, Text, ThemeIcon } from "@mantine/core";
 import { IconBell } from "@tabler/icons-react";
-import { useAuth } from "../../lib/auth";
+import { useAuth } from "../../lib/authContext";
 import {
   dismissBanner,
   isBannerDismissed,
@@ -73,7 +73,7 @@ export const NotificationBanner = () => {
               px={16}
               {...text.uiLabel}
               loading={isBusy}
-              onClick={handleEnable}>
+              onClick={() => void handleEnable()}>
               Turn on reminders
             </Button>
             <Text

@@ -303,7 +303,9 @@ ul {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  transition: box-shadow 0.25s, transform 0.25s;
+  transition:
+    box-shadow 0.25s,
+    transform 0.25s;
 }
 
 .card:hover {

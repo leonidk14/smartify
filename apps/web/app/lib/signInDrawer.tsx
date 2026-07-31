@@ -11,7 +11,7 @@ import {
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { notifications } from "@mantine/notifications";
-import { useAuth } from "./auth";
+import { useAuth } from "./authContext";
 import { useKeyboardInset } from "./useKeyboardInset";
 import { text, textCss } from "../theme/typography";
 

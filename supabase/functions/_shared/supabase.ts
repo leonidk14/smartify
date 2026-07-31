@@ -15,8 +15,14 @@ export function createAdminClient(): SupabaseClient {
 // applies. A signed-out caller sends the anon key, which resolves to a null
 // auth.uid() — the vocabulary select policy then yields exactly the public words.
 export function createUserClient(req: Request): SupabaseClient {
-  return createClient(requireEnv("SUPABASE_URL"), requireEnv("SUPABASE_ANON_KEY"), {
-    global: { headers: { Authorization: req.headers.get("Authorization") ?? "" } },
-    auth: { persistSession: false },
-  });
+  return createClient(
+    requireEnv("SUPABASE_URL"),
+    requireEnv("SUPABASE_ANON_KEY"),
+    {
+      global: {
+        headers: { Authorization: req.headers.get("Authorization") ?? "" },
+      },
+      auth: { persistSession: false },
+    },
+  );
 }

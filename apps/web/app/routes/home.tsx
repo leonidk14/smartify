@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import type { Route } from "./+types/home";
+import { readTextField } from "../lib/formData";
 import { lookupWord } from "./wordSearch/actions";
 import { toKey } from "./wordSearch/normalize";
 import {
@@ -12,11 +13,11 @@ import { useVocabulary } from "./wordSearch/useVocabulary";
 import { WordSearch } from "./wordSearch/wordSearch";
 
 export async function clientAction({ request }: Route.ClientActionArgs) {
-  let formData = await request.formData();
+  const formData = await request.formData();
   const intent = formData.get("intent");
 
   if (intent === "practice") {
-    const word = String(formData.get("word"));
+    const word = readTextField(formData, "word");
     await setPracticeLater({
       word: toKey(word),
       shouldPracticeLater: formData.get("shouldPracticeLater") === "true",
@@ -24,7 +25,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     return { success: true };
   }
 
-  const searchItem = String(formData.get("search-item"));
+  const searchItem = readTextField(formData, "search-item");
 
   if (!searchItem) {
     console.error("Search item is not found");

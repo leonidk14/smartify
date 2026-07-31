@@ -9,7 +9,6 @@ import {
 import {
   ActionIcon,
   Box,
-  Button,
   Flex,
   Group,
   SegmentedControl,
@@ -26,6 +25,24 @@ const MODE_LABELS: Record<string, string> = {
   sentence: "Rebuild the sentence",
   both: "Guess & rebuild",
 };
+
+function isEmptyLookupResult(actionResult: unknown): boolean {
+  if (typeof actionResult !== "object" || actionResult === null) {
+    return false;
+  }
+  const { dictionary } = actionResult as { dictionary?: { groups?: unknown } };
+  return Array.isArray(dictionary?.groups) && dictionary.groups.length === 0;
+}
+
+type PushNavigateMessage = { type: "PUSH_NAVIGATE"; url: string };
+
+function isPushNavigateMessage(data: unknown): data is PushNavigateMessage {
+  if (typeof data !== "object" || data === null) {
+    return false;
+  }
+  const { type, url } = data as { type?: unknown; url?: unknown };
+  return type === "PUSH_NAVIGATE" && typeof url === "string";
+}
 
 export async function clientLoader() {
   return readVocabulary();
@@ -47,11 +64,11 @@ export function shouldRevalidate({
   // The layout loads the whole vocabulary once and only needs to refetch after a
   // mutation. Without this, React Router's default revalidation refetches it on
   // every search-param change (e.g. the ?mode added when opening /practice/select).
-  if (formMethod == null || formMethod === "GET") {
+  if (formMethod === undefined || formMethod === "GET") {
     return false;
   }
 
-  if (actionResult?.dictionary?.groups?.length === 0) {
+  if (isEmptyLookupResult(actionResult)) {
     return false;
   }
 
@@ -81,8 +98,9 @@ export default function Layout() {
     }
 
     const onMessage = (event: MessageEvent) => {
-      if (event.data?.type === "PUSH_NAVIGATE" && event.data.url) {
-        navigate(event.data.url);
+      const data: unknown = event.data;
+      if (isPushNavigateMessage(data)) {
+        void navigate(data.url);
       }
     };
 
@@ -142,7 +160,7 @@ export default function Layout() {
             radius={12}
             color="ink"
             value={isHome ? "/" : "/practice"}
-            onChange={(value) => navigate(value)}
+            onChange={(value) => void navigate(value)}
             styles={{ root: { background: "var(--color-surface-warm)" } }}
             data={[
               {

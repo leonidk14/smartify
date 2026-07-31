@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Link, useBlocker, useNavigate } from "react-router";
+import { Link, NavigationType, useBlocker, useNavigate } from "react-router";
 import { Box, Button, Flex, Group, Text } from "@mantine/core";
 import { IconCheck, IconX } from "@tabler/icons-react";
 import { useSessionStore } from "../store/session";
@@ -16,14 +16,16 @@ export default function PracticeSummary() {
   const results = useSessionStore((s) => s.results);
   const reset = useSessionStore((s) => s.reset);
 
-  const blocker = useBlocker(({ historyAction }) => historyAction === "POP");
+  const blocker = useBlocker(
+    ({ historyAction }) => historyAction === NavigationType.Pop,
+  );
 
   useEffect(() => {
     if (blocker.state !== "blocked") {
       return;
     }
     reset();
-    navigate("/practice", { replace: true });
+    void navigate("/practice", { replace: true });
   }, [blocker, navigate, reset]);
 
   const correctCount = results.filter((r) => r.correct).length;
@@ -31,7 +33,7 @@ export default function PracticeSummary() {
 
   const done = () => {
     reset();
-    navigate("/practice", { replace: true });
+    void navigate("/practice", { replace: true });
   };
 
   if (results.length === 0) {

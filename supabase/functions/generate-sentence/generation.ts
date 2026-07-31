@@ -1,8 +1,8 @@
 import Anthropic from "npm:@anthropic-ai/sdk@0.110.0";
 import {
   buildTokenUsage,
-  sumTokenUsage,
   type PricingModel,
+  sumTokenUsage,
   type TokenUsage,
 } from "../_shared/usage.ts";
 import type { GeneratedSentence, SentenceGeneration } from "./sentenceCache.ts";
@@ -11,7 +11,8 @@ export type GenerationSource = "haiku" | "sonnet" | "haiku+sonnet";
 
 export type GenerationModel = "auto" | "haiku" | "sonnet";
 
-const GENERATION_SYSTEM_PROMPT = `You help English learners practice a target word. You are given a WORD, a REQUESTED meaning to practice, and a list of all MEANINGS available for that word.
+const GENERATION_SYSTEM_PROMPT =
+  `You help English learners practice a target word. You are given a WORD, a REQUESTED meaning to practice, and a list of all MEANINGS available for that word.
 
 Follow this order:
 1. Find a genuine, confidently-attributable published quotation for the REQUESTED meaning.
@@ -57,7 +58,8 @@ const GENERATION_OUTPUT_FORMAT = {
   },
 } as const;
 
-const SIMPLIFICATION_SYSTEM_PROMPT = `You help English learners practice a target word. You are given a WORD, the MEANING it carries here, and a SENTENCE that uses it.
+const SIMPLIFICATION_SYSTEM_PROMPT =
+  `You help English learners practice a target word. You are given a WORD, the MEANING it carries here, and a SENTENCE that uses it.
 
 Always return a JSON object with ALL of these fields present:
 1. "simplified": a plain-language paraphrase of the SENTENCE (without any attribution) that keeps the same idea but uses only simple, common words — AND does NOT contain the WORD or any obvious inflection of it. Replace the word with a plain description of its sense, so the learner can reinstate the word themselves. On failure, set this to an empty string.
@@ -232,7 +234,8 @@ export async function generateFresh({
   model?: GenerationModel;
 }): Promise<SentenceGeneration & { source: GenerationSource }> {
   const meaningsList = meanings.map((m) => `- ${m}`).join("\n");
-  const userContent = `Word: ${word}\nRequested meaning: ${meaning}\nMeanings:\n${meaningsList}`;
+  const userContent =
+    `Word: ${word}\nRequested meaning: ${meaning}\nMeanings:\n${meaningsList}`;
 
   if (model === "sonnet") {
     const sonnet = await runGeneration({

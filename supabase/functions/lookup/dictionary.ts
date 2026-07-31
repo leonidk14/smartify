@@ -33,7 +33,8 @@ export interface LookupResponse {
   usage: TokenUsage;
 }
 
-export const DICTIONARY_SYSTEM_PROMPT = `You are a strict dictionary lookup service. When given a word or phrase, provide its meanings in the style and substance of the Oxford English Dictionary — concise, precise, and ordered by most common usage first.
+export const DICTIONARY_SYSTEM_PROMPT =
+  `You are a strict dictionary lookup service. When given a word or phrase, provide its meanings in the style and substance of the Oxford English Dictionary — concise, precise, and ordered by most common usage first.
 
 CRITICAL — Typo detection:
 - You must ONLY define words that are spelled correctly and exist as real dictionary entries.

@@ -23,10 +23,9 @@ serveFunction(async (req) => {
 
   const segments = new URL(req.url).pathname.split("/").filter(Boolean);
   const lookupIndex = segments.indexOf("lookup");
-  const slug =
-    lookupIndex >= 0 && lookupIndex < segments.length - 1
-      ? segments.slice(lookupIndex + 1).join("/")
-      : "";
+  const slug = lookupIndex >= 0 && lookupIndex < segments.length - 1
+    ? segments.slice(lookupIndex + 1).join("/")
+    : "";
   const word = decodeURIComponent(slug).replaceAll("-", " ").trim();
 
   if (!word) {

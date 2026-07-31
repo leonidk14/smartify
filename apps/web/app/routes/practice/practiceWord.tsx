@@ -62,7 +62,7 @@ export const PracticeWord = ({
     if (!queue.includes(word)) {
       startSession([word]);
     }
-  }, [word]);
+  }, [queue, startSession, word]);
 
   // Keyed off the keyboard opening rather than the field focusing: at focus time
   // the viewport hasn't shrunk yet, so the scroll would land short.
@@ -79,7 +79,7 @@ export const PracticeWord = ({
   const tone =
     view === "correct" ? "correct" : view === "wrong" ? "wrong" : "neutral";
 
-  const canShowHint = hints && hints.length > 1;
+  const canShowHint = hints.length > 1;
 
   const handleCheck = () => {
     if (!answer.trim()) {
@@ -105,12 +105,12 @@ export const PracticeWord = ({
 
     const next = nextWord(queue, word);
     if (next) {
-      navigate(`/practice/${encodeURIComponent(next)}`, { replace: true });
+      void navigate(`/practice/${encodeURIComponent(next)}`, { replace: true });
       return;
     }
 
     if (mode === "word") {
-      navigate("/practice/summary", { replace: true });
+      void navigate("/practice/summary", { replace: true });
       return;
     }
 
@@ -118,7 +118,7 @@ export const PracticeWord = ({
     const firstWord = queue[0] ?? word;
     const firstMeaningId =
       firstWord === word ? meaningId : meaningIds[firstWord];
-    navigate(
+    void navigate(
       `/practice/${encodeURIComponent(firstWord)}/sentence?m=${encodeURIComponent(
         firstMeaningId ?? "",
       )}`,
@@ -162,7 +162,9 @@ export const PracticeWord = ({
               value={answer}
               onChange={(e) => setAnswer(e.currentTarget.value)}
               onKeyDown={(e) => {
-                if (e.key === "Enter") handleCheck();
+                if (e.key === "Enter") {
+                  handleCheck();
+                }
               }}
               autoFocus
               style={{ borderBottom: "2px solid var(--color-text)" }}

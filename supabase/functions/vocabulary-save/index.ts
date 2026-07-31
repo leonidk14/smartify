@@ -48,14 +48,12 @@ serveFunction(async (req) => {
   const row: Omit<VocabularyRow, "is_public"> = {
     user_id: user.id,
     word: key,
-    display:
-      typeof display === "string" && display.trim()
-        ? display.trim().toLowerCase()
-        : key,
-    typed:
-      typeof typed === "string" && typed.trim()
-        ? typed.trim().toLowerCase()
-        : null,
+    display: typeof display === "string" && display.trim()
+      ? display.trim().toLowerCase()
+      : key,
+    typed: typeof typed === "string" && typed.trim()
+      ? typed.trim().toLowerCase()
+      : null,
     groups,
     should_practice_later: false,
     saved_at: new Date().toISOString(),

@@ -18,7 +18,7 @@ import { notifications } from "@mantine/notifications";
 import { IconCloudOff, IconLogout, IconPlus } from "@tabler/icons-react";
 import { type StoredMeaning, type VocabularyEntry } from "./vocabulary";
 import { text } from "../../theme/typography";
-import { useAuth } from "../../lib/auth";
+import { useAuth } from "../../lib/authContext";
 
 interface VocabularyHomeProps {
   words: [string, VocabularyEntry][];
@@ -105,7 +105,7 @@ export const VocabularyHome = ({
                 <Menu.Label>{user?.email}</Menu.Label>
                 <Menu.Item
                   leftSection={<IconLogout size={16} />}
-                  onClick={handleSignOut}>
+                  onClick={() => void handleSignOut()}>
                   Sign out
                 </Menu.Item>
               </Menu.Dropdown>
@@ -141,10 +141,7 @@ export const VocabularyHome = ({
           <Text {...text.uiLabel} c="var(--color-text-on-inverse)">
             Unlock your vocabulary
           </Text>
-          <Text
-            {...text.bodyXs}
-            mt={5}
-            c="var(--color-text-on-inverse-dimmed)">
+          <Text {...text.bodyXs} mt={5} c="var(--color-text-on-inverse-dimmed)">
             These are sample words. Sign in to see the words you saved and to
             practice with generated sentences.
           </Text>

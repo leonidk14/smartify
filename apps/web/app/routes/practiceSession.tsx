@@ -9,21 +9,22 @@ import type { Route } from "./+types/practiceSession";
 // Entry point for links that arrive from outside the app (practice reminders):
 // the session queue lives in memory only, so it has to be rebuilt from the URL
 // before the first step renders.
-export async function clientLoader({ request }: Route.ClientLoaderArgs) {
+export function clientLoader({ request }: Route.ClientLoaderArgs) {
   const params = new URL(request.url).searchParams;
   const words = (params.get("words") ?? "")
     .split(",")
     .map((word) => word.trim())
     .filter(Boolean);
 
-  if (words.length === 0) {
+  const [firstWord] = words;
+  if (firstWord === undefined) {
     return redirect("/practice");
   }
 
   const mode = parsePracticeMode(params.get("mode"));
   useSessionStore.getState().startSession(words, mode);
 
-  return redirect(firstStepPath({ word: words[0], mode }));
+  return redirect(firstStepPath({ word: firstWord, mode }));
 }
 
 export default function PracticeSessionRoute() {

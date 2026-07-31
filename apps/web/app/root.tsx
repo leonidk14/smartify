@@ -62,8 +62,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <MantineProvider
           theme={theme}
           cssVariablesResolver={cssVariablesResolver}
-          defaultColorScheme="light"
-        >
+          defaultColorScheme="light">
           <Notifications position="top-center" />
           <DesktopNoticeModal />
           <AuthProvider>{children}</AuthProvider>

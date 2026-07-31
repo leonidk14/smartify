@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useSearchParams } from "react-router";
-import { PracticeSelect, parsePreselect } from "./practice/practiceSelect";
+import { PracticeSelect } from "./practice/practiceSelect";
+import { parsePreselect } from "./practice/preselect";
 import { parsePracticeMode } from "../store/session";
 import { useVocabulary } from "./wordSearch/useVocabulary";
 

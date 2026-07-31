@@ -18,7 +18,7 @@ import {
 } from "@tabler/icons-react";
 import { text } from "../../theme/typography";
 import { NotificationBanner } from "./notificationBanner";
-import { useAuth } from "../../lib/auth";
+import { useAuth } from "../../lib/authContext";
 import type { PracticeMode } from "../../store/session";
 
 interface PracticeStartProps {
@@ -79,10 +79,7 @@ export const PracticeStart = ({ total, markedCount }: PracticeStartProps) => {
           <Text {...text.uiLabel} c="var(--color-text-on-inverse)">
             Sentence practice needs an account
           </Text>
-          <Text
-            {...text.bodyXs}
-            mt={5}
-            c="var(--color-text-on-inverse-dimmed)">
+          <Text {...text.bodyXs} mt={5} c="var(--color-text-on-inverse-dimmed)">
             Rebuild-the-sentence modes are generated on the fly, so they need
             sign-in. Guess-the-word practice and your saved words stay available
             offline.
@@ -114,11 +111,13 @@ export const PracticeStart = ({ total, markedCount }: PracticeStartProps) => {
                 radius={14}
                 px={15}
                 py={14}
-                onClick={() =>
-                  isLocked
-                    ? openSignIn()
-                    : navigate(`/practice/select?mode=${option.mode}`)
-                }
+                onClick={() => {
+                  if (isLocked) {
+                    openSignIn();
+                    return;
+                  }
+                  void navigate(`/practice/select?mode=${option.mode}`);
+                }}
                 style={{
                   border: "1.5px solid rgba(0,0,0,.14)",
                   cursor: "pointer",

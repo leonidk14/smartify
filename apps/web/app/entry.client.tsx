@@ -26,5 +26,7 @@ if (import.meta.env.PROD && "serviceWorker" in navigator) {
 }
 
 // Keep the offline vocabulary snapshot (IndexedDB) durable so it isn't evicted
-// under storage pressure.
+// under storage pressure. The DOM lib types both of these as always present;
+// the optional chaining is a real guard for browsers without the Storage API.
+// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 void navigator.storage?.persist?.();

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { VocabularyHome } from "./vocabularyHome";
 import { LookupPanel } from "./lookupPanel";
 import type { VocabularyEntry } from "./vocabulary";
-import { useBlocker, type BlockerFunction } from "react-router";
+import { NavigationType, useBlocker, type BlockerFunction } from "react-router";
 
 interface WordSearchProps {
   words: [string, VocabularyEntry][];
@@ -23,7 +23,7 @@ export const WordSearch = ({
 
   const shouldBlock = useCallback<BlockerFunction>(
     ({ historyAction }) => {
-      return lookup.open && historyAction === "POP";
+      return lookup.open && historyAction === NavigationType.Pop;
     },
     [lookup.open],
   );

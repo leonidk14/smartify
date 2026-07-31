@@ -24,7 +24,7 @@ import { toKey } from "./normalize";
 import type { StoredMeaningGroup, VocabularyEntry } from "./vocabulary";
 import { text, textCss } from "../../theme/typography";
 import { useKeyboardInset } from "../../lib/useKeyboardInset";
-import { useAuth } from "../../lib/auth";
+import { useAuth } from "../../lib/authContext";
 
 type SearchResult = Omit<LookupResult, "dictionary"> & {
   dictionary: { groups: StoredMeaningGroup[]; typo?: Typo };
@@ -87,17 +87,18 @@ export const LookupPanel = ({
     // A new word needs the LLM lookup, which requires a signed-in user; the
     // sign-in-required view below handles the signed-out case.
     if (!findCached(term) && isSignedIn) {
-      searchFetcher.submit({ "search-item": term }, { method: "post" });
+      void searchFetcher.submit({ "search-item": term }, { method: "post" });
     }
   };
 
   useEffect(() => {
     if (committedQuery && !cachedResult && isSignedIn) {
-      searchFetcher.submit(
+      void searchFetcher.submit(
         { "search-item": committedQuery },
         { method: "post" },
       );
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -107,6 +108,7 @@ export const LookupPanel = ({
     if (isSignedIn && committedQuery.trim().length > 0 && !cachedResult) {
       onClose();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSignedIn]);
 
   const data: PanelResult | undefined = cachedResult ?? searchFetcher.data;
@@ -147,7 +149,7 @@ export const LookupPanel = ({
     if (!practiceWord) {
       return;
     }
-    practiceFetcher.submit(
+    void practiceFetcher.submit(
       {
         intent: "practice",
         word: practiceWord,
@@ -244,7 +246,7 @@ export const LookupPanel = ({
             <Text {...text.body}>Searching for the meaning…</Text>
             <Loader size="sm" color="ink" />
           </Group>
-        ) : hasResult && groups ? (
+        ) : hasResult ? (
           <WordResult
             word={normalizedDisplay ?? originalSearchItem ?? value}
             groups={groups}
@@ -349,8 +351,8 @@ const WordResult = ({
     <Stack gap={22}>
       <Title order={2}>{word}</Title>
       {groups.map((group) => {
-        const senses = Object.values(group.meanings).sort(
-          (a, b) => a.order - b.order,
+        const senses = Object.entries(group.meanings).sort(
+          ([, a], [, b]) => a.order - b.order,
         );
         return (
           <Stack key={group.part_of_speech} gap={12}>
@@ -369,10 +371,10 @@ const WordResult = ({
                 {senses.length} {senses.length === 1 ? "sense" : "senses"}
               </Text>
             </Group>
-            {senses.map((sense, index) => {
+            {senses.map(([senseId, sense], index) => {
               const example = sense.sentences?.[0]?.sentence;
               return (
-                <Group key={index} gap={12} align="flex-start" wrap="nowrap">
+                <Group key={senseId} gap={12} align="flex-start" wrap="nowrap">
                   <Text {...text.metaLg} pt={1}>
                     {index + 1}
                   </Text>

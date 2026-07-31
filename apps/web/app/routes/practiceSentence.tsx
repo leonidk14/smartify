@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { Await } from "react-router";
 import { Flex, Loader, Text } from "@mantine/core";
 import { readVocabulary } from "./wordSearch/vocabulary";
+import { readTextField } from "../lib/formData";
 import { useBlockBack } from "../lib/useBlockBack";
 import { PracticeSentence } from "./practice/practiceSentence";
 import { text } from "../theme/typography";
@@ -64,6 +65,9 @@ export async function clientLoader({
   const selected =
     allMeanings.find((m) => m.id === requestedId) ??
     allMeanings[Math.floor(Math.random() * allMeanings.length)];
+  if (!selected) {
+    throw new Response("Word has no meanings", { status: 404 });
+  }
   const meaning = selected.definition;
 
   const sentence: Promise<SentenceData> = generateSentence({
@@ -87,7 +91,7 @@ export async function clientLoader({
         generationFailed: false,
       };
     })
-    .catch((e): SentenceData => {
+    .catch((e: unknown): SentenceData => {
       console.error("Sentence generation failed", e);
       return failedSentence(meaning);
     });
@@ -100,9 +104,9 @@ export async function clientAction({
   params,
 }: Route.ClientActionArgs): Promise<SentenceEvaluation | { error: true }> {
   const formData = await request.formData();
-  const meaning = String(formData.get("meaning"));
-  const original = String(formData.get("original"));
-  const userSentence = String(formData.get("sentence")).trim();
+  const meaning = readTextField(formData, "meaning");
+  const original = readTextField(formData, "original");
+  const userSentence = readTextField(formData, "sentence").trim();
 
   try {
     const { evaluation } = await evaluateSentence({

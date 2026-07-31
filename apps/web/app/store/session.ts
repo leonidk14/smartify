@@ -50,7 +50,7 @@ export const useSessionStore = create<SessionState>((set) => ({
 
 export function nextWord(queue: string[], word: string): string | null {
   const i = queue.indexOf(word);
-  return i >= 0 && i < queue.length - 1 ? queue[i + 1] : null;
+  return i >= 0 && i < queue.length - 1 ? (queue[i + 1] ?? null) : null;
 }
 
 export function parsePracticeMode(value: string | null): PracticeMode {

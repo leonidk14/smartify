@@ -1,7 +1,4 @@
-import {
-  createClient,
-  type User,
-} from "npm:@supabase/supabase-js@2";
+import { createClient, type User } from "npm:@supabase/supabase-js@2";
 import { requireEnv } from "./env.ts";
 
 // Resolves the caller from the request's `Authorization: Bearer <jwt>` header.

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import {
   Box,
@@ -17,8 +17,7 @@ import {
   type PracticeMode,
   useSessionStore,
 } from "../../store/session";
-
-export type PreselectKind = "marked" | "all" | "random";
+import type { PreselectKind } from "./preselect";
 
 interface PracticeSelectProps {
   words: [string, VocabularyEntry][];
@@ -36,12 +35,6 @@ const QUICK_OPTIONS: { kind: PreselectKind; label: string }[] = [
 
 const shuffle = <T,>(items: T[]): T[] =>
   [...items].sort(() => Math.random() - 0.5);
-
-export function parsePreselect(value: string | null): PreselectKind | null {
-  return value === "marked" || value === "all" || value === "random"
-    ? value
-    : null;
-}
 
 export const PracticeSelect = ({
   words,
@@ -84,12 +77,13 @@ export const PracticeSelect = ({
     });
 
   const startPractice = () => {
-    if (selected.size === 0) {
+    const ordered = allWords.filter((w) => selected.has(w));
+    const [firstWord] = ordered;
+    if (firstWord === undefined) {
       return;
     }
-    const ordered = allWords.filter((w) => selected.has(w));
     startSession(ordered, mode);
-    navigate(firstStepPath({ word: ordered[0], mode }));
+    void navigate(firstStepPath({ word: firstWord, mode }));
   };
 
   if (words.length === 0) {

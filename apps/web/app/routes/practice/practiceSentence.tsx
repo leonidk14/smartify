@@ -136,21 +136,24 @@ export const PracticeSentence = ({
     if (!sentence || isSubmitting) {
       return;
     }
-    evalFetcher.submit({ sentence, meaning, original }, { method: "post" });
+    void evalFetcher.submit(
+      { sentence, meaning, original },
+      { method: "post" },
+    );
   };
 
   const advance = (isCorrect: boolean) => {
     recordResult(word, "sentence", isCorrect);
     const next = nextWord(queue, word);
     if (next) {
-      navigate(
+      void navigate(
         `/practice/${encodeURIComponent(next)}/sentence?m=${encodeURIComponent(
           meaningIds[next] ?? "",
         )}`,
         { replace: true },
       );
     } else {
-      navigate("/practice/summary", { replace: true });
+      void navigate("/practice/summary", { replace: true });
     }
   };
 

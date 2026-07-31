@@ -50,8 +50,7 @@ export async function ensureOwnedWord({
     throw new Error(readError.message);
   }
 
-  const visible =
-    preferOwnRows({ visibleRows: data ?? [], userId })[0] ?? null;
+  const visible = preferOwnRows({ visibleRows: data ?? [], userId })[0] ?? null;
   if (visible === null || visible.user_id === userId) {
     return visible;
   }
@@ -63,6 +62,7 @@ export async function ensureOwnedWord({
     groups: visible.groups,
     should_practice_later: visible.should_practice_later,
     saved_at: visible.saved_at,
+    typed: visible.typed,
   };
 
   // ignoreDuplicates compiles to `on conflict do nothing`, so two concurrent forks
