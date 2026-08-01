@@ -326,7 +326,7 @@ export const PracticeWord = ({
                 handleCheck();
               }
             }}
-            autoFocus
+            data-autofocus
             style={{ borderBottom: "2px solid var(--color-text)" }}
             styles={{ input: { paddingRight: 40 } }}
             autoComplete="off"
