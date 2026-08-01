@@ -1,6 +1,6 @@
 # smartify
 
-**A quieter way to grow the words you actually use.**
+**Learn English words by using them: look up, save, then rebuild real sentences with Claude grading the fit.**
 
 [Live app](https://smartify-web-beige.vercel.app/)
 

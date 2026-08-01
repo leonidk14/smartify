@@ -1,5 +1,16 @@
-import { Box, Button, Flex, Group, Text, TextInput } from "@mantine/core";
-import { useEffect, useRef, useState } from "react";
+import {
+  ActionIcon,
+  Box,
+  Button,
+  Drawer,
+  Flex,
+  Group,
+  Stack,
+  Text,
+  TextInput,
+} from "@mantine/core";
+import { IconArrowUp, IconX } from "@tabler/icons-react";
+import { useEffect, useState } from "react";
 import { useNavigate, useNavigation } from "react-router";
 import { normalize } from "../wordSearch/normalize";
 import { nextWord, useSessionStore } from "../../store/session";
@@ -45,10 +56,10 @@ export const PracticeWord = ({
   const [attempts, setAttempts] = useState(0);
   const [showHint, setShowHint] = useState(false);
   const [view, setView] = useState<View>("input");
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
   const navigation = useNavigation();
   const navigate = useNavigate();
-  const definitionRef = useRef<HTMLParagraphElement>(null);
-  const isKeyboardOpen = useKeyboardInset() > 0;
+  const keyboardInset = useKeyboardInset();
 
   const queue = useSessionStore((s) => s.queue);
   const mode = useSessionStore((s) => s.mode);
@@ -64,18 +75,6 @@ export const PracticeWord = ({
     }
   }, [queue, startSession, word]);
 
-  // Keyed off the keyboard opening rather than the field focusing: at focus time
-  // the viewport hasn't shrunk yet, so the scroll would land short.
-  useEffect(() => {
-    if (!isKeyboardOpen) {
-      return;
-    }
-    definitionRef.current?.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-    });
-  }, [isKeyboardOpen, view, word]);
-
   const tone =
     view === "correct" ? "correct" : view === "wrong" ? "wrong" : "neutral";
 
@@ -85,6 +84,7 @@ export const PracticeWord = ({
     if (!answer.trim()) {
       return;
     }
+    setIsSheetOpen(false);
     if (normalize(answer) === normalize(word)) {
       setView("correct");
     } else {
@@ -97,6 +97,7 @@ export const PracticeWord = ({
   const tryAgain = () => {
     setAnswer("");
     setView("input");
+    setIsSheetOpen(true);
   };
 
   const handleNext = () => {
@@ -145,33 +146,9 @@ export const PracticeWord = ({
             <Box mt={14}>
               <PartOfSpeechPill>{partOfSpeech}</PartOfSpeechPill>
             </Box>
-            <Text
-              {...text.prose}
-              ref={definitionRef}
-              mt={16}
-              style={{ scrollMarginTop: 16 }}>
+            <Text {...text.prose} mt={16}>
               {definition}
             </Text>
-          </Box>
-
-          <Box>
-            <TextInput
-              variant="unstyled"
-              placeholder="type the word…"
-              size="xl"
-              value={answer}
-              onChange={(e) => setAnswer(e.currentTarget.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  handleCheck();
-                }
-              }}
-              autoFocus
-              style={{ borderBottom: "2px solid var(--color-text)" }}
-              autoComplete="off"
-              type="search"
-              enterKeyHint="send"
-            />
           </Box>
 
           {showHint && hints.length > 1 && (
@@ -219,9 +196,9 @@ export const PracticeWord = ({
                 h={48}
                 radius={12}
                 flex={1}
-                onClick={handleCheck}
-                disabled={!answer.trim()}>
-                Check
+                rightSection={<IconArrowUp size={16} />}
+                onClick={() => setIsSheetOpen(true)}>
+                Answer
               </Button>
             </Group>
           </ActionBar>
@@ -312,6 +289,62 @@ export const PracticeWord = ({
           </ActionBar>
         </>
       )}
+
+      <Drawer
+        opened={isSheetOpen}
+        onClose={() => setIsSheetOpen(false)}
+        position="bottom"
+        size={192 + keyboardInset}
+        zIndex={300}
+        withCloseButton={false}
+        overlayProps={{ backgroundOpacity: 0.35 }}
+        radius={0}
+        styles={{
+          content: { borderRadius: "24px 24px 0 0" },
+          body: { padding: "14px 20px 22px" },
+        }}>
+        <Stack gap={8} pos="relative">
+          <Flex justify="flex-end">
+            <ActionIcon
+              variant="subtle"
+              color="gray"
+              size="md"
+              aria-label="Close"
+              type="button"
+              onClick={() => setIsSheetOpen(false)}>
+              <IconX size={22} />
+            </ActionIcon>
+          </Flex>
+          <TextInput
+            variant="unstyled"
+            placeholder="type the word…"
+            size="xl"
+            value={answer}
+            onChange={(e) => setAnswer(e.currentTarget.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                handleCheck();
+              }
+            }}
+            autoFocus
+            style={{ borderBottom: "2px solid var(--color-text)" }}
+            styles={{ input: { paddingRight: 40 } }}
+            autoComplete="off"
+            type="search"
+            enterKeyHint="send"
+          />
+          <Button
+            fullWidth
+            variant="filled"
+            color="black"
+            h={48}
+            radius={12}
+            onClick={handleCheck}
+            disabled={!answer.trim()}>
+            Check
+          </Button>
+        </Stack>
+      </Drawer>
     </Flex>
   );
 };
