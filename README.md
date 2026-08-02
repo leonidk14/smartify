@@ -11,7 +11,8 @@ The app is a PWA which allows you to look up and store new words and phrases in 
 |                                                                  Your words                                                                   |                                                                                 Look up a word                                                                                 |                                                                        Rebuild a sentence                                                                         |
 | :-------------------------------------------------------------------------------------------------------------------------------------------: | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------: |
 | <img src="docs/screenshots/home.jpg" alt="The saved word list: 96 words, 14 due today, and a button to start a practice session" width="260"> | <img src="docs/screenshots/lookup.jpg" alt="A lookup for &quot;to get along&quot;: a phrasal verb with three senses, each with a definition and a quoted example" width="260"> | <img src="docs/screenshots/practice-sentence.jpg" alt="Sentence practice: a rephrased sentence above an empty field to rewrite it in your own words" width="260"> |
-|                                        \*design was inspired and largely implemented by Claude Design                                         |
+
+*design was inspired and largely implemented by Claude Design
 
 ## Decisions & priorities
 
