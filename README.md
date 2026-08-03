@@ -14,6 +14,17 @@ The app is a PWA which allows you to look up and store new words and phrases in 
 
 *design was inspired and largely implemented by Claude Design
 
+## List of features
+
+- **Look up a word or phrase.** Different meanings are grouped by part of speech and are presented with examples. Misspellings are caught and each word/phrase is presented in its canonical form.
+- **Keep the ones worth keeping.** Any word user wants to practice later can be marked by hitting the **Practice later** button. Such words are the ones selected for the daily practice reminders.
+- **Three practice modes.** The user can simply try to guess a word by one of its meanings, rebuild a simplified sentence using the word or phrase selected for practice, or do both one after another in one go.
+- **Real sentences for practice.** Up to three different sentences are cached per meaning and rotated
+  least-used-first. Haiku searches for and generates them; Sonnet picks up where Haiku can't.
+- **Real-world-like evaluation.** Claude is asked to evaluate the usage of the word or phrase with a focus on smoothness and naturalness, similar to how a native speaker would perceive it; proper usage in the context is weighed more than a 1-to-1 match with the original.
+- **One reminder a day.** 20:00 Europe/Berlin, five words marked for practice. The push notification opens a practice session without revealing what is being practiced.
+- **Auth-gated usage.** Anyone can see the default 5 words in the vocabulary and practice them by guessing. The rest of the app is auth-gated: only signed-in users can use the practice involving Claude and add new words. Any word a user adds is only visible to that user.
+
 ## Decisions & priorities
 
 Some decisions I made along the way:
@@ -41,17 +52,6 @@ Some decisions I made along the way:
   produce a sentence. Results are cached to avoid repeat calls: a word you've already looked up is
   served from your saved vocabulary instead of a fresh lookup, and each meaning keeps up to three
   sentences, so practising a word again rarely triggers a fresh model call.
-
-## List of features
-
-- **Look up a word or phrase.** Different meanings are grouped by part of speech and are presented with examples. Misspellings are caught and each word/phrase is presented in its canonical form.
-- **Keep the ones worth keeping.** Any word you want to practice later can be marked by hitting the **Practice later** button. Such words are the ones selected for the daily practice reminders.
-- **Three practice modes.** The user can simply try to guess a word by one of its meanings, rebuild a simplified sentence using the word or phrase selected for practice, or do both one after another in one go.
-- **Real sentences for practice.** Up to three different sentences are cached per meaning and rotated
-  least-used-first. Haiku searches for and generates them; Sonnet picks up where Haiku can't.
-- **Real-world-like evaluation.** Claude is asked to evaluate the usage of the word or phrase with a focus on smoothness and naturalness, similar to how a native speaker would perceive it; proper usage in the context is weighed more than a 1-to-1 match with the original.
-- **One reminder a day.** 20:00 Europe/Berlin, five words marked for practice. The push notification opens a practice session without revealing what is being practiced.
-- **Auth-gated usage.** Anyone can see the default 5 words in the vocabulary and practice them by guessing. The rest of the app is auth-gated: only signed-in users can use the practice involving Claude and add new words. Any word a user adds is only visible to that user.
 
 ## How practice sentences work
 
