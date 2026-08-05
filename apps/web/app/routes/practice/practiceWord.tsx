@@ -102,7 +102,12 @@ export const PracticeWord = ({
 
   const handleNext = () => {
     setMeaning(word, meaningId);
-    recordResult(word, "word", view === "correct");
+    recordResult(
+      word,
+      "word",
+      view === "correct" ? "correct" : "wrong",
+      display,
+    );
 
     const next = nextWord(queue, word);
     if (next) {

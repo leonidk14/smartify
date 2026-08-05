@@ -56,8 +56,8 @@ function buildWordView(store: VocabularyStore, word: string): WordView | null {
     ...otherWords.filter((item) => !isSamePartOfSpeech(item)),
   ]
     .slice(0, 2)
-    .map(([key]) => key);
-  const hints = buildHints({ correct: word, decoys });
+    .map(([key, candidate]) => candidate.display ?? key);
+  const hints = buildHints({ correct: entry.display ?? word, decoys });
 
   return {
     word,

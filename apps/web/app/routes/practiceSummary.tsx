@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Link, NavigationType, useBlocker, useNavigate } from "react-router";
 import { Box, Button, Flex, Group, Text } from "@mantine/core";
-import { IconCheck, IconX } from "@tabler/icons-react";
+import { IconCheck, IconMinus, IconX } from "@tabler/icons-react";
 import { useSessionStore } from "../store/session";
 import { text } from "../theme/typography";
 import { ActionBar } from "./practice/actionBar";
@@ -28,8 +28,9 @@ export default function PracticeSummary() {
     void navigate("/practice", { replace: true });
   }, [blocker, navigate, reset]);
 
-  const correctCount = results.filter((r) => r.correct).length;
-  const reviewCount = results.length - correctCount;
+  const correctCount = results.filter((r) => r.outcome === "correct").length;
+  const reviewCount = results.filter((r) => r.outcome === "wrong").length;
+  const revealedCount = results.filter((r) => r.outcome === "revealed").length;
 
   const done = () => {
     reset();
@@ -80,6 +81,11 @@ export default function PracticeSummary() {
           label="Review"
           color="var(--color-text-error)"
         />
+        <StatTile
+          value={revealedCount}
+          label="Revealed"
+          color="var(--color-warning)"
+        />
       </Group>
 
       <Flex direction="column">
@@ -91,25 +97,37 @@ export default function PracticeSummary() {
             py={12}
             wrap="nowrap"
             style={{ borderBottom: "1px solid rgba(0,0,0,.07)" }}>
-            {r.correct ? (
+            {r.outcome === "correct" ? (
               <IconCheck
                 size={18}
                 stroke={2.4}
                 style={{ color: "var(--color-text-success)" }}
               />
-            ) : (
+            ) : r.outcome === "wrong" ? (
               <IconX
                 size={18}
                 stroke={2.4}
                 style={{ color: "var(--color-text-error)" }}
               />
+            ) : (
+              <IconMinus
+                size={18}
+                stroke={2.4}
+                style={{ color: "var(--color-warning)" }}
+              />
             )}
             <Text {...text.displaySm} flex={1} tt="capitalize">
-              {r.word}
+              {r.display ?? r.word}
             </Text>
             <Text
               {...text.label}
-              c={r.correct ? "dimmed" : "var(--color-text-error)"}>
+              c={
+                r.outcome === "correct"
+                  ? "dimmed"
+                  : r.outcome === "wrong"
+                    ? "var(--color-text-error)"
+                    : "var(--color-warning)"
+              }>
               {StepTag[r.step]}
             </Text>
           </Group>

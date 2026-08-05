@@ -1,4 +1,4 @@
-import { Box, Text } from "@mantine/core";
+import { Box, Group, Text } from "@mantine/core";
 import { text } from "../../theme/typography";
 
 function escapeRegExp(s: string): string {
@@ -76,6 +76,80 @@ export const Section = ({
     <Text {...text.proseSm}>{children}</Text>
   </Box>
 );
+
+type HintLevel = 1 | 2 | 3;
+
+const HINT_HEADER: Record<HintLevel, string> = {
+  1: "Hint · starts with",
+  2: "Hint · half the letters",
+  3: "Hint · the word",
+};
+
+const SEPARATORS = new Set([" ", "-"]);
+
+const numberOfLetters = (word: string) =>
+  Array.from(word).filter((ch) => !SEPARATORS.has(ch)).length;
+
+function revealedOrdinals(letterCount: number, level: HintLevel): Set<number> {
+  if (level === 3) {
+    return new Set(Array.from({ length: letterCount }, (_, i) => i));
+  }
+  if (level === 1) {
+    return new Set([0]);
+  }
+  const ordinals = new Set<number>();
+  for (let i = 0; i < letterCount; i += 2) {
+    ordinals.add(i);
+  }
+  return ordinals;
+}
+
+function maskWord(word: string, level: HintLevel): string {
+  const shown = revealedOrdinals(numberOfLetters(word), level);
+  let ordinal = -1;
+  return Array.from(word)
+    .map((ch) => {
+      if (SEPARATORS.has(ch)) {
+        return ch;
+      }
+      ordinal += 1;
+      return shown.has(ordinal) ? ch : "_";
+    })
+    .join("");
+}
+
+export const HintBanner = ({
+  word,
+  level,
+}: {
+  word: string;
+  level: HintLevel;
+}) => {
+  const masked = maskWord(word, level);
+  const letterCount = numberOfLetters(word);
+
+  return (
+    <Box bg="var(--color-surface-inverse)" p="13px 15px" bdrs={13}>
+      <Text {...text.label} c="var(--color-text-on-inverse-dimmed)">
+        {HINT_HEADER[level]}
+      </Text>
+      <Group gap={10} mt={8} align="baseline">
+        <Text
+          span
+          ff="var(--font-family-mono)"
+          fz={22}
+          fw={500}
+          c="var(--color-text-on-inverse)"
+          style={{ letterSpacing: "2px" }}>
+          {masked}
+        </Text>
+        <Text {...text.meta} span c="var(--color-text-on-inverse-dimmed)">
+          {letterCount} letters
+        </Text>
+      </Group>
+    </Box>
+  );
+};
 
 export const HighlightPhrase = ({
   simplified,

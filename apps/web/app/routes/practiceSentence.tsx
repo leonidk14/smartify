@@ -99,7 +99,7 @@ export async function clientLoader({
       return failedSentence(meaning);
     });
 
-  return { word: params.word, sentence };
+  return { word: params.word, display: entry.display, sentence };
 }
 
 export async function clientAction({
@@ -147,6 +147,7 @@ export default function PracticeSentenceRoute({
         {(sentence) => (
           <PracticeSentence
             word={loaderData.word}
+            display={loaderData.display}
             meaning={sentence.meaning}
             original={sentence.original}
             source={sentence.source}

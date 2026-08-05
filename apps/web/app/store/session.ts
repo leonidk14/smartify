@@ -2,11 +2,13 @@ import { create } from "zustand";
 
 type Phase = "word" | "sentence";
 export type PracticeMode = "word" | "sentence" | "both";
+export type StepOutcome = "correct" | "wrong" | "revealed";
 
 export interface StepResult {
   word: string;
+  display?: string;
   step: Phase;
-  correct: boolean;
+  outcome: StepOutcome;
 }
 
 interface SessionState {
@@ -18,7 +20,12 @@ interface SessionState {
   startSession: (words: string[], mode?: PracticeMode) => void;
   setMeaning: (word: string, meaningId: string) => void;
   setPhase: (phase: Phase) => void;
-  recordResult: (word: string, step: Phase, correct: boolean) => void;
+  recordResult: (
+    word: string,
+    step: Phase,
+    outcome: StepOutcome,
+    display?: string,
+  ) => void;
   reset: () => void;
 }
 
@@ -43,8 +50,10 @@ export const useSessionStore = create<SessionState>((set) => ({
   setMeaning: (word, meaningId) =>
     set((s) => ({ meaningIds: { ...s.meaningIds, [word]: meaningId } })),
   setPhase: (phase) => set({ phase }),
-  recordResult: (word, step, correct) =>
-    set((s) => ({ results: [...s.results, { word, step, correct }] })),
+  recordResult: (word, step, outcome, display) =>
+    set((s) => ({
+      results: [...s.results, { word, display, step, outcome }],
+    })),
   reset: () => set({ ...EMPTY }),
 }));
 
