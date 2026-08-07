@@ -1,5 +1,6 @@
-import { Box, Group, Text } from "@mantine/core";
-import { text } from "../../theme/typography";
+import { Box, Button, Center, Group, Text } from "@mantine/core";
+import { text } from "../../../theme/typography";
+import { IconBulb } from "@tabler/icons-react";
 
 function escapeRegExp(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -205,5 +206,76 @@ export const HighlightPhrase = ({
       </Text>
       {textAfterTarget}
     </Section>
+  );
+};
+
+export const SentenceHintsCTAs = ({
+  hintLevel,
+  onCTAHintClick,
+  onConfirmReveal,
+}: {
+  hintLevel: number;
+  onCTAHintClick: (nextLevel: -1 | 0 | 2 | 1 | 3) => void;
+  onConfirmReveal: () => void;
+}) => {
+  return (
+    <>
+      {hintLevel === -1 && (
+        <Group gap={8} align="center" wrap="nowrap">
+          <Center
+            {...text.bodyXs}
+            w={16}
+            h={16}
+            flex="none"
+            c="dimmed"
+            bd="1.5px solid var(--color-border)"
+            bdrs="50%">
+            ?
+          </Center>
+          <Text {...text.meta}>A hint will appear if you get stuck</Text>
+        </Group>
+      )}
+      {hintLevel === 0 && (
+        <Group justify="flex-start">
+          <Button
+            variant="subtle"
+            color="dark"
+            size="compact-md"
+            leftSection={<IconBulb size={16} />}
+            onClick={() => onCTAHintClick(1)}>
+            Reveal a hint
+          </Button>
+        </Group>
+      )}
+      {hintLevel === 1 && (
+        <Group justify="flex-start">
+          <Button
+            variant="subtle"
+            color="dark"
+            size="compact-md"
+            leftSection={<IconBulb size={16} />}
+            onClick={() => onCTAHintClick(2)}>
+            Reveal more letters
+          </Button>
+        </Group>
+      )}
+      {hintLevel === 2 && (
+        <Group justify="flex-start">
+          <Button
+            variant="subtle"
+            color="dark"
+            size="compact-md"
+            leftSection={<IconBulb size={16} />}
+            onClick={onConfirmReveal}>
+            Reveal the whole word
+          </Button>
+        </Group>
+      )}
+      {hintLevel === 3 && (
+        <Text {...text.meta} c="var(--color-warning)">
+          You revealed the word — this one won't be scored.
+        </Text>
+      )}
+    </>
   );
 };

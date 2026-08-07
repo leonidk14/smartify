@@ -4,7 +4,7 @@ import { Flex, Loader, Text } from "@mantine/core";
 import { readVocabulary } from "./wordSearch/vocabulary";
 import { readTextField } from "../lib/formData";
 import { useBlockBack } from "../lib/useBlockBack";
-import { PracticeSentence } from "./practice/practiceSentence";
+import { PracticeSentence } from "./practice/practiceSentence/practiceSentence";
 import { text } from "../theme/typography";
 import { evaluateSentence, generateSentence } from "./practice/sentenceActions";
 import type { SentenceEvaluation } from "./practice/sentenceTypes";
