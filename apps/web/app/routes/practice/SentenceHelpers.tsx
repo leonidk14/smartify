@@ -85,35 +85,60 @@ const HINT_HEADER: Record<HintLevel, string> = {
   3: "Hint · the word",
 };
 
-const SEPARATORS = new Set([" ", "-"]);
+const UNMASKED_CHARS = new Set([" ", "-", "'", "’", "/"]);
+const PLACEHOLDER_TOKEN = /^(sb|sth)(['’]s)?(\/(sb|sth))?$/i;
+const INFINITIVE_MARKER = /^to[ -]/i;
+
+const tokenize = (word: string) => word.split(/([ -])/);
+const isMaskable = (token: string) => !PLACEHOLDER_TOKEN.test(token);
 
 const numberOfLetters = (word: string) =>
-  Array.from(word).filter((ch) => !SEPARATORS.has(ch)).length;
+  tokenize(word)
+    .filter(isMaskable)
+    .flatMap((token) => Array.from(token))
+    .filter((ch) => !UNMASKED_CHARS.has(ch)).length;
 
-function revealedOrdinals(letterCount: number, level: HintLevel): Set<number> {
+const firstLetterIndex = (word: string) => {
+  const marker = INFINITIVE_MARKER.exec(word);
+  if (marker === null) {
+    return 0;
+  }
+  const lettersToSkip = numberOfLetters(marker[0]);
+  return lettersToSkip;
+};
+
+function revealedLetterIndexes(word: string, level: HintLevel): Set<number> {
+  const letterCount = numberOfLetters(word);
   if (level === 3) {
     return new Set(Array.from({ length: letterCount }, (_, i) => i));
   }
   if (level === 1) {
-    return new Set([0]);
+    return new Set([firstLetterIndex(word)]);
   }
-  const ordinals = new Set<number>();
+  const letterIndexes = new Set<number>();
   for (let i = 0; i < letterCount; i += 2) {
-    ordinals.add(i);
+    letterIndexes.add(i);
   }
-  return ordinals;
+  return letterIndexes;
 }
 
 function maskWord(word: string, level: HintLevel): string {
-  const shown = revealedOrdinals(numberOfLetters(word), level);
-  let ordinal = -1;
-  return Array.from(word)
-    .map((ch) => {
-      if (SEPARATORS.has(ch)) {
-        return ch;
+  const revealedIndexes = revealedLetterIndexes(word, level);
+  let letterIndex = -1;
+  return tokenize(word)
+    .map((token) => {
+      if (!isMaskable(token)) {
+        return token;
       }
-      ordinal += 1;
-      return shown.has(ordinal) ? ch : "_";
+      return Array.from(token)
+        .map((ch) => {
+          if (UNMASKED_CHARS.has(ch)) {
+            return ch;
+          }
+          letterIndex += 1;
+          return revealedIndexes.has(letterIndex) ? ch : "_";
+        })
+        .join("");
     })
     .join("");
 }
