@@ -22,6 +22,7 @@ export interface VocabularyEntry {
   typed?: string;
   shouldPracticeLater: boolean;
   savedAt: string;
+  isPublic: boolean;
 }
 
 export type VocabularyStore = Record<string, VocabularyEntry>;
@@ -102,6 +103,12 @@ export async function setPracticeLater({
   await postFunction("vocabulary-mark-practice", {
     word: word.trim().toLowerCase(),
     shouldPracticeLater,
+  });
+}
+
+export async function deleteWord({ word }: { word: string }): Promise<void> {
+  await postFunction("vocabulary-delete", {
+    word: word.trim().toLowerCase(),
   });
 }
 

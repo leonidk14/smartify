@@ -1,7 +1,7 @@
 import { VocabularyHome } from "./vocabularyHome";
 import { LookupPanel } from "./lookupPanel";
 import type { VocabularyEntry } from "./vocabulary";
-import { useLocation, useNavigate, useSearchParams } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 
 const LOOKUP_PARAM = "lookup";
 
@@ -20,7 +20,6 @@ export const WordSearch = ({
 }: WordSearchProps) => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const location = useLocation();
 
   const isLookupOpen = searchParams.has(LOOKUP_PARAM);
   const lookupQuery = searchParams.get(LOOKUP_PARAM) ?? undefined;
@@ -31,11 +30,7 @@ export const WordSearch = ({
   };
 
   const closeLookup = () => {
-    if (location.key === "default") {
-      void navigate("/", { replace: true });
-      return;
-    }
-    void navigate(-1);
+    void navigate("/", { replace: true });
   };
 
   return (

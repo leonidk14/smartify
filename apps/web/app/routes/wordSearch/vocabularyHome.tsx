@@ -1,9 +1,9 @@
-import { Link } from "react-router";
+import { useState } from "react";
+import { Link, useFetcher } from "react-router";
 import {
   Avatar,
   Box,
   Button,
-  Divider,
   Group,
   Menu,
   Paper,
@@ -16,7 +16,9 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { IconCloudOff, IconLogout, IconPlus } from "@tabler/icons-react";
-import { type StoredMeaning, type VocabularyEntry } from "./vocabulary";
+import { type VocabularyEntry } from "./vocabulary";
+import { DeleteWordDrawer } from "./deleteWordDrawer";
+import { VocabularyRow } from "./vocabularyRow";
 import { text } from "../../theme/typography";
 import { useAuth } from "../../lib/authContext";
 
@@ -26,14 +28,6 @@ interface VocabularyHomeProps {
   dueCount: number;
   isFromOfflineCopy: boolean;
   onOpenLookup: (query?: string) => void;
-}
-
-function firstSense(entry: VocabularyEntry): StoredMeaning | undefined {
-  const group = entry.groups[0];
-  if (!group) {
-    return undefined;
-  }
-  return Object.values(group.meanings).sort((a, b) => a.order - b.order)[0];
 }
 
 function initialsFromEmail(email: string | undefined): string {
@@ -51,6 +45,25 @@ export const VocabularyHome = ({
   onOpenLookup,
 }: VocabularyHomeProps) => {
   const { isSignedIn, user, signOut, openSignIn } = useAuth();
+
+  const deleteFetcher = useFetcher<{ success: boolean }>();
+  const [wordToDelete, setWordToDelete] = useState<{
+    key: string;
+    display: string;
+  } | null>(null);
+  const isDeleting = deleteFetcher.state !== "idle";
+
+  const handleConfirmDelete = async () => {
+    if (wordToDelete === null) {
+      return;
+    }
+    await deleteFetcher.submit(
+      { intent: "delete", word: wordToDelete.key },
+      { method: "post" },
+    );
+    notifications.show({ message: `Deleted “${wordToDelete.display}”` });
+    setWordToDelete(null);
+  };
 
   const handleSignOut = async () => {
     await signOut();
@@ -191,55 +204,27 @@ export const VocabularyHome = ({
           </Text>
         ) : (
           <Stack gap={0}>
-            {words.map(([word, entry], index) => {
-              const sense = firstSense(entry);
-              return (
-                <Box key={word}>
-                  {index > 0 ? <Divider /> : null}
-                  <UnstyledButton
-                    onClick={() => onOpenLookup(entry.display ?? word)}
-                    style={{
-                      display: "flex",
-                      alignItems: "flex-start",
-                      gap: 12,
-                      padding: "12px 0",
-                      width: "100%",
-                    }}>
-                    <Box
-                      style={{
-                        width: 7,
-                        height: 7,
-                        borderRadius: "50%",
-                        marginTop: 7,
-                        flex: "none",
-                        // TODO: tokenize the remaining black-alpha values (see theme/colors.md)
-                        background: entry.shouldPracticeLater
-                          ? "var(--color-warning)"
-                          : "rgba(0,0,0,.2)",
-                      }}
-                    />
-                    <Box flex={1} miw={0}>
-                      <Text {...text.displaySm}>
-                        {entry.display ?? word}
-                        {entry.groups[0] ? (
-                          <Text {...text.annotation} span ml={6}>
-                            {entry.groups[0].part_of_speech}
-                          </Text>
-                        ) : null}
-                      </Text>
-                      {sense ? (
-                        <Text {...text.bodyXs} c="dimmed" mt={2} lineClamp={1}>
-                          {sense.definition}
-                        </Text>
-                      ) : null}
-                    </Box>
-                  </UnstyledButton>
-                </Box>
-              );
-            })}
+            {words.map(([word, entry], index) => (
+              <VocabularyRow
+                key={word}
+                word={word}
+                entry={entry}
+                showDivider={index > 0}
+                onOpenLookup={onOpenLookup}
+                onRequestDelete={setWordToDelete}
+              />
+            ))}
           </Stack>
         )}
       </Box>
+
+      <DeleteWordDrawer
+        wordToDelete={wordToDelete}
+        opened={wordToDelete !== null}
+        loading={isDeleting}
+        onCancel={() => setWordToDelete(null)}
+        onConfirm={handleConfirmDelete}
+      />
     </Stack>
   );
 };

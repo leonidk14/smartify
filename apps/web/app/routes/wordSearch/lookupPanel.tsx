@@ -17,11 +17,13 @@ import {
   Title,
   UnstyledButton,
 } from "@mantine/core";
-import { IconChevronLeft, IconSearch } from "@tabler/icons-react";
+import { notifications } from "@mantine/notifications";
+import { IconChevronLeft, IconSearch, IconTrash } from "@tabler/icons-react";
 import type { LookupResult, Typo } from "./actions";
 import type { GeneratedSentence } from "../practice/sentenceTypes";
 import { toKey } from "./normalize";
 import type { StoredMeaningGroup, VocabularyEntry } from "./vocabulary";
+import { DeleteWordDrawer } from "./deleteWordDrawer";
 import { text, textCss } from "../../theme/typography";
 import { useKeyboardInset } from "../../lib/useKeyboardInset";
 import { useAuth } from "../../lib/authContext";
@@ -35,6 +37,8 @@ type PanelResult = {
   originalSearchItem?: string;
   normalizedDisplay?: string;
   shouldPracticeLater?: boolean;
+  isPublic?: boolean;
+  key?: string;
 };
 
 interface LookupPanelProps {
@@ -52,23 +56,43 @@ export const LookupPanel = ({
 }: LookupPanelProps) => {
   const searchFetcher = useFetcher<SearchResult>();
   const practiceFetcher = useFetcher<{ success: boolean }>();
+  const deleteFetcher = useFetcher<{ success: boolean }>();
   const [value, setValue] = useState(initialQuery ?? "");
   const [committedQuery, setCommittedQuery] = useState(initialQuery ?? "");
+  const [isDeleteDrawerOpen, setIsDeleteDrawerOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const keyboardInset = useKeyboardInset();
   const { isSignedIn, openSignIn } = useAuth();
 
+  const isDeleting = deleteFetcher.state !== "idle";
+
+  useEffect(() => {
+    if (deleteFetcher.state === "idle" && deleteFetcher.data?.success) {
+      onClose();
+    }
+  }, [deleteFetcher.state, deleteFetcher.data, onClose]);
+
   const findCached = useCallback(
     (term: string): PanelResult | undefined => {
-      const entry = savedWords.find(([word]) => word === toKey(term))?.[1];
-      if (!entry || entry.groups.length === 0) {
+      const found = savedWords.find(([word]) => word === toKey(term));
+
+      if (!found) {
         return undefined;
       }
+
+      const [key, entry] = found;
+
+      if (entry.groups.length === 0) {
+        return undefined;
+      }
+
       return {
         dictionary: { groups: entry.groups },
         originalSearchItem: term,
         normalizedDisplay: entry.display ?? toKey(term),
         shouldPracticeLater: entry.shouldPracticeLater,
+        isPublic: entry.isPublic,
+        key,
       };
     },
     [savedWords],
@@ -134,8 +158,21 @@ export const LookupPanel = ({
     committedQuery.trim().length > 0 &&
     !cachedResult;
 
-  const originalSearchItem = data?.originalSearchItem;
-  const normalizedDisplay = data?.normalizedDisplay;
+  const canDelete = hasResult && data?.isPublic === false;
+
+  const handleConfirmDelete = async () => {
+    const key = data?.key;
+    if (key === undefined) {
+      return;
+    }
+    await deleteFetcher.submit(
+      { intent: "delete", word: key },
+      { method: "post" },
+    );
+    notifications.show({
+      message: `Deleted “${data?.normalizedDisplay ?? key}”`,
+    });
+  };
 
   const isMarkingForPractice =
     practiceFetcher.state === "submitting" ||
@@ -145,7 +182,7 @@ export const LookupPanel = ({
     : (data?.shouldPracticeLater ?? false);
 
   const handleTogglePracticeLater = () => {
-    const practiceWord = normalizedDisplay ?? originalSearchItem;
+    const practiceWord = data?.normalizedDisplay ?? data?.originalSearchItem;
     if (!practiceWord) {
       return;
     }
@@ -191,16 +228,28 @@ export const LookupPanel = ({
       mih={0}
       style={{ zIndex: 200 }}>
       <Box p={16} pb={12}>
-        <Group gap={10} mb={14}>
-          <ActionIcon
-            variant="subtle"
-            color="gray"
-            size="md"
-            aria-label="Back"
-            onClick={onClose}>
-            <IconChevronLeft size={22} />
-          </ActionIcon>
-          <Text {...text.metaLg}>Look up</Text>
+        <Group gap={10} mb={14} justify="space-between" wrap="nowrap">
+          <Group gap={10} wrap="nowrap">
+            <ActionIcon
+              variant="subtle"
+              color="gray"
+              size="md"
+              aria-label="Back"
+              onClick={onClose}>
+              <IconChevronLeft size={22} />
+            </ActionIcon>
+            <Text {...text.metaLg}>Look up</Text>
+          </Group>
+          {canDelete ? (
+            <ActionIcon
+              variant="subtle"
+              color="red"
+              size="md"
+              aria-label="Delete word"
+              onClick={() => setIsDeleteDrawerOpen(true)}>
+              <IconTrash size={20} />
+            </ActionIcon>
+          ) : null}
         </Group>
         <Group gap={8} align="stretch" wrap="nowrap">
           <TextInput
@@ -248,7 +297,7 @@ export const LookupPanel = ({
           </Group>
         ) : hasResult ? (
           <WordResult
-            word={normalizedDisplay ?? originalSearchItem ?? value}
+            word={data?.normalizedDisplay ?? data?.originalSearchItem ?? value}
             groups={groups}
           />
         ) : typo ? (
@@ -333,6 +382,17 @@ export const LookupPanel = ({
           </Button>
         </Box>
       ) : null}
+
+      <DeleteWordDrawer
+        wordToDelete={{
+          display: data?.normalizedDisplay ?? null,
+          key: data?.key ?? null,
+        }}
+        opened={isDeleteDrawerOpen}
+        loading={isDeleting}
+        onCancel={() => setIsDeleteDrawerOpen(false)}
+        onConfirm={handleConfirmDelete}
+      />
     </Flex>
   );
 };

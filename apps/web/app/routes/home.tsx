@@ -4,6 +4,7 @@ import { readTextField } from "../lib/formData";
 import { lookupWord } from "./wordSearch/actions";
 import { toKey } from "./wordSearch/normalize";
 import {
+  deleteWord,
   readVocabulary,
   saveWord,
   setPracticeLater,
@@ -25,6 +26,12 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     return { success: true };
   }
 
+  if (intent === "delete") {
+    const word = readTextField(formData, "word");
+    await deleteWord({ word: toKey(word) });
+    return { success: true };
+  }
+
   const searchItem = readTextField(formData, "search-item");
 
   if (!searchItem) {
@@ -32,18 +39,20 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     return null;
   }
 
-  const toCachedResult = (entry: VocabularyEntry) => ({
+  const toCachedResult = (entry: VocabularyEntry, key: string) => ({
     dictionary: { groups: entry.groups },
     originalSearchItem: searchItem,
     normalizedDisplay: entry.display ?? toKey(searchItem),
     shouldPracticeLater: entry.shouldPracticeLater,
+    isPublic: entry.isPublic,
+    key,
   });
 
   const { store } = await readVocabulary();
 
   const preCached = store[toKey(searchItem)];
   if (preCached && preCached.groups.length > 0) {
-    return toCachedResult(preCached);
+    return toCachedResult(preCached, toKey(searchItem));
   }
 
   const result = await lookupWord(searchItem);
@@ -63,7 +72,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 
   const existing = store[key];
   if (existing && existing.groups.length > 0) {
-    return toCachedResult(existing);
+    return toCachedResult(existing, key);
   }
 
   const saved = await saveWord({
@@ -79,6 +88,8 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     originalSearchItem: searchItem,
     normalizedDisplay,
     shouldPracticeLater: false,
+    isPublic: saved.isPublic,
+    key,
   };
 }
 
