@@ -6,6 +6,7 @@ export interface VocabularyEntry {
   typed?: string;
   shouldPracticeLater: boolean;
   savedAt: string;
+  isPublic: boolean;
 }
 
 export type VocabularyStore = Record<string, VocabularyEntry>;
@@ -22,9 +23,10 @@ export interface VocabularyRow {
 }
 
 // Takes only the columns it reads, so callers holding a row that has not been written
-// yet (and so has no server-assigned is_public) don't have to invent one.
+// yet (and so has no server-assigned is_public) don't have to invent one — such a row is
+// always a fresh private save, so is_public defaults to false.
 export function rowToEntry(
-  row: Omit<VocabularyRow, "user_id" | "is_public">,
+  row: Omit<VocabularyRow, "user_id" | "is_public"> & { is_public?: boolean },
 ): VocabularyEntry {
   return {
     groups: row.groups,
@@ -32,6 +34,7 @@ export function rowToEntry(
     typed: row.typed ?? undefined,
     shouldPracticeLater: row.should_practice_later,
     savedAt: row.saved_at,
+    isPublic: row.is_public ?? false,
   };
 }
 
