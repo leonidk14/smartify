@@ -189,8 +189,7 @@ function buildPayload({
   return JSON.stringify({
     title,
     body,
-    previewUrl: `/practice/preview?${query}`,
-    practiceUrl: `/practice/session?${query}`,
+    url: `/practice/preview?${query}`,
     tag: "practice-reminder",
   });
 }

@@ -10,16 +10,15 @@ self.addEventListener("push", (event) => {
 
   const title = payload.title || "Ready to practice?";
   const body = payload.body || "Your words are waiting.";
-  const previewUrl = payload.previewUrl || DEFAULT_URL;
+  const url = payload.url || DEFAULT_URL;
 
   event.waitUntil(
     self.registration.showNotification(title, {
       body,
-      data: { previewUrl, practiceUrl: payload.practiceUrl },
+      data: { url },
       icon: "/pwa-192x192.png",
       badge: "/badge.png",
       tag: payload.tag,
-      actions: [{ action: "practice", title: "Practice without preview" }],
     }),
   );
 });
@@ -27,11 +26,7 @@ self.addEventListener("push", (event) => {
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
 
-  const data = event.notification.data || {};
-  const url =
-    event.action === "practice" && data.practiceUrl
-      ? data.practiceUrl
-      : data.previewUrl || DEFAULT_URL;
+  const url = event.notification.data?.url || DEFAULT_URL;
 
   event.waitUntil(
     (async () => {
