@@ -1,5 +1,4 @@
 import {
-  ActionIcon,
   Box,
   Button,
   Drawer,
@@ -9,7 +8,7 @@ import {
   Text,
   TextInput,
 } from "@mantine/core";
-import { IconArrowUp, IconX } from "@tabler/icons-react";
+import { IconArrowUp } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { useNavigate, useNavigation } from "react-router";
 import { normalize } from "../wordSearch/normalize";
@@ -19,6 +18,7 @@ import { text } from "../../theme/typography";
 import { PracticeProgress } from "./practiceProgress";
 import { ActionBar } from "./actionBar";
 import { FeedbackHeader } from "./feedbackHeader";
+import { useClickOutside } from "@mantine/hooks";
 
 interface PracticeWordProps {
   word: string;
@@ -68,6 +68,8 @@ export const PracticeWord = ({
   const setMeaning = useSessionStore((s) => s.setMeaning);
   const setPhase = useSessionStore((s) => s.setPhase);
   const recordResult = useSessionStore((s) => s.recordResult);
+
+  const ref = useClickOutside(() => setIsSheetOpen(false));
 
   useEffect(() => {
     if (!queue.includes(word)) {
@@ -296,6 +298,7 @@ export const PracticeWord = ({
       )}
 
       <Drawer
+        ref={ref}
         opened={isSheetOpen}
         onClose={() => setIsSheetOpen(false)}
         position="bottom"
@@ -309,17 +312,6 @@ export const PracticeWord = ({
           body: { padding: "14px 20px 22px" },
         }}>
         <Stack gap={8} pos="relative">
-          <Flex justify="flex-end">
-            <ActionIcon
-              variant="subtle"
-              color="gray"
-              size="md"
-              aria-label="Close"
-              type="button"
-              onClick={() => setIsSheetOpen(false)}>
-              <IconX size={22} />
-            </ActionIcon>
-          </Flex>
           <TextInput
             variant="unstyled"
             placeholder="type the word…"

@@ -9,6 +9,7 @@ import {
   Box,
   Group,
 } from "@mantine/core";
+import { useClickOutside } from "@mantine/hooks";
 import { IconX } from "@tabler/icons-react";
 import { useKeyboardInset } from "~/lib/useKeyboardInset";
 import { text, textCss } from "~/theme/typography";
@@ -31,39 +32,30 @@ export const AnswerDrawer = ({
   onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
 }) => {
   const keyboardInset = useKeyboardInset();
+  const ref = useClickOutside(() => onClose());
 
   return (
     <Drawer
+      ref={ref}
       opened={isOpen}
       onClose={onClose}
       position="bottom"
       size={260 + keyboardInset}
       zIndex={300}
       withCloseButton={false}
-      overlayProps={{ backgroundOpacity: 0.35 }}
+      overlayProps={{ backgroundOpacity: 0.05 }}
       radius={0}
       styles={{
         content: { borderRadius: "24px 24px 0 0" },
         body: { padding: "14px 20px 22px" },
       }}>
       <Stack gap={12}>
-        <Flex justify="flex-end">
-          <ActionIcon
-            variant="subtle"
-            color="gray"
-            size="md"
-            aria-label="Close"
-            type="button"
-            onClick={onClose}>
-            <IconX size={22} />
-          </ActionIcon>
-        </Flex>
         <Textarea
           variant="unstyled"
           placeholder="Type your sentence…"
           autosize
-          minRows={3}
-          maxRows={5}
+          minRows={2}
+          maxRows={2}
           value={value}
           onChange={onChange}
           onKeyDown={(e) => {
