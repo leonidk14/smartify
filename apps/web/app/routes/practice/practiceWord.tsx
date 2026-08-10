@@ -302,7 +302,7 @@ export const PracticeWord = ({
         opened={isSheetOpen}
         onClose={() => setIsSheetOpen(false)}
         position="bottom"
-        size={192 + keyboardInset}
+        size={150 + keyboardInset}
         zIndex={300}
         withCloseButton={false}
         overlayProps={{ backgroundOpacity: 0.35 }}

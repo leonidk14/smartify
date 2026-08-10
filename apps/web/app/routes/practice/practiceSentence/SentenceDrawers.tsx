@@ -40,7 +40,7 @@ export const AnswerDrawer = ({
       opened={isOpen}
       onClose={onClose}
       position="bottom"
-      size={260 + keyboardInset}
+      size={160 + keyboardInset}
       zIndex={300}
       withCloseButton={false}
       overlayProps={{ backgroundOpacity: 0.05 }}
@@ -49,7 +49,7 @@ export const AnswerDrawer = ({
         content: { borderRadius: "24px 24px 0 0" },
         body: { padding: "14px 20px 22px" },
       }}>
-      <Stack gap={12}>
+      <Stack gap={8}>
         <Textarea
           variant="unstyled"
           placeholder="Type your sentence…"
