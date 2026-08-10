@@ -10,6 +10,7 @@ export default [
     index("routes/home.tsx"),
     route("practice", "routes/practice.tsx"),
     route("practice/select", "routes/practiceSelect.tsx"),
+    route("practice/preview", "routes/practicePreview.tsx"),
     route("practice/session", "routes/practiceSession.tsx"),
     route("practice/summary", "routes/practiceSummary.tsx"),
     route("practice/:word", "routes/practiceWord.tsx"),
