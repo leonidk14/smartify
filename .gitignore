@@ -15,6 +15,7 @@ TODO.md
 FINDINGS.md
 PWA_NOTES.md
 PUSH_NOTIFICATIONS.md
+PLAN_NOTES.md
 apps/web/app/theme/colors.md
 apps/web/app/theme/typography.md
 
@@ -22,3 +23,6 @@ dev-dist/
 dist/
 
 docs/screenshots/raw/*.jpg
+
+*storybook.log
+storybook-static
