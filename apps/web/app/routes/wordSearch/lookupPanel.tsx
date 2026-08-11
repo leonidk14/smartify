@@ -57,20 +57,7 @@ export const LookupPanel = ({
   const searchFetcher = useFetcher<SearchResult>();
   const practiceFetcher = useFetcher<{ success: boolean }>();
   const deleteFetcher = useFetcher<{ success: boolean }>();
-  const [value, setValue] = useState(initialQuery ?? "");
   const [committedQuery, setCommittedQuery] = useState(initialQuery ?? "");
-  const [isDeleteDrawerOpen, setIsDeleteDrawerOpen] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const keyboardInset = useKeyboardInset();
-  const { isSignedIn, openSignIn } = useAuth();
-
-  const isDeleting = deleteFetcher.state !== "idle";
-
-  useEffect(() => {
-    if (deleteFetcher.state === "idle" && deleteFetcher.data?.success) {
-      onClose();
-    }
-  }, [deleteFetcher.state, deleteFetcher.data, onClose]);
 
   const findCached = useCallback(
     (term: string): PanelResult | undefined => {
@@ -102,6 +89,22 @@ export const LookupPanel = ({
     () => findCached(committedQuery),
     [findCached, committedQuery],
   );
+
+  const [value, setValue] = useState(
+    initialQuery ? (cachedResult?.normalizedDisplay ?? "") : "",
+  );
+  const [isDeleteDrawerOpen, setIsDeleteDrawerOpen] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const keyboardInset = useKeyboardInset();
+  const { isSignedIn, openSignIn } = useAuth();
+
+  const isDeleting = deleteFetcher.state !== "idle";
+
+  useEffect(() => {
+    if (deleteFetcher.state === "idle" && deleteFetcher.data?.success) {
+      onClose();
+    }
+  }, [deleteFetcher.state, deleteFetcher.data, onClose]);
 
   const commitSearch = (term: string) => {
     // Dismisses the on-screen keyboard on mobile — the result needs the room.
@@ -273,7 +276,7 @@ export const LookupPanel = ({
             }
             rightSectionPointerEvents="all"
             flex={1}
-            type="text"
+            type="search"
             enterKeyHint="search"
             autoComplete="off"
           />
