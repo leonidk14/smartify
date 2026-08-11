@@ -46,7 +46,7 @@ export const Section = ({
   tint,
   children,
 }: {
-  label: string;
+  label?: string;
   warm?: boolean;
   tint?: "red";
   children: React.ReactNode;
@@ -68,12 +68,14 @@ export const Section = ({
           ? "1px solid rgba(0,0,0,.08)"
           : "1px solid var(--color-border)"
     }>
-    <Text
-      {...text.label}
-      c={tint === "red" ? "var(--color-text-error)" : "dimmed"}
-      mb={6}>
-      {label}
-    </Text>
+    {label ? (
+      <Text
+        {...text.label}
+        c={tint === "red" ? "var(--color-text-error)" : "dimmed"}
+        mb={6}>
+        {label}
+      </Text>
+    ) : null}
     <Text {...text.proseSm}>{children}</Text>
   </Box>
 );
@@ -185,11 +187,7 @@ export const HighlightPhrase = ({
   rephrasedTarget: string | null;
 }) => {
   if (!simplified || !rephrasedTarget) {
-    return (
-      <Section label="Rephrased" warm>
-        {simplified}
-      </Section>
-    );
+    return <Section warm>{simplified}</Section>;
   }
 
   const indexRephrasedTarget = simplified.indexOf(rephrasedTarget);
@@ -199,7 +197,7 @@ export const HighlightPhrase = ({
   );
 
   return (
-    <Section label="Rephrased" warm>
+    <Section warm>
       {textBeforeTarget}
       <Text span bg="yellow.2" px={2}>
         {rephrasedTarget}

@@ -2,7 +2,11 @@ import { Box, Button, Center, Flex, Group, Text } from "@mantine/core";
 import { useEffect, useState } from "react";
 import { useFetcher, useNavigate } from "react-router";
 import { IconArrowUp, IconRefresh } from "@tabler/icons-react";
-import { HINT_DELAY_MS, NEAR_PERFECT_THRESHOLD } from "../constants";
+import {
+  EVALUATION_ERROR_MESSAGE,
+  HINT_DELAY_MS,
+  NEAR_PERFECT_THRESHOLD,
+} from "../constants";
 import type { SentenceEvaluation } from "../sentenceTypes";
 import type { StepOutcome } from "../../../store/session";
 import { nextWord, useSessionStore } from "../../../store/session";
@@ -17,7 +21,8 @@ import {
   SentenceHintsCTAs,
   UnderlineWord,
 } from "./SentenceHelpers";
-import { AnswerDrawer, ConfirmRevealWordDrawer } from "./SentenceDrawers";
+import { AnswerDrawer } from "../answerDrawer";
+import { ConfirmRevealWordDrawer } from "./confirmRevealWordDrawer";
 
 interface PracticeSentenceProps {
   word: string;
@@ -170,16 +175,13 @@ export const PracticeSentence = ({
   }
 
   return (
-    <Flex direction="column" p={16} pb={110} gap={18} flex={1}>
+    <Flex direction="column" p={16} pb={110} gap={12} flex={1}>
       <PracticeProgress tone={tone} />
 
       {!evaluation ? (
         <>
           <Box>
             <Text {...text.label}>Rebuild the sentence</Text>
-            <Text {...text.bodySm} c="dimmed" mt={12}>
-              Rewrite this sentence.
-            </Text>
           </Box>
 
           <HighlightPhrase
@@ -199,7 +201,7 @@ export const PracticeSentence = ({
 
           {evalError ? (
             <Text {...text.body} c="red">
-              We couldn't grade that — please try again.
+              {EVALUATION_ERROR_MESSAGE}
             </Text>
           ) : null}
 
@@ -246,9 +248,7 @@ export const PracticeSentence = ({
             </Text>
           </Box>
 
-          <Section label="Rephrased" warm>
-            {simplified}
-          </Section>
+          <Section warm>{simplified}</Section>
 
           <Section label={generated ? "Example" : "Original"}>
             <UnderlineWord sentence={original} word={word} />
@@ -305,11 +305,14 @@ export const PracticeSentence = ({
       <AnswerDrawer
         isOpen={isAnswerSheetOpen && !evaluation}
         onClose={() => setIsAnswerSheetOpen(false)}
+        inputVariant="textarea"
+        backdrop="readable"
+        placeholder="Type your sentence…"
+        value={value}
+        onChange={setValue}
         onSubmit={handleSubmit}
         isSubmitting={isSubmitting}
-        value={value}
-        onChange={(e) => setValue(e.currentTarget.value)}
-        evalError={evalError}
+        errorMessage={evalError ? EVALUATION_ERROR_MESSAGE : undefined}
       />
 
       <ConfirmRevealWordDrawer

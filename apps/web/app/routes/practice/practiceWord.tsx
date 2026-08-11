@@ -1,24 +1,14 @@
-import {
-  Box,
-  Button,
-  Drawer,
-  Flex,
-  Group,
-  Stack,
-  Text,
-  TextInput,
-} from "@mantine/core";
+import { Box, Button, Flex, Group, Text } from "@mantine/core";
 import { IconArrowUp } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { useNavigate, useNavigation } from "react-router";
 import { normalize } from "../wordSearch/normalize";
 import { nextWord, useSessionStore } from "../../store/session";
-import { useKeyboardInset } from "../../lib/useKeyboardInset";
 import { text } from "../../theme/typography";
 import { PracticeProgress } from "./practiceProgress";
 import { ActionBar } from "./actionBar";
+import { AnswerDrawer } from "./answerDrawer";
 import { FeedbackHeader } from "./feedbackHeader";
-import { useClickOutside } from "@mantine/hooks";
 
 interface PracticeWordProps {
   word: string;
@@ -59,7 +49,6 @@ export const PracticeWord = ({
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const navigation = useNavigation();
   const navigate = useNavigate();
-  const keyboardInset = useKeyboardInset();
 
   const queue = useSessionStore((s) => s.queue);
   const mode = useSessionStore((s) => s.mode);
@@ -68,8 +57,6 @@ export const PracticeWord = ({
   const setMeaning = useSessionStore((s) => s.setMeaning);
   const setPhase = useSessionStore((s) => s.setPhase);
   const recordResult = useSessionStore((s) => s.recordResult);
-
-  const ref = useClickOutside(() => setIsSheetOpen(false));
 
   useEffect(() => {
     if (!queue.includes(word)) {
@@ -143,16 +130,18 @@ export const PracticeWord = ({
       : "To sentences →";
 
   return (
-    <Flex direction="column" p={16} pb={110} gap={20} flex={1}>
+    <Flex direction="column" p={16} pb={110} gap={12} flex={1}>
       <PracticeProgress tone={tone} />
 
       {view === "input" && (
         <>
           <Box>
-            <Text {...text.label}>Guess the word</Text>
-            <Box mt={14}>
-              <PartOfSpeechPill>{partOfSpeech}</PartOfSpeechPill>
-            </Box>
+            <Flex justify="space-between" align="center">
+              <Text {...text.label}>Guess the word</Text>
+              <Box>
+                <PartOfSpeechPill>{partOfSpeech}</PartOfSpeechPill>
+              </Box>
+            </Flex>
             <Text {...text.prose} mt={16}>
               {definition}
             </Text>
@@ -297,51 +286,16 @@ export const PracticeWord = ({
         </>
       )}
 
-      <Drawer
-        ref={ref}
-        opened={isSheetOpen}
+      <AnswerDrawer
+        isOpen={isSheetOpen}
         onClose={() => setIsSheetOpen(false)}
-        position="bottom"
-        size={150 + keyboardInset}
-        zIndex={300}
-        withCloseButton={false}
-        overlayProps={{ backgroundOpacity: 0.35 }}
-        radius={0}
-        styles={{
-          content: { borderRadius: "24px 24px 0 0" },
-          body: { padding: "14px 20px 22px" },
-        }}>
-        <Stack gap={8} pos="relative">
-          <TextInput
-            variant="unstyled"
-            placeholder="type the word…"
-            size="xl"
-            value={answer}
-            onChange={(e) => setAnswer(e.currentTarget.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                handleCheck();
-              }
-            }}
-            data-autofocus
-            style={{ borderBottom: "2px solid var(--color-text)" }}
-            styles={{ input: { paddingRight: 40 } }}
-            autoComplete="off"
-            type="search"
-            enterKeyHint="send"
-          />
-          <Button
-            fullWidth
-            variant="filled"
-            color="black"
-            h={48}
-            radius={12}
-            onClick={handleCheck}
-            disabled={!answer.trim()}>
-            Check
-          </Button>
-        </Stack>
-      </Drawer>
+        inputVariant="input"
+        backdrop="dimmed"
+        placeholder="type the word…"
+        value={answer}
+        onChange={setAnswer}
+        onSubmit={handleCheck}
+      />
     </Flex>
   );
 };

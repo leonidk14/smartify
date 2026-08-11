@@ -2,7 +2,6 @@ import { useState } from "react";
 import {
   Box,
   Button,
-  Drawer,
   PasswordInput,
   Stack,
   Text,
@@ -12,7 +11,7 @@ import {
 import { useForm } from "@mantine/form";
 import { notifications } from "@mantine/notifications";
 import { useAuth } from "./authContext";
-import { useKeyboardInset } from "./useKeyboardInset";
+import { BottomSheet } from "./bottomSheet";
 import { text, textCss } from "../theme/typography";
 
 const labelStyles = { label: { ...textCss.label, marginBottom: 5 } };
@@ -50,69 +49,48 @@ export function SignInDrawer() {
     form.reset();
   });
 
-  const keyboardInset = useKeyboardInset();
-
   return (
-    <Drawer
-      opened={isSignInOpen}
-      onClose={handleClose}
-      position="bottom"
-      size={300 + keyboardInset}
-      zIndex={300}
-      withCloseButton={false}
-      overlayProps={{ backgroundOpacity: 0.35 }}
-      radius={0}
-      styles={{
-        content: { borderRadius: "24px 24px 0 0" },
-        body: { padding: "18px 22px 26px" },
-      }}>
-      <Stack gap={16}>
-        <Box>
-          <Title order={1}>Welcome back</Title>
-          <Text {...text.bodySm} c="dimmed" mt={5}>
-            Sign in to look up words and practice.
-          </Text>
-        </Box>
+    <BottomSheet isOpen={isSignInOpen} onClose={handleClose}>
+      <Box>
+        <Title order={1}>Sign In</Title>
+      </Box>
 
-        <form onSubmit={handleSubmit}>
-          <Stack gap={11}>
-            <TextInput
-              label="Email"
-              type="email"
-              autoComplete="email"
-              placeholder="alex@example.com"
-              size="md"
-              radius={12}
-              styles={labelStyles}
-              {...form.getInputProps("email")}
-            />
-            <PasswordInput
-              label="Password"
-              autoComplete="current-password"
-              size="md"
-              radius={12}
-              styles={labelStyles}
-              {...form.getInputProps("password")}
-            />
+      <form onSubmit={handleSubmit}>
+        <Stack gap={11}>
+          <TextInput
+            type="email"
+            autoComplete="email"
+            placeholder="alex@example.com"
+            size="md"
+            radius={12}
+            styles={labelStyles}
+            {...form.getInputProps("email")}
+          />
+          <PasswordInput
+            size="md"
+            placeholder="password"
+            radius={12}
+            styles={labelStyles}
+            {...form.getInputProps("password")}
+          />
 
-            {formError ? (
-              <Text {...text.bodySm} c="var(--color-text-error)">
-                {formError}
-              </Text>
-            ) : null}
+          {formError ? (
+            <Text {...text.bodySm} c="var(--color-text-error)">
+              {formError}
+            </Text>
+          ) : null}
 
-            <Button
-              type="submit"
-              fullWidth
-              size="md"
-              radius={13}
-              mt={4}
-              loading={isSubmitting}>
-              Sign in
-            </Button>
-          </Stack>
-        </form>
-      </Stack>
-    </Drawer>
+          <Button
+            type="submit"
+            fullWidth
+            size="md"
+            radius={13}
+            mt={4}
+            loading={isSubmitting}>
+            Sign in
+          </Button>
+        </Stack>
+      </form>
+    </BottomSheet>
   );
 }

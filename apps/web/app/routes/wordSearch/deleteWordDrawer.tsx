@@ -1,14 +1,5 @@
-import {
-  ActionIcon,
-  Box,
-  Button,
-  Drawer,
-  Flex,
-  Group,
-  Stack,
-  Text,
-} from "@mantine/core";
-import { IconX } from "@tabler/icons-react";
+import { Box, Text } from "@mantine/core";
+import { BottomSheet } from "../../lib/bottomSheet";
 import { text } from "../../theme/typography";
 
 interface DeleteWordDrawerProps {
@@ -27,63 +18,28 @@ export function DeleteWordDrawer({
   onConfirm,
 }: DeleteWordDrawerProps) {
   return (
-    <Drawer
-      opened={opened}
+    <BottomSheet
+      isOpen={opened}
       onClose={onCancel}
-      position="bottom"
-      size={250}
+      hasCloseButton
       zIndex={400}
-      withCloseButton={false}
-      overlayProps={{ backgroundOpacity: 0.35 }}
-      radius={0}
-      styles={{
-        content: { borderRadius: "24px 24px 0 0" },
-        body: { padding: "14px 20px 24px" },
+      secondaryAction={{
+        label: "Cancel",
+        onClick: onCancel,
+        isDisabled: loading,
+      }}
+      primaryAction={{
+        label: "Delete",
+        onClick: () => void onConfirm(),
+        tone: "danger",
+        isLoading: loading,
       }}>
-      <Stack gap={16}>
-        <Flex justify="flex-end">
-          <ActionIcon
-            variant="subtle"
-            color="gray"
-            size="md"
-            aria-label="Close"
-            type="button"
-            onClick={onCancel}>
-            <IconX size={22} />
-          </ActionIcon>
-        </Flex>
-        <Box>
-          <Text {...text.headline}>Delete “{wordToDelete?.display}”?</Text>
-          <Text {...text.bodySm} c="dimmed" mt={8}>
-            This removes it from your vocabulary. You can always look it up
-            again.
-          </Text>
-        </Box>
-        <Group gap={10} wrap="nowrap">
-          <Button
-            variant="outline"
-            color="dark"
-            h={48}
-            radius={12}
-            flex={1}
-            type="button"
-            onClick={onCancel}
-            disabled={loading}>
-            Cancel
-          </Button>
-          <Button
-            variant="filled"
-            color="red"
-            h={48}
-            radius={12}
-            flex={1}
-            type="button"
-            onClick={() => void onConfirm()}
-            loading={loading}>
-            Delete
-          </Button>
-        </Group>
-      </Stack>
-    </Drawer>
+      <Box>
+        <Text {...text.headline}>Delete “{wordToDelete?.display}”?</Text>
+        <Text {...text.bodySm} c="dimmed" mt={8}>
+          This removes it from your vocabulary. You can always look it up again.
+        </Text>
+      </Box>
+    </BottomSheet>
   );
 }
