@@ -18,7 +18,15 @@ export default defineConfig({
   server: {
     allowedHosts: [".ngrok-free.dev"],
   },
-  plugins: [tailwindcss(), reactRouter()],
+  // Storybook's Vite builder loads this file itself and then resolves with
+  // `configFile: false`, which the React Router plugin rejects outright — it
+  // needs the config path to spin up its child compiler. So it is left out
+  // under Storybook (which sets STORYBOOK=true in its CLI) and everything else
+  // here — Tailwind, envDir, tsconfig paths — is shared as-is.
+  plugins: [
+    tailwindcss(),
+    ...(process.env.STORYBOOK === "true" ? [] : [reactRouter()]),
+  ],
   resolve: {
     tsconfigPaths: true,
   },

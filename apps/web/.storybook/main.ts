@@ -13,6 +13,10 @@ function getAbsolutePath(value: string) {
 }
 const config: StorybookConfig = {
   stories: ["../**/*.stories.@(js|jsx|mjs|ts|tsx)"],
+  // Both mount at the server root. The MSW worker is kept out of the app's own
+  // public/ because Vite copies that directory verbatim into build/client, which
+  // would ship the worker to production and precache it in sw.js.
+  staticDirs: ["../public", "./public"],
   addons: [
     getAbsolutePath("@chromatic-com/storybook"),
     getAbsolutePath("@storybook/addon-vitest"),
@@ -23,20 +27,6 @@ const config: StorybookConfig = {
   framework: getAbsolutePath("@storybook/react-vite"),
   viteFinal: (config) => ({
     ...config,
-    plugins: (config.plugins ?? []).filter((plugin) => {
-      const isReactRouterPlugin =
-        plugin !== null &&
-        ((typeof plugin === "object" &&
-          "name" in plugin &&
-          plugin.name.startsWith("react-router")) ||
-          (Array.isArray(plugin) &&
-            plugin[0] !== null &&
-            typeof plugin[0] === "object" &&
-            "name" in plugin[0] &&
-            plugin[0].name.startsWith("react-router")));
-
-      return !isReactRouterPlugin;
-    }),
     define: {
       ...config.define,
       "import.meta.env.VITE_SUPABASE_URL": JSON.stringify(
