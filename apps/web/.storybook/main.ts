@@ -4,6 +4,8 @@ import { dirname } from "path";
 
 import { fileURLToPath } from "url";
 
+import { storybookSupabaseEnv } from "./supabaseEnv.ts";
+
 /**
  * This function is used to resolve the absolute path of a package.
  * It is needed in projects that use Yarn PnP or are set up within a monorepo.
@@ -28,11 +30,12 @@ const config: StorybookConfig = {
     ...config,
     define: {
       ...config.define,
-      "import.meta.env.VITE_SUPABASE_URL": JSON.stringify(
-        "http://supabase.test",
+      ...Object.fromEntries(
+        Object.entries(storybookSupabaseEnv).map(([name, value]) => [
+          `import.meta.env.${name}`,
+          JSON.stringify(value),
+        ]),
       ),
-      "import.meta.env.VITE_SUPABASE_ANON_KEY":
-        JSON.stringify("storybook-anon-key"),
     },
   }),
 };
