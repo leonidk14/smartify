@@ -35,6 +35,7 @@ of `apps/landing` (a devDependency is not the "runtime dependency" that app forb
 npm run dev / build / serve / typecheck   # apps/web, on :5173
 npm run landing:dev / landing:build       # apps/landing, on :5174
 npm run verify                            # run after every change — see Verification
+npm run test                              # only once verify is clean — see Tests
 ```
 
 Only `.prettierrc.json` is shared from the root, since Prettier resolves config by
@@ -51,27 +52,30 @@ resolves as `node ../../scripts/generate-sw.mjs` from the `apps/web` CWD.
 
 **Run `npm run verify` after finishing any piece of work, and do not report the work
 as done until it passes.** This is not conditional on the change looking small or
-type-only — it is the definition of finished here. There is no CI and there are no git
-hooks, so this command is the only thing standing between a mistake and `main`.
+type-only — it is the definition of finished here. There are no git hooks, so nothing
+runs it for you locally; CI re-runs it on every pull request and every push to `main`,
+but by then the mistake is already pushed.
 
 ```bash
 npm run verify     # typecheck -> eslint -> prettier -> deno, in that order
 ```
 
-**`npm run verify` is the whole of what you run.** Anything that requires driving the
-app — clicking through a flow, starting a dev server, installing the PWA, testing on a
-phone, checking offline behaviour — **I run manually**. Do not launch the app or a
-browser, and never report a behavioural claim as verified when it was only reasoned
-about. Finish instead with the manual steps you want exercised and the expected result
-of each, and say plainly which parts of the change stay unverified until I have done
-them.
+**`npm run verify` and `npm run test` are the whole of what you run.** Anything that
+requires driving the app — clicking through a flow, starting a dev server, installing the
+PWA, testing on a phone, checking offline behaviour — **I run manually**. `npm run test`
+drives its own headless Chromium and **that is the only browser you may start**; a dev
+server, a real browser window, or a device is never yours. Never report a behavioural
+claim as verified when it was only reasoned about. Finish instead with the manual steps
+you want exercised and the expected result of each, and say plainly which parts of the
+change stay unverified until I have done them.
 
-| Stage          | Command                | Fix with                         |
-| -------------- | ---------------------- | -------------------------------- |
-| Types          | `npm run typecheck`    | by hand                          |
-| Lint           | `npm run lint`         | `npm run lint:fix`, then by hand |
-| Format         | `npm run format:check` | `npm run format`                 |
-| Edge functions | `npm run deno:check`   | `npm run deno:fmt`               |
+| Stage          | Command                          | Fix with                                    |
+| -------------- | -------------------------------- | ------------------------------------------- |
+| Types          | `npm run typecheck`              | by hand                                     |
+| Lint           | `npm run lint`                   | `npm run lint:fix`, then by hand            |
+| Format         | `npm run format:check`           | `npm run format`                            |
+| Edge functions | `npm run deno:check`             | `npm run deno:fmt`                          |
+| Tests          | `npm run test` (not in `verify`) | **stop and tell me** — never edit the test  |
 
 Ownership is split by runtime, and the split is deliberate:
 
@@ -84,8 +88,9 @@ Ownership is split by runtime, and the split is deliberate:
 - **`supabase/functions`** — Deno owns both formatting and linting (`deno fmt`,
   `deno lint`). Node-based ESLint cannot resolve its `npm:` specifiers or `Deno`
   globals, so **do not** add these files to the ESLint or Prettier scope.
-- **`scripts/*.mjs` and root Markdown/JSON are checked by nothing.** Known gap, not an
-  oversight — the tooling is per workspace and those files are outside every workspace.
+- **`scripts/*.mjs`, `.github/workflows/*`, and root Markdown/JSON are checked by
+  nothing.** Known gap, not an oversight — the tooling is per workspace and those files
+  are outside every workspace.
 
 **Errors gate; warnings do not.** `npm run lint` deliberately does not pass
 `--max-warnings`, so warnings are a real advisory tier — a rule sits at `warn` when it
@@ -125,6 +130,47 @@ they stand**: the mount-only effects in
 storage-API guard in `apps/web/app/entry.client.tsx`
 (`@typescript-eslint/no-unnecessary-condition`), where the DOM lib types an optional API
 as always present. They are grandfathered, not a precedent — do not add a third.
+
+### Tests
+
+`npm run test` runs `vitest run` inside `apps/web`: Storybook stories rendered in a
+headless Chromium at 393x852, driven by `@storybook/addon-vitest`. A test is a `play`
+function on a story under `apps/web/**/*.stories.tsx` — today only
+[apps/web/app/routes/home.stories.tsx](apps/web/app/routes/home.stories.tsx). The backend
+is MSW ([apps/web/.storybook/msw/handlers.ts](apps/web/.storybook/msw/handlers.ts),
+fixtures in `.storybook/fixtures/vocabulary.ts`), and `.storybook/supabaseEnv.ts`
+overrides the real `VITE_SUPABASE_*` values that `envDir` would otherwise pull from the
+root `.env`, so **no test reaches the live backend**.
+
+**Run it only after `npm run verify` passes** — no errors, and no warnings you have left
+standing. A failing typecheck or lint makes the test run meaningless, since the browser
+compiles the same broken code. Verify first, resolve everything it reports, then test.
+
+**When a test fails, never edit a test or a story to make it pass.** Report which story
+failed, the assertion output, and your reading of whether the product code or the test's
+expectation is wrong — then stop and let me decide. The one exception: if the failure is
+a plain regression from the change you just made, fix the **product** code, say what you
+changed and why, and re-run. If the cause is not obviously your change, or if the fix
+would mean changing what the test asserts, it is my call — wait for it.
+
+A new test is a new story, or a new `play` on an existing one, mocked through the
+existing MSW handlers. Do not add a second test runner or a jsdom project. Note that
+`vite.config.ts` drops the React Router plugin whenever `VITEST` or `STORYBOOK` is set
+(the reason is commented there) — a story needing route context uses `withRouter` from
+`.storybook/decorators.tsx` rather than re-enabling the plugin.
+
+### CI
+
+[.github/workflows/ci.yml](.github/workflows/ci.yml) runs two jobs on every pull request
+and on every push to `main`: `checks` (`npm run verify`, with Deno installed for the
+`deno:check` stage) and `tests` (`npm run test`, with Chromium installed for Playwright),
+the latter gated on `needs: checks` so it mirrors the local ordering. Node is pinned
+inline in the workflow.
+
+**CI runs the same two npm scripts you run locally — keep it that way.** A new
+verification step belongs in the npm script, never in the workflow YAML, so that local
+and CI never drift into two different definitions of "passing". And CI is a backstop, not
+a substitute: run both locally before reporting work as done.
 
 ## Styling (Mantine)
 

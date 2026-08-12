@@ -46,8 +46,9 @@ Some decisions I made along the way:
   reviewing/iterating on the plan Claude Code came up with. After that, a lot of time goes into
   reviewing and fine-tuning the code changes. The app is still in the MVP stage and has only 1 user
   (me), so I didn't invest time into covering it with tests thoroughly since the app and its
-  behaviour change quite a lot. At the moment the focus is on getting value from the app and solving the problem
-  now, rather than on perfect production readiness.
+  behaviour change quite a lot — what exists is a thin browser smoke suite over the critical paths,
+  run in CI on every pull request, rather than broad coverage. At the moment the focus is on getting
+  value from the app and solving the problem now, rather than on perfect production readiness.
 - **Cost control:** generation runs Haiku first and only falls back to Sonnet when Haiku can't
   produce a sentence. Results are cached to avoid repeat calls: a word you've already looked up is
   served from your saved vocabulary instead of a fresh lookup, and each meaning keeps up to three
@@ -86,7 +87,7 @@ up my English by learning and practicing using those words and phrases the way i
 | **Backend** | Supabase — Postgres + migrations, Auth, Edge Functions (Deno), Storage, `pg_cron`                                                                             |
 | **AI**      | Anthropic Claude via `@anthropic-ai/sdk` — Haiku 4.5 by default, Sonnet 5 as the generation fallback, JSON-schema structured output                           |
 | **PWA**     | Web app manifest · Workbox-generated service worker · Web Push + VAPID                                                                                        |
-| **Tooling** | npm workspaces · Vercel                                                                                                                                       |
+| **Tooling** | npm workspaces · Vercel · GitHub Actions CI · Storybook 10 · Vitest (browser mode) · Playwright · MSW                                                         |
 
 ## Repository layout
 
@@ -104,6 +105,7 @@ Every command below runs from the repo root.
 ```bash
 npm install
 npm run dev        # the app at http://localhost:5173
-npm run typecheck
+npm run verify     # typecheck → lint → format → deno
+npm run test       # Storybook stories in headless Chromium
 npm run build      # → apps/web/build/client (+ the service worker)
 ```

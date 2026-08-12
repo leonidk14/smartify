@@ -17,6 +17,7 @@
     "deno:fmt": "deno fmt --config supabase/functions/deno.json supabase/functions",
     "deno:check": "deno fmt --check --config supabase/functions/deno.json supabase/functions && deno lint --config supabase/functions/deno.json supabase/functions",
     "verify": "npm run typecheck && npm run lint && npm run format:check && npm run deno:check",
+    "test": "npm run test -w smartify",
     "landing:dev": "npm run dev -w smartify-landing",
     "landing:build": "npm run build -w smartify-landing",
     "landing:preview": "npm run preview -w smartify-landing"

@@ -45,12 +45,12 @@ export const HomeLookupHappyPath: Story = {
       await canvas.findByRole(
         "heading",
         { level: 2, name: "ephemeral" },
-        { timeout: 3000 },
+        { timeout: 10000 },
       ),
     ).toBeVisible();
     await expect(
       await canvas.findByText(/placeholder definition of/i, undefined, {
-        timeout: 3000,
+        timeout: 10000,
       }),
     ).toBeVisible();
   },
