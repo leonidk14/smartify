@@ -1,4 +1,4 @@
-import { http, HttpResponse, type PathParams } from "msw";
+import { delay, http, HttpResponse, type PathParams } from "msw";
 import type {
   StoredMeaningGroup,
   VocabularyEntry,
@@ -43,7 +43,13 @@ export const handlers = [
 
   http.post(functionUrl("vocabulary-delete"), () => HttpResponse.json({})),
 
-  http.get<{ slug: string }>(functionUrl("lookup/:slug"), ({ params }) =>
-    HttpResponse.json(lookupFixture(params.slug.replace(/-/g, " "))),
+  http.get<{ slug: string }>(
+    functionUrl("lookup/:slug"),
+    async ({ params }) => {
+      // A visible delay so the "Searching…" loader is observable in the lookup
+      // story's play test, not a sub-frame flash.
+      await delay(1000);
+      return HttpResponse.json(lookupFixture(params.slug.replace(/-/g, " ")));
+    },
   ),
 ];

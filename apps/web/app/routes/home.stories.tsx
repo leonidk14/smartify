@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import type { ActionFunction } from "react-router";
+import { expect, userEvent, within } from "storybook/test";
 import { withAuth, withRouter } from "../../.storybook/decorators";
 import Home, { clientAction } from "./home";
 
@@ -22,4 +23,35 @@ type Story = StoryObj<typeof meta>;
 
 export const HomeSignedIn: Story = {
   decorators: [withRouter({ action }), withAuth({ isSignedIn: true })],
+};
+
+export const HomeLookupHappyPath: Story = {
+  decorators: [withRouter({ action }), withAuth({ isSignedIn: true })],
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await userEvent.click(
+      canvas.getByRole("button", { name: /look up a new word/i }),
+    );
+
+    await userEvent.type(await canvas.findByRole("searchbox"), "ephemeral");
+    await userEvent.click(canvas.getByRole("button", { name: "Search" }));
+
+    await expect(
+      await canvas.findByText(/searching for the meaning/i),
+    ).toBeVisible();
+
+    await expect(
+      await canvas.findByRole(
+        "heading",
+        { level: 2, name: "ephemeral" },
+        { timeout: 3000 },
+      ),
+    ).toBeVisible();
+    await expect(
+      await canvas.findByText(/placeholder definition of/i, undefined, {
+        timeout: 3000,
+      }),
+    ).toBeVisible();
+  },
 };

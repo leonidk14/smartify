@@ -39,7 +39,6 @@
     "@eslint-react/eslint-plugin": "^5.18.1",
     "@eslint/js": "^10.0.1",
     "@react-router/dev": "7.16.0",
-    "@storybook/addon-a11y": "^10.5.7",
     "@storybook/addon-docs": "^10.5.7",
     "@storybook/addon-mcp": "latest",
     "@storybook/addon-vitest": "^10.5.7",

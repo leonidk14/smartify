@@ -6,8 +6,22 @@ import { Notifications } from "@mantine/notifications";
 import { definePreview, type Decorator } from "@storybook/react-vite";
 import { setupWorker } from "msw/browser";
 import addonMsw from "msw-storybook-addon";
+import { MINIMAL_VIEWPORTS, type ViewportMap } from "storybook/viewport";
 import { cssVariablesResolver, theme } from "~/theme";
 import { handlers } from "./msw/handlers";
+
+// The app is a mobile-first PWA, so every story frames at a phone width by
+// default. 393 matches the Chromatic viewport below and the test viewport in
+// vite.config.ts, so dev, snapshots, and tests all agree on one size. The stock
+// presets stay available in the toolbar for checking other sizes.
+const viewportOptions: ViewportMap = {
+  mobile393: {
+    name: "Mobile (393)",
+    styles: { width: "393px", height: "852px" },
+    type: "mobile",
+  },
+  ...MINIMAL_VIEWPORTS,
+};
 
 const withMantine: Decorator = (Story) => (
   <MantineProvider
@@ -42,5 +56,9 @@ export default definePreview({
   parameters: {
     layout: "fullscreen",
     chromatic: { viewports: [393] },
+    viewport: { options: viewportOptions },
+  },
+  initialGlobals: {
+    viewport: { value: "mobile393", isRotated: false },
   },
 });

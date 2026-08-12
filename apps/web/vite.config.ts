@@ -18,14 +18,22 @@ export default defineConfig({
   server: {
     allowedHosts: [".ngrok-free.dev"],
   },
-  // Storybook's Vite builder loads this file itself and then resolves with
-  // `configFile: false`, which the React Router plugin rejects outright — it
-  // needs the config path to spin up its child compiler. So it is left out
-  // under Storybook (which sets STORYBOOK=true in its CLI) and everything else
-  // here — Tailwind, envDir, tsconfig paths — is shared as-is.
+  // The React Router plugin must be left out whenever Storybook renders the
+  // stories, in either of two contexts:
+  //   - `storybook dev`/`build` (sets STORYBOOK=true): its Vite builder loads
+  //     this file and resolves with `configFile: false`, which the plugin
+  //     rejects outright — it needs the config path for its child compiler.
+  //   - the `@storybook/addon-vitest` browser run (`vitest` sets VITEST=true):
+  //     the plugin injects a React-Refresh preamble the browser tester never
+  //     provides, failing every story import with "can't detect preamble".
+  // In both, Storybook's own react-vite framework does the rendering, so the
+  // plugin is redundant there. Everything else — Tailwind, envDir, tsconfig
+  // paths — is shared as-is.
   plugins: [
     tailwindcss(),
-    ...(process.env.STORYBOOK === "true" ? [] : [reactRouter()]),
+    ...(process.env.STORYBOOK === "true" || process.env.VITEST === "true"
+      ? []
+      : [reactRouter()]),
   ],
   resolve: {
     tsconfigPaths: true,
@@ -50,6 +58,10 @@ export default defineConfig({
             instances: [
               {
                 browser: "chromium",
+                // Mobile-first PWA: run the browser tests at the same 393 width
+                // as the Storybook default viewport and the Chromatic snapshot,
+                // overriding Vitest's 414x896 default.
+                viewport: { width: 393, height: 852 },
               },
             ],
           },
