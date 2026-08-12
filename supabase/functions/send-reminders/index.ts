@@ -223,7 +223,8 @@ serveFunction(async (req) => {
   if (!options.isForced && hour !== REMINDER_HOUR) {
     return jsonResponse({
       skipped: true,
-      reason: `${hour}:00 in ${REMINDER_TIMEZONE}, reminders go out at ${REMINDER_HOUR}:00`,
+      reason:
+        `${hour}:00 in ${REMINDER_TIMEZONE}, reminders go out at ${REMINDER_HOUR}:00`,
     });
   }
 
@@ -249,8 +250,7 @@ serveFunction(async (req) => {
   const deliveries: Delivery[] = [];
 
   for (const [userId, userSubscriptions] of groupByUser(subscriptions ?? [])) {
-    const words =
-      options.words ??
+    const words = options.words ??
       (await readWordsForUser({ supabase, userId, count: options.count }));
 
     if (words.length === 0) {
