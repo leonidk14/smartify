@@ -38,7 +38,7 @@ export const HomeLookupHappyPath: Story = {
     await userEvent.click(canvas.getByRole("button", { name: "Search" }));
 
     await expect(
-      await canvas.findByText(/searching for the meaning/i),
+      await canvas.findByText(/searchiasdng for the meaning/i),
     ).toBeVisible();
 
     await expect(
