@@ -87,18 +87,21 @@ up my English by learning and practicing using those words and phrases the way i
 | **Backend** | Supabase — Postgres + migrations, Auth, Edge Functions (Deno), Storage, `pg_cron`                                                                             |
 | **AI**      | Anthropic Claude via `@anthropic-ai/sdk` — Haiku 4.5 by default, Sonnet 5 as the generation fallback, JSON-schema structured output                           |
 | **PWA**     | Web app manifest · Workbox-generated service worker · Web Push + VAPID                                                                                        |
-| **Tooling** | npm workspaces · Vercel · GitHub Actions CI · Storybook 10 · Vitest (browser mode) · Playwright · MSW                                                         |
+| **Tooling** | Vercel · GitHub Actions CI · Storybook 10 · Vitest (browser mode) · Playwright · MSW                                                                          |
 
 ## Repository layout
 
-An npm-workspaces monorepo. The app lives in `apps/web`; `supabase/`, `scripts/`, `data/` and
-`.env` stay at the root and are shared.
+A single app at the repository root, with its backend alongside it.
 
-| Path       | What                          | Dev                   | Build output            |
-| ---------- | ----------------------------- | --------------------- | ----------------------- |
-| `apps/web` | the PWA — React Router v7 SPA | `npm run dev` (:5173) | `apps/web/build/client` |
+| Path                              | What                                                |
+| --------------------------------- | --------------------------------------------------- |
+| `app/`                            | the PWA — React Router v7 SPA (`npm run dev`, :5173) |
+| `public/`                         | static assets, copied into `build/client`            |
+| `.storybook/`                     | Storybook config, MSW handlers, fixtures             |
+| `supabase/`                       | Postgres migrations + Deno edge functions            |
+| `scripts/` `data/`                | seeding, migration, and build tooling                |
 
-Every command below runs from the repo root.
+Every command below runs from the repo root; the build lands in `build/client`.
 
 ## Getting started
 
@@ -107,5 +110,5 @@ npm install
 npm run dev        # the app at http://localhost:5173
 npm run verify     # typecheck → lint → format → deno
 npm run test       # Storybook stories in headless Chromium
-npm run build      # → apps/web/build/client (+ the service worker)
+npm run build      # → build/client (+ the service worker)
 ```

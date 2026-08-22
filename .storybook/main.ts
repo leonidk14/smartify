@@ -14,7 +14,7 @@ function getAbsolutePath(value: string) {
   return dirname(fileURLToPath(import.meta.resolve(`${value}/package.json`)));
 }
 const config: StorybookConfig = {
-  stories: ["../**/*.stories.@(js|jsx|mjs|ts|tsx)"],
+  stories: ["../app/**/*.stories.@(js|jsx|mjs|ts|tsx)"],
   // Both mount at the server root. The MSW worker is kept out of the app's own
   // public/ because Vite copies that directory verbatim into build/client, which
   // would ship the worker to production and precache it in sw.js.

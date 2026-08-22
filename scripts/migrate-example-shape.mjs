@@ -70,7 +70,12 @@ function withMigratedExamples({ groups, word }) {
           return [id, meaning];
         }
         const { example, isParsed } = toExampleSentence(meaning.example);
-        changes.push({ word, before: meaning.example, after: example, isParsed });
+        changes.push({
+          word,
+          before: meaning.example,
+          after: example,
+          isParsed,
+        });
         return [id, { ...meaning, example }];
       }),
     ),

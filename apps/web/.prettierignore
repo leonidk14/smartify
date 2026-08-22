@@ -1,5 +1,0 @@
-build/
-.react-router/
-*.json
-*.md
-.storybook/public/

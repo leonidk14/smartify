@@ -6,6 +6,7 @@
     ".react-router/types/**/*",
     ".storybook/**/*"
   ],
+  "exclude": ["node_modules", "build", "supabase", "scripts"],
   "compilerOptions": {
     "lib": ["DOM", "DOM.Iterable", "ES2022"],
     "types": ["node", "vite/client"],

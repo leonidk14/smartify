@@ -27,7 +27,7 @@ const ink: MantineColorsTuple = [
 // Semantic color tokens — one key per current use case, holding the exact value
 // used today (no merging). Near-identical siblings (surfaceError*) are kept
 // separate on purpose; collapsing them is a manual follow-up documented in
-// apps/web/app/theme/colors.md. Consumed as `var(--color-*)` via the resolver below.
+// app/theme/colors.md. Consumed as `var(--color-*)` via the resolver below.
 const colors = {
   text: "#1a1a1a",
   textSuccess: "#1f8a5b",

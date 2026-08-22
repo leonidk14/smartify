@@ -1,8 +1,8 @@
-# Testing strategy for `apps/web`
+# Testing strategy for the app
 
 ## Context
 
-`apps/web` has **no tests at all** — no runner, no config, no `*.test.*` file anywhere in the
+the app has **no tests at all** — no runner, no config, no `*.test.*` file anywhere in the
 repo (`TODO.md` carries the line "add proper tests"). The only gate between a mistake and
 `main` is `npm run verify`, which checks types, lint and formatting: it proves the code
 compiles and is tidy, and nothing about whether it still _works_. Every behavioural claim is
@@ -16,7 +16,7 @@ actual notification to exercise. Those are exactly the paths that break silently
 **Goal:** a suite that fails when a critical user action stops working or a key screen stops
 rendering correctly — and that is trusted enough to be believed when it goes red.
 
-**Scope:** `apps/web` only. Not `apps/landing`, not the Deno edge functions.
+**Scope:** the app only. Not the Deno edge functions.
 
 ---
 
@@ -31,11 +31,11 @@ Three things the framing leaves out, all folded into the plan below:
 
 1. **A pure-logic tier.** The cheapest tests per bug caught aren't flows at all — they're
    functions. `normalize` vs `toKey` in
-   [normalize.ts](apps/web/app/routes/wordSearch/normalize.ts) are two _different_
+   [normalize.ts](app/routes/wordSearch/normalize.ts) are two _different_
    normalizations used for two different purposes; `nextWord` in
-   [session.ts](apps/web/app/store/session.ts) advances via `indexOf`, so a duplicated word in
+   [session.ts](app/store/session.ts) advances via `indexOf`, so a duplicated word in
    the queue loops forever; the three-branch `shouldRevalidate` in
-   [layout.tsx](apps/web/app/routes/layout.tsx) governs every refetch in the app. None of these
+   [layout.tsx](app/routes/layout.tsx) governs every refetch in the app. None of these
    are reliably reachable through a flow test, and all are testable in milliseconds.
 
 2. **Fixture drift — the echo-chamber risk.** This is the single biggest threat to the
@@ -78,9 +78,9 @@ Two consequences worth stating plainly up front:
   to the `verify` chain once the suite has proven stable.
 - **The Vitest tier is limited to already-exported functions.** The densest logic in the app —
   the hint-masking engine in
-  [SentenceHelpers.tsx](apps/web/app/routes/practice/practiceSentence/SentenceHelpers.tsx)
+  [SentenceHelpers.tsx](app/routes/practice/practiceSentence/SentenceHelpers.tsx)
   (`maskWord`, `revealedLetterIndexes`, 3 levels of index arithmetic) and `buildHints` /
-  `buildWordView` in [practiceWord.tsx](apps/web/app/routes/practiceWord.tsx) — is
+  `buildWordView` in [practiceWord.tsx](app/routes/practiceWord.tsx) — is
   module-private, so it gets covered only _indirectly_, through browser journeys. Accepted.
   The trigger to revisit is a masking bug slipping through; the fix at that point is a
   one-word `export` diff per function, no logic change.
@@ -100,7 +100,7 @@ Both invoked on demand. Vitest is forced to v4: Vite **8.0.16** is installed and
 ### The one mock layer
 
 Every edge-function call in the app funnels through **one** module —
-[supabaseFunctions.ts](apps/web/app/lib/supabaseFunctions.ts) (`postFunction` / `getFunction`
+[supabaseFunctions.ts](app/lib/supabaseFunctions.ts) (`postFunction` / `getFunction`
 over axios, hitting `${VITE_SUPABASE_URL}/functions/v1/<name>`). There is no
 `supabase.functions.invoke` and no `.from()` anywhere. That single choke point means one
 `page.route("**/functions/v1/**")` handler covers `lookup`, `vocabulary-list`,
@@ -111,7 +111,7 @@ over axios, hitting `${VITE_SUPABASE_URL}/functions/v1/<name>`). There is no
 
 ## Safety: tests must never reach the real Supabase project
 
-`apps/web/vite.config.ts` sets `envDir: "../../"`, so the app reads the **root `.env`** —
+`vite.config.ts` sets `envDir: "../../"`, so the app reads the **root `.env`** —
 which holds a real `VITE_SUPABASE_URL` and anon key. An unconfigured test run would point at
 the live project, and `vocabulary-save` / `vocabulary-delete` are real writes.
 
@@ -129,7 +129,7 @@ Closed off in config, not by convention:
 
 ## Tier 1 — Vitest (pure logic)
 
-**New files:** `apps/web/vitest.config.ts`, `*.test.ts` colocated beside each source file.
+**New files:** `vitest.config.ts`, `*.test.ts` colocated beside each source file.
 
 The config must be **separate from `vite.config.ts`** — the `reactRouter()` plugin does not
 run under Vitest. Define a fresh config with `environment: "node"`, the `~/* → ./app/*` alias,
@@ -137,14 +137,14 @@ and **no `envDir`**.
 
 | Target                                                                                                          | What it protects                                                                                                                                                                                                                     |
 | --------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| [normalize.ts](apps/web/app/routes/wordSearch/normalize.ts)                                                     | `normalize` (strips `a\|an\|the\|to`, spaces→dashes, for answer comparison) vs `toKey` (strips apostrophes + non-alphanumerics, the store key). Divergence between them is a live bug source                                         |
-| [session.ts](apps/web/app/store/session.ts)                                                                     | `nextWord` (incl. the duplicate-word `indexOf` case), `parsePracticeMode` fallback to `both`, `firstStepPath`, and a full `startSession → recordResult → reset` store sequence                                                       |
-| [layout.tsx](apps/web/app/routes/layout.tsx) + [practiceSentence.tsx](apps/web/app/routes/practiceSentence.tsx) | Both exported `shouldRevalidate` policies — pure given their args, and they decide every refetch in the app                                                                                                                          |
-| [vocabulary.ts](apps/web/app/routes/wordSearch/vocabulary.ts)                                                   | `readVocabulary`'s offline discrimination: an axios error **with** `.response` rethrows (server refused → error page), **without** falls back to the IndexedDB snapshot and sets `isFromOfflineCopy`. Effectively untestable by hand |
-| [offlineCache.ts](apps/web/app/lib/offlineCache.ts)                                                             | `saveSnapshot`/`readSnapshot` round-trip via `fake-indexeddb`                                                                                                                                                                        |
-| [usage.ts](apps/web/app/routes/wordSearch/usage.ts)                                                             | `formatUSD` precision switch below $0.01, `sumTokenUsage`                                                                                                                                                                            |
-| [push.ts](apps/web/app/lib/push.ts)                                                                             | `urlBase64ToUint8Array` (pure VAPID decode), `isBannerDismissed` 7-day TTL                                                                                                                                                           |
-| [preselect.ts](apps/web/app/routes/practice/preselect.ts), [formData.ts](apps/web/app/lib/formData.ts)          | `parsePreselect` validation, `readTextField`'s `File`/`null` guard                                                                                                                                                                   |
+| [normalize.ts](app/routes/wordSearch/normalize.ts)                                                     | `normalize` (strips `a\|an\|the\|to`, spaces→dashes, for answer comparison) vs `toKey` (strips apostrophes + non-alphanumerics, the store key). Divergence between them is a live bug source                                         |
+| [session.ts](app/store/session.ts)                                                                     | `nextWord` (incl. the duplicate-word `indexOf` case), `parsePracticeMode` fallback to `both`, `firstStepPath`, and a full `startSession → recordResult → reset` store sequence                                                       |
+| [layout.tsx](app/routes/layout.tsx) + [practiceSentence.tsx](app/routes/practiceSentence.tsx) | Both exported `shouldRevalidate` policies — pure given their args, and they decide every refetch in the app                                                                                                                          |
+| [vocabulary.ts](app/routes/wordSearch/vocabulary.ts)                                                   | `readVocabulary`'s offline discrimination: an axios error **with** `.response` rethrows (server refused → error page), **without** falls back to the IndexedDB snapshot and sets `isFromOfflineCopy`. Effectively untestable by hand |
+| [offlineCache.ts](app/lib/offlineCache.ts)                                                             | `saveSnapshot`/`readSnapshot` round-trip via `fake-indexeddb`                                                                                                                                                                        |
+| [usage.ts](app/routes/wordSearch/usage.ts)                                                             | `formatUSD` precision switch below $0.01, `sumTokenUsage`                                                                                                                                                                            |
+| [push.ts](app/lib/push.ts)                                                                             | `urlBase64ToUint8Array` (pure VAPID decode), `isBannerDismissed` 7-day TTL                                                                                                                                                           |
+| [preselect.ts](app/routes/practice/preselect.ts), [formData.ts](app/lib/formData.ts)          | `parsePreselect` validation, `readTextField`'s `File`/`null` guard                                                                                                                                                                   |
 
 **New dev deps:** `vitest`, `fake-indexeddb`.
 
@@ -152,7 +152,7 @@ and **no `envDir`**.
 
 ## Tier 2 — Playwright (journeys + screenshots)
 
-**New files:** `apps/web/playwright.config.ts`, `apps/web/tests/` (specs, fixtures, helpers).
+**New files:** `playwright.config.ts`, `tests/` (specs, fixtures, helpers).
 
 **Key design choice — screenshots are assertions _along_ the journeys, not a parallel suite.**
 One spec walks a flow, asserts behaviour at each step, and takes a baseline at each state
@@ -192,8 +192,8 @@ await page.addInitScript(() => {
 ```
 
 This is why no production change is needed. Without the `Math.random` stub,
-[practiceWord.tsx:80](apps/web/app/routes/practiceWord.tsx#L80) splices the correct answer at
-a random index of 3 and [practiceWord.tsx:37](apps/web/app/routes/practiceWord.tsx#L37) picks
+[practiceWord.tsx:80](app/routes/practiceWord.tsx#L80) splices the correct answer at
+a random index of 3 and [practiceWord.tsx:37](app/routes/practiceWord.tsx#L37) picks
 a random meaning, so the word-quiz screen renders differently on every run and its baseline
 would fail 100% of the time.
 
@@ -207,7 +207,7 @@ Signed-out specs use a fresh empty context.
 
 ### Fixtures
 
-`apps/web/tests/fixtures/` — typed builders (`aVocabularyStore()`, `aLookupResult()`,
+`tests/fixtures/` — typed builders (`aVocabularyStore()`, `aLookupResult()`,
 `aGeneratedSentence()`, `anEvaluation()`) annotated with the app's exported types, per the
 drift requirement above. `data/vocabulary.json` is **git-ignored** (`.gitignore:19`) so it
 cannot be a committed fixture — its shape is the template, but the data is authored fresh.
@@ -244,7 +244,7 @@ is not automatable and stays manual.
 - _Cold start:_ deep-link `/practice/preview?words=a,b&mode=word` (the URL `send-reminders`
   emits) → blurred list → "See the words first" → revealed → start → session.
 - _Warm app:_ dispatch the `PUSH_NAVIGATE` message that
-  [push-sw.js](apps/web/public/push-sw.js) posts and `layout.tsx` listens for, asserting the
+  [push-sw.js](public/push-sw.js) posts and `layout.tsx` listens for, asserting the
   app navigates. **Spike this in Phase 0** — if driving the message proves awkward without a
   registered SW, cover the cold-start path only and note the gap.
 
@@ -261,7 +261,7 @@ is not automatable and stays manual.
 | `eslint.config.js`                               | `strictTypeChecked` will fire routinely on test code (`no-unsafe-assignment`, `no-non-null-assertion`, `unbound-method`). CLAUDE.md **bans call-site `eslint-disable` outright**, so the only legal route is a scoped override block for `**/*.test.ts` + `tests/**` — carrying the required comment stating it is the _rule is wrong about what the code means here_ case |
 | `.prettierignore` (per workspace)                | Add `test-results/`, `playwright-report/`, and the screenshot baseline directory                                                                                                                                                                                                                                                                                           |
 | `.gitignore`                                     | Add `test-results/`, `playwright-report/`. **Screenshot baselines must be committed** — they are the assertion                                                                                                                                                                                                                                                             |
-| `package.json` scripts                           | `apps/web`: `test`, `test:e2e`, `test:e2e:update`. Root: matching `-w smartify` passthroughs, following the existing pattern                                                                                                                                                                                                                                               |
+| `package.json` scripts                           | the app: `test`, `test:e2e`, `test:e2e:update`. Root: matching `-w smartify` passthroughs, following the existing pattern                                                                                                                                                                                                                                               |
 | `npm run verify`                                 | **Unchanged**, per decision. Recorded here as a conscious gap, not an oversight                                                                                                                                                                                                                                                                                            |
 
 ---
@@ -332,6 +332,6 @@ Deliberate, listed so they are choices rather than surprises:
   possible addition: one extra spec reusing journey 1 with an empty storage state.
 - Module-private logic (hint masking, `buildHints`, `buildWordView`, `toStoredGroups`) is
   covered only indirectly.
-- Edge functions, `apps/landing`, the service worker, PWA install, offline behaviour, real
+- Edge functions, the service worker, PWA install, offline behaviour, real
   push delivery, cross-browser, and accessibility auditing are all out of scope.
 - No CI: the suite is a tool you invoke, not a gate.

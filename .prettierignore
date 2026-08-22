@@ -1,0 +1,8 @@
+build/
+.react-router/
+*.json
+*.md
+.storybook/public/
+
+# Deno owns formatting here — see `npm run deno:fmt`.
+supabase/

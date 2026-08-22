@@ -16,8 +16,8 @@ FINDINGS.md
 PWA_NOTES.md
 PUSH_NOTIFICATIONS.md
 PLAN_NOTES.md
-apps/web/app/theme/colors.md
-apps/web/app/theme/typography.md
+app/theme/colors.md
+app/theme/typography.md
 
 dev-dist/
 dist/

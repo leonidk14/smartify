@@ -75,7 +75,8 @@ function withMigratedMeanings({ groups, word }) {
         if (!meaning.example) {
           return [id, meaning];
         }
-        const { meaning: updated, dropped } = withExampleAsFirstSentence(meaning);
+        const { meaning: updated, dropped } =
+          withExampleAsFirstSentence(meaning);
         changes.push({ word, example: meaning.example, dropped });
         return [id, updated];
       }),

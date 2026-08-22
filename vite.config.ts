@@ -14,8 +14,6 @@ const dirname =
 
 // More info at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon
 export default defineConfig({
-  // The .env files live at the monorepo root, not next to this config.
-  envDir: "../../",
   server: {
     allowedHosts: [".ngrok-free.dev"],
   },
@@ -28,8 +26,8 @@ export default defineConfig({
   //     the plugin injects a React-Refresh preamble the browser tester never
   //     provides, failing every story import with "can't detect preamble".
   // In both, Storybook's own react-vite framework does the rendering, so the
-  // plugin is redundant there. Everything else — Tailwind, envDir, tsconfig
-  // paths — is shared as-is.
+  // plugin is redundant there. Everything else — Tailwind, tsconfig paths — is
+  // shared as-is.
   plugins: [
     tailwindcss(),
     ...(process.env.STORYBOOK === "true" || process.env.VITEST === "true"
@@ -52,8 +50,8 @@ export default defineConfig({
         ],
         test: {
           name: "storybook",
-          // Overrides the real values the root .env supplies through `envDir`,
-          // so the stories reach the MSW handlers instead of the live backend.
+          // Overrides the real values the .env supplies, so the stories reach
+          // the MSW handlers instead of the live backend.
           env: storybookSupabaseEnv,
           browser: {
             enabled: true,

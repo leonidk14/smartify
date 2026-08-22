@@ -18,8 +18,7 @@ import { readFile } from "node:fs/promises";
 const isFromStorage = process.argv.includes("--from-storage");
 const isDryRun = process.argv.includes("--dry-run");
 
-const SUPABASE_URL =
-  process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL;
+const SUPABASE_URL = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const OWNER_EMAIL = process.env.SEED_OWNER_EMAIL ?? "leonid.kaida@outlook.com";
 
@@ -143,7 +142,12 @@ if (isDryRun) {
   console.log(`  owner:  ${OWNER_EMAIL} (${ownerId})`);
   console.log(`  words:  ${rows.length}`);
   console.log(`  public: ${publicWords.length} [${publicWords.join(", ")}]`);
-  console.log(`  first:  ${rows.slice(0, 5).map((row) => row.word).join(", ")}`);
+  console.log(
+    `  first:  ${rows
+      .slice(0, 5)
+      .map((row) => row.word)
+      .join(", ")}`,
+  );
   console.log(
     isFromStorage
       ? "  source: the Storage copy"

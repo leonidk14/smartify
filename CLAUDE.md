@@ -16,37 +16,35 @@ them so decisions rest on facts and real needs rather than vibes or intuition.
 - **Then defer.** Challenge once, clearly; after I've heard the reasoning and decided, follow
   the decision without relitigating. The goal is a better decision, not the last word.
 
-## Repository layout (npm workspaces)
+## Repository layout
 
-Two independent apps under `apps/*`, with shared infra at the root.
+One app, at the repository root. There is no monorepo and no npm workspaces — the
+root `package.json` **is** the app's (`smartify`), and every command runs from the
+root with no `-w` indirection.
 
-| Path                                  | What                                                                                                                                                                                                                                                                                                        |
-| ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `apps/web`                            | the PWA (React Router v7 SPA, Mantine). Workspace name `smartify`.                                                                                                                                                                                                                                          |
-| `apps/landing`                        | the public marketing page. Plain HTML + CSS on Vite — **never add a framework or a runtime dependency to it**. The one exception is a ~15-line inline script in `index.html` driving the feature-card demo players; keep any further JS inline, vanilla, and this small. Workspace name `smartify-landing`. |
-| `supabase/` `scripts/` `data/` `.env` | root-level, shared. Their commands run from the root unchanged.                                                                                                                                                                                                                                             |
-
-The root `package.json` has **no dependencies** — it is workspace wiring plus script
-aliases. Add dependencies to the owning app, never to the root. This holds for dev
-tooling too: ESLint and Prettier are devDependencies of `apps/web`, and Prettier alone
-of `apps/landing` (a devDependency is not the "runtime dependency" that app forbids).
+| Path                        | What                                                            |
+| --------------------------- | --------------------------------------------------------------- |
+| `app/`                      | the PWA (React Router v7 SPA, Mantine). Routes, lib, store, theme. |
+| `public/`                   | static assets copied verbatim into `build/client`.               |
+| `.storybook/`               | Storybook config, MSW handlers, fixtures, decorators.            |
+| `supabase/` `scripts/` `data/` `.env` | backend, tooling, and seed data.                       |
 
 ```bash
-npm run dev / build / serve / typecheck   # apps/web, on :5173
-npm run landing:dev / landing:build       # apps/landing, on :5174
+npm run dev / build / serve / typecheck   # the app, on :5173
 npm run verify                            # run after every change — see Verification
 npm run test                              # only once verify is clean — see Tests
 ```
 
-Only `.prettierrc.json` is shared from the root, since Prettier resolves config by
-walking up from each file. The **`.prettierignore` files are per workspace and must
-stay that way**: Prettier resolves ignore files relative to the CWD, so a root-level
-one is invisible to `prettier --check .` running inside `apps/web`, and the generated
-`.react-router/types/**` and `build/` trees would get reformatted.
+`.prettierrc.json` and `.prettierignore` both sit at the root, alongside
+`eslint.config.js` and `tsconfig.json`. Because all four now see the **whole**
+repository rather than one workspace, each carries an explicit exclusion for
+`supabase/` — Deno owns that tree (see the ownership split under Verification) — and
+`tsconfig.json`'s `exclude` must keep listing `node_modules` by hand, since an
+explicit `exclude` overrides TypeScript's default.
 
-`apps/web/vite.config.ts` sets `envDir: "../../"` so the app reads the root `.env` —
-if `VITE_*` values ever come back undefined, check that first. The build's SW step
-resolves as `node ../../scripts/generate-sw.mjs` from the `apps/web` CWD.
+The build's SW step resolves as `node scripts/generate-sw.mjs`;
+[scripts/generate-sw.mjs](scripts/generate-sw.mjs) finds `build/client` relative to
+the CWD, so it must be invoked from the root.
 
 ## Verification
 
@@ -79,18 +77,25 @@ change stay unverified until I have done them.
 
 Ownership is split by runtime, and the split is deliberate:
 
-- **`apps/web`** — ESLint (flat config in `apps/web/eslint.config.js`) plus Prettier.
-  Linting is **type-aware** (`projectService`), so `npm run lint` chains
-  `react-router typegen` first; without the generated `./+types/*` modules the type
-  information is missing and the run is meaningless.
-- **`apps/landing`** — Prettier only. There is no JS to lint; the inline `<script>`
-  in `index.html` gets formatted but not linted.
+- **The app (`app/`, `.storybook/`, the root configs)** — ESLint (flat config in
+  [eslint.config.js](eslint.config.js)) plus Prettier. Linting is **type-aware**
+  (`projectService`), so `npm run lint` chains `react-router typegen` first; without
+  the generated `./+types/*` modules the type information is missing and the run is
+  meaningless.
 - **`supabase/functions`** — Deno owns both formatting and linting (`deno fmt`,
   `deno lint`). Node-based ESLint cannot resolve its `npm:` specifiers or `Deno`
-  globals, so **do not** add these files to the ESLint or Prettier scope.
-- **`scripts/*.mjs`, `.github/workflows/*`, and root Markdown/JSON are checked by
-  nothing.** Known gap, not an oversight — the tooling is per workspace and those files
-  are outside every workspace.
+  globals, and its `.ts` files belong to no `tsconfig`, which `projectService`
+  reports as an error. So `supabase/` is ignored **explicitly** in all three of
+  `eslint.config.js`, `.prettierignore`, and `tsconfig.json`'s `exclude` — those
+  entries are what keeps the runtimes apart now that the tooling runs repo-wide, so
+  **do not remove them**, and **do not** otherwise add these files to the ESLint or
+  Prettier scope.
+- **`scripts/*.mjs` and `.github/workflows/*`** — Prettier formats them (they are
+  inside the root scope), nothing lints them. `scripts/` is in the ESLint ignore list:
+  it is Node tooling, not app code, and the type-aware config does not describe it.
+- **Root Markdown and JSON are checked by nothing** — `*.md` and `*.json` are in
+  `.prettierignore`. Deliberate: reformatting this file and the README on every
+  `npm run format` would bury real diffs.
 
 **Errors gate; warnings do not.** `npm run lint` deliberately does not pass
 `--max-warnings`, so warnings are a real advisory tier — a rule sits at `warn` when it
@@ -126,21 +131,21 @@ it is: the `@eslint-react` block is the duplicate-finding kind, `only-throw-erro
 
 Two `eslint-disable` sites predate this rule and **have been reviewed and accepted as
 they stand**: the mount-only effects in
-`apps/web/app/routes/wordSearch/lookupPanel.tsx` (`react-hooks/exhaustive-deps`) and the
-storage-API guard in `apps/web/app/entry.client.tsx`
+`app/routes/wordSearch/lookupPanel.tsx` (`react-hooks/exhaustive-deps`) and the
+storage-API guard in `app/entry.client.tsx`
 (`@typescript-eslint/no-unnecessary-condition`), where the DOM lib types an optional API
 as always present. They are grandfathered, not a precedent — do not add a third.
 
 ### Tests
 
-`npm run test` runs `vitest run` inside `apps/web`: Storybook stories rendered in a
+`npm run test` runs `vitest run` at the root: Storybook stories rendered in a
 headless Chromium at 393x852, driven by `@storybook/addon-vitest`. A test is a `play`
-function on a story under `apps/web/**/*.stories.tsx` — today only
-[apps/web/app/routes/home.stories.tsx](apps/web/app/routes/home.stories.tsx). The backend
-is MSW ([apps/web/.storybook/msw/handlers.ts](apps/web/.storybook/msw/handlers.ts),
+function on a story under `app/**/*.stories.tsx` — today only
+[app/routes/home.stories.tsx](app/routes/home.stories.tsx). The backend
+is MSW ([.storybook/msw/handlers.ts](.storybook/msw/handlers.ts),
 fixtures in `.storybook/fixtures/vocabulary.ts`), and `.storybook/supabaseEnv.ts`
-overrides the real `VITE_SUPABASE_*` values that `envDir` would otherwise pull from the
-root `.env`, so **no test reaches the live backend**.
+overrides the real `VITE_SUPABASE_*` values that Vite would otherwise pull from the
+`.env`, so **no test reaches the live backend**.
 
 **Run it only after `npm run verify` passes** — no errors, and no warnings you have left
 standing. A failing typecheck or lint makes the test run meaningless, since the browser
@@ -191,8 +196,8 @@ Prefer Mantine component **style props** over inline `style={{}}` objects. Reach
 - Non-Mantine elements (e.g. Tabler `@tabler/icons-react` SVGs) take their own
   props (`size`, `color`) and `style`; Mantine style props don't apply to them.
 
-Reference examples: [apps/web/app/routes/practice/practiceStart.tsx](apps/web/app/routes/practice/practiceStart.tsx),
-[apps/web/app/routes/practice/practiceSelect.tsx](apps/web/app/routes/practice/practiceSelect.tsx).
+Reference examples: [app/routes/practice/practiceStart.tsx](app/routes/practice/practiceStart.tsx),
+[app/routes/practice/practiceSelect.tsx](app/routes/practice/practiceSelect.tsx).
 
 ## Code style
 
@@ -242,7 +247,7 @@ per user**: primary key `(user_id, word)`, plus `groups` jsonb,
 `should_practice_later`, `saved_at`, `display`, `is_public`. The SPA reaches it
 through the `vocabulary-*` edge functions
 (`supabase/functions/vocabulary-{list,save,mark-practice}`). IndexedDB
-(`smartify-vocabulary`, via [apps/web/app/lib/offlineCache.ts](apps/web/app/lib/offlineCache.ts))
+(`smartify-vocabulary`, via [app/lib/offlineCache.ts](app/lib/offlineCache.ts))
 is only an on-demand offline snapshot, not a source of truth.
 
 **Visibility is enforced by RLS, not by JavaScript.** The policies in
@@ -287,7 +292,7 @@ Seed data:
 
 - **Local seed file:** [data/vocabulary.json](data/vocabulary.json) — a full
   `VocabularyStore` snapshot (`{ [word]: { groups, shouldPracticeLater, savedAt } }`,
-  see [apps/web/app/routes/wordSearch/vocabulary.ts](apps/web/app/routes/wordSearch/vocabulary.ts)
+  see [app/routes/wordSearch/vocabulary.ts](app/routes/wordSearch/vocabulary.ts)
   for the types), plus an optional `isPublic: true` per entry that the seed script
   maps onto the `is_public` column.
 - **Cloud fallback copy:** the same file is stored in the private Supabase
