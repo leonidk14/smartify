@@ -42,7 +42,7 @@ interface ReminderOptions {
 }
 
 const DEFAULT_COUNT = 5;
-const DEFAULT_TITLE = "Ready to practice?";
+const DEFAULT_TITLE = "Ready to practice words?";
 const REMINDER_HOUR = 20;
 const REMINDER_TIMEZONE = "Europe/Berlin";
 

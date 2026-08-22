@@ -4,6 +4,12 @@ on:
   pull_request:
   push:
     branches: [main]
+  workflow_dispatch:
+
+# Never add pull_request_target or workflow_run here: both hand the deploy job's
+# secrets to fork-controlled code.
+permissions:
+  contents: read
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -39,3 +45,20 @@ jobs:
 
       - run: npx playwright install --with-deps chromium
       - run: npm run test
+
+  deploy-functions:
+    name: Deploy edge functions
+    needs: [checks, tests]
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - run: supabase functions deploy --project-ref "$PROJECT_ID"
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}

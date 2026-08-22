@@ -72,7 +72,7 @@ change stay unverified until I have done them.
 | Types          | `npm run typecheck`              | by hand                                     |
 | Lint           | `npm run lint`                   | `npm run lint:fix`, then by hand            |
 | Format         | `npm run format:check`           | `npm run format`                            |
-| Edge functions | `npm run deno:check`             | `npm run deno:fmt`                          |
+| Edge functions | `npm run deno:check`             | `npm run deno:fmt`, types by hand           |
 | Tests          | `npm run test` (not in `verify`) | **stop and tell me** — never edit the test  |
 
 Ownership is split by runtime, and the split is deliberate:
@@ -82,8 +82,11 @@ Ownership is split by runtime, and the split is deliberate:
   (`projectService`), so `npm run lint` chains `react-router typegen` first; without
   the generated `./+types/*` modules the type information is missing and the run is
   meaningless.
-- **`supabase/functions`** — Deno owns both formatting and linting (`deno fmt`,
-  `deno lint`). Node-based ESLint cannot resolve its `npm:` specifiers or `Deno`
+- **`supabase/functions`** — Deno owns formatting, linting, and type-checking
+  (`deno fmt`, `deno lint`, `deno check` over every `*/index.ts`; `_shared/` is covered
+  transitively because each entrypoint imports it). The type-check stage matters more
+  than it looks: pushes to `main` deploy these functions automatically, and nothing else
+  in the pipeline compiles them. Node-based ESLint cannot resolve its `npm:` specifiers or `Deno`
   globals, and its `.ts` files belong to no `tsconfig`, which `projectService`
   reports as an error. So `supabase/` is ignored **explicitly** in all three of
   `eslint.config.js`, `.prettierignore`, and `tsconfig.json`'s `exclude` — those
@@ -166,16 +169,46 @@ existing MSW handlers. Do not add a second test runner or a jsdom project. Note 
 
 ### CI
 
-[.github/workflows/ci.yml](.github/workflows/ci.yml) runs two jobs on every pull request
-and on every push to `main`: `checks` (`npm run verify`, with Deno installed for the
-`deno:check` stage) and `tests` (`npm run test`, with Chromium installed for Playwright),
-the latter gated on `needs: checks` so it mirrors the local ordering. Node is pinned
-inline in the workflow.
+[.github/workflows/ci.yml](.github/workflows/ci.yml) runs two verification jobs on every
+pull request and on every push to `main`: `checks` (`npm run verify`, with Deno installed
+for the `deno:check` stage) and `tests` (`npm run test`, with Chromium installed for
+Playwright), the latter gated on `needs: checks` so it mirrors the local ordering. Node is
+pinned inline in the workflow.
 
 **CI runs the same two npm scripts you run locally — keep it that way.** A new
 verification step belongs in the npm script, never in the workflow YAML, so that local
 and CI never drift into two different definitions of "passing". And CI is a backstop, not
 a substitute: run both locally before reporting work as done.
+
+### Edge function deploys
+
+A job `deploy-functions`, runs `supabase functions deploy` for all nine functions
+on every push to `main`, gated on `needs: [checks, tests]`. It also accepts a manual
+`workflow_dispatch` run — the retry path when a deploy fails on a transient error, so you
+never need an empty commit. Pull requests never reach it (`github.ref` is pinned to
+`refs/heads/main`).
+
+Deploying every function rather than only the changed ones is deliberate: a change under
+`_shared/` affects all nine, and a redeploy is idempotent, so "what is deployed equals
+what is on `main`" holds unconditionally. It exists because the frontend already
+auto-deploys via Vercel — manual function deploys let the two halves drift.
+
+- **Only code is deployed.** `supabase secrets` are untouched, which is what stops an
+  automated deploy from flipping `EVALUATE_MODE` to `real` and spending tokens. Do not
+  add a `secrets set` step.
+- **Migrations stay manual.** `supabase db push` is still run by hand — an auto-applied
+  migration has no undo. Push a migration *before* merging a function that depends on it.
+- **Required repository secrets:** `SUPABASE_ACCESS_TOKEN` and `SUPABASE_PROJECT_ID`.
+  Rollback of a bad deploy is a revert on `main`; Supabase does not roll back function
+  versions for you.
+- **Never add `pull_request_target` or `workflow_run` to this workflow.** Both hand
+  those secrets to fork-controlled code. Plain `pull_request` from a fork gets no
+  secrets, which is what makes the current setup safe. The workflow-level
+  `permissions: contents: read` caps `GITHUB_TOKEN` for the same reason.
+
+Note that CI verifies but does not *test* these functions — `npm run test` mocks the
+backend with MSW and executes none of `supabase/functions/**`. The gate means "compiles,
+formats, lints", not "works".
 
 ## Styling (Mantine)
 
