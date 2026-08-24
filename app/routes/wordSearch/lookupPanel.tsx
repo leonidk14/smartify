@@ -143,7 +143,7 @@ export const LookupPanel = ({
   const query = value.trim().toLowerCase();
   const isLoading =
     searchFetcher.state === "loading" || searchFetcher.state === "submitting";
-  const isDirty = query !== committedQuery.trim().toLowerCase();
+  const isDirty = toKey(value) !== toKey(committedQuery);
   const isShowingSearchOutcome = !isLoading && !isDirty;
 
   const groups = data?.dictionary?.groups ?? null;
@@ -215,6 +215,7 @@ export const LookupPanel = ({
   return (
     <Flex
       component="form"
+      data-testid="lookup-panel"
       onSubmit={(e) => {
         e.preventDefault();
         if (query.length > 0) {

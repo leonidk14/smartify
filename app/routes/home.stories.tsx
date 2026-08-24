@@ -55,3 +55,22 @@ export const HomeLookupHappyPath: Story = {
     ).toBeVisible();
   },
 };
+
+export const HomeOpensSavedMultiWordEntry: Story = {
+  decorators: [withRouter({ action }), withAuth({ isSignedIn: true })],
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await userEvent.click(canvas.getByRole("button", { name: /^to swell/i }));
+
+    const panel = within(await canvas.findByTestId("lookup-panel"));
+
+    await expect(panel.getByRole("searchbox")).toHaveValue("to swell");
+
+    await expect(
+      panel.getByRole("heading", { level: 2, name: "to swell" }),
+    ).toBeVisible();
+    await expect(panel.getByText(/to become larger or rounder/i)).toBeVisible();
+    await expect(panel.queryByText("Suggestions")).toBeNull();
+  },
+};

@@ -71,6 +71,19 @@ export const vocabularyFixture: VocabularyStore = {
     savedAt: "2026-08-07T12:30:00.000Z",
     isPublic: true,
   },
+  "to-swell": {
+    groups: [
+      group("verb", [
+        "To become larger or rounder in size, typically as a result of an accumulation of fluid.",
+        "To increase in number, amount, or intensity.",
+      ]),
+    ],
+    display: "to swell",
+    typed: "swelling",
+    shouldPracticeLater: false,
+    savedAt: "2026-08-06T14:20:00.000Z",
+    isPublic: false,
+  },
 };
 
 export function lookupFixture(word: string): LookupResult {
