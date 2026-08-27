@@ -1,7 +1,7 @@
 import { Flex, Text } from "@mantine/core";
 import { text } from "../theme/typography";
 
-const MARK_SIZE = 128;
+const MARK_SIZE = 256;
 
 export function AppSplash() {
   return (
