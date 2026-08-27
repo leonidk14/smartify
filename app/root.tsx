@@ -16,11 +16,13 @@ import { Notifications } from "@mantine/notifications";
 import { cssVariablesResolver, theme } from "./theme";
 import { AuthProvider } from "./lib/auth";
 import { DesktopNoticeModal } from "./lib/desktopNoticeModal";
+import { AppSplash } from "./lib/appSplash";
 
 export const links: Route.LinksFunction = () => [
   { rel: "icon", href: "/favicon.ico" },
   { rel: "mask-icon", href: "/favicon.ico" },
   { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
+  { rel: "preload", as: "image", href: "/pwa-512x512.png" },
   // use-credentials makes the manifest fetch send cookies — needed so the
   // ngrok free-tier interstitial-bypass cookie is included (otherwise ngrok
   // returns its warning HTML instead of the manifest). Harmless same-origin.
@@ -76,6 +78,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return <Outlet />;
+}
+
+export function HydrateFallback() {
+  return <AppSplash />;
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
