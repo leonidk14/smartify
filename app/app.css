@@ -26,10 +26,12 @@ body > div {
 }
 
 .app-splash-mark {
+  display: block;
   animation: app-splash-breathe 0.8s ease-in-out infinite alternate;
 }
 
 .app-splash-caption {
+  transform: translateX(-50%);
   animation: app-splash-fade-in 600ms ease-out 200ms backwards;
 }
 
