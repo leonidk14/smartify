@@ -1,7 +1,7 @@
 import { Box, Flex, Text } from "@mantine/core";
 import { text } from "../theme/typography";
 
-const MARK_SIZE = 256;
+const MARK_SIZE = 240;
 const CAPTION_GAP = 28;
 
 export function AppSplash() {
