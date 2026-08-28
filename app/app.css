@@ -27,7 +27,7 @@ body > div {
 
 .app-splash-mark {
   display: block;
-  animation: app-splash-breathe 0.8s ease-in-out infinite alternate;
+  animation: app-splash-breathe 0.8s ease-in-out 200ms infinite alternate;
 }
 
 .app-splash-caption {
