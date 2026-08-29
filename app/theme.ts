@@ -45,6 +45,7 @@ const colors = {
   borderErrorStrong: "#b4441e47",
   borderInfo: "rgba(30, 110, 70, 0.22)",
   warning: "#c87a1e",
+  surfaceWarning: "#faf2e9",
   // Cream-on-dark cards (sign-in prompts) — inverse of the default surface.
   surfaceInverse: "#1a1a1a",
   textOnInverse: "#f0eee9",
@@ -106,6 +107,7 @@ export const cssVariablesResolver: CSSVariablesResolver = () => ({
     "--color-border-error-strong": colors.borderErrorStrong,
     "--color-border-info": colors.borderInfo,
     "--color-warning": colors.warning,
+    "--color-surface-warning": colors.surfaceWarning,
     "--color-surface-inverse": colors.surfaceInverse,
     "--color-text-on-inverse": colors.textOnInverse,
     "--color-text-on-inverse-dimmed": colors.textOnInverseDimmed,
