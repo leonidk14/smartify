@@ -18,6 +18,7 @@ PUSH_NOTIFICATIONS.md
 PLAN_NOTES.md
 app/theme/colors.md
 app/theme/typography.md
+docs/features/*
 
 dev-dist/
 dist/
