@@ -7,10 +7,10 @@ import { text } from "../../theme/typography";
 import { ActionBar } from "../practice/actionBar";
 import { MarkedTranscript } from "./markedTranscript";
 import { SuggestionSheet } from "./suggestionSheet";
-import type { SpeechRecording } from "./speechTypes";
+import type { SpeechEntry } from "./speechApi";
 
 interface SpeechRecordingViewProps {
-  recording: SpeechRecording;
+  recording: SpeechEntry;
 }
 
 const SAVE_STUB_DELAY_MS = 900;

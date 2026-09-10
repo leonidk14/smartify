@@ -182,14 +182,14 @@ a substitute: run both locally before reporting work as done.
 
 ### Edge function deploys
 
-A job `deploy-functions`, runs `supabase functions deploy` for all nine functions
+A job `deploy-functions`, runs `supabase functions deploy` for all eleven functions
 on every push to `main`, gated on `needs: [checks, tests]`. It also accepts a manual
 `workflow_dispatch` run — the retry path when a deploy fails on a transient error, so you
 never need an empty commit. Pull requests never reach it (`github.ref` is pinned to
 `refs/heads/main`).
 
 Deploying every function rather than only the changed ones is deliberate: a change under
-`_shared/` affects all nine, and a redeploy is idempotent, so "what is deployed equals
+`_shared/` affects all eleven, and a redeploy is idempotent, so "what is deployed equals
 what is on `main`" holds unconditionally. It exists because the frontend already
 auto-deploys via Vercel — manual function deploys let the two halves drift.
 
@@ -258,6 +258,13 @@ part of the ref rule.
 - **Don't store values in refs.** `useRef` for DOM nodes / imperative handles is
   fine; using a ref as a mutable value store to avoid re-renders is not (rare edge
   cases only).
+- **Import a constant where it's read; don't prop-drill it.** A fixed value (a
+  limit, a flag) that never varies per caller belongs in the module that uses it,
+  imported directly — not threaded through props from a parent that only forwards
+  it. Reserve props for values that actually vary per render or per caller (state,
+  computed values, callbacks). If a container and the view it renders both need the
+  same constant for different reasons (validation vs. display), each imports it
+  independently rather than one passing it to the other.
 - **Always brace `if` bodies.** Even a single-line guard clause with a pure return
   gets curly braces — write `if (a) { return null; }`, never `if (a) return null;`.
   Applies equally to `continue` / `break` / `throw` guard clauses.

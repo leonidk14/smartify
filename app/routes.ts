@@ -13,6 +13,7 @@ export default [
       ? [
           route("speech", "routes/speech.tsx"),
           route("speech/record", "routes/speechRecord.tsx"),
+          route("speech/type", "routes/speechType.tsx"),
           route("speech/:id", "routes/speechRecording.tsx"),
         ]
       : []),
