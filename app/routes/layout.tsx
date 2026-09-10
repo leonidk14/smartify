@@ -30,7 +30,7 @@ import { readVocabulary } from "./wordSearch/vocabulary";
 import { IS_SPEECH_ENABLED } from "../featureFlags";
 import { MAX_DURATION_SECONDS } from "./speech/speechConstants";
 import { formatDuration, formatRecordingDate } from "./speech/speechFormat";
-import { isSpeechRecording } from "./speech/speechTypes";
+import { isSpeechEntry } from "./speech/speechApi";
 
 const TOP_LEVEL_PATHS: string[] = (IS_SPEECH_ENABLED as boolean)
   ? ["/", "/speech", "/practice"]
@@ -132,6 +132,7 @@ export default function Layout() {
   const selectMode = new URLSearchParams(location.search).get("mode") ?? "both";
 
   const isSpeechRecordScreen = location.pathname === "/speech/record";
+  const isSpeechTypeScreen = location.pathname === "/speech/type";
 
   // /speech/:id's header needs the recording's date and duration, which live
   // in that route's own loaderData — read via useMatches() rather than
@@ -140,7 +141,7 @@ export default function Layout() {
   const speechRecordingMatch = matches.find(
     (match) => match.id === "routes/speechRecording",
   );
-  const speechRecording = isSpeechRecording(speechRecordingMatch?.loaderData)
+  const speechRecording = isSpeechEntry(speechRecordingMatch?.loaderData)
     ? speechRecordingMatch.loaderData
     : null;
 
@@ -183,6 +184,16 @@ export default function Layout() {
         </Box>
       ) : null}
 
+      {isSpeechTypeScreen ? (
+        <Box p="16px 16px 0">
+          <IconX
+            size={22}
+            onClick={() => void navigate("/speech")}
+            style={{ color: "rgba(0,0,0,.45)", cursor: "pointer" }}
+          />
+        </Box>
+      ) : null}
+
       {speechRecording ? (
         <Box p="16px 16px 0">
           <Group justify="space-between" align="center" wrap="nowrap">
@@ -197,7 +208,11 @@ export default function Layout() {
             </ActionIcon>
             <Text {...text.meta}>
               {formatRecordingDate(speechRecording.createdAt)} ·{" "}
-              {formatDuration(speechRecording.durationSeconds)}
+              {speechRecording.durationSeconds !== null
+                ? formatDuration(speechRecording.durationSeconds)
+                : `${speechRecording.wordCount} ${
+                    speechRecording.wordCount === 1 ? "word" : "words"
+                  }`}
             </Text>
             <IconDots size={16} style={{ color: "rgba(0,0,0,.45)" }} />
           </Group>

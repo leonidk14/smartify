@@ -39,16 +39,3 @@ export interface SpeechRecording {
   savedWords: string[];
   createdAt: string;
 }
-
-// layout.tsx reads the `/speech/:id` route's loaderData via useMatches() to
-// render that screen's header, and useMatches() types match data as unknown
-// — this is what narrows it back to a SpeechRecording.
-export function isSpeechRecording(value: unknown): value is SpeechRecording {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    "id" in value &&
-    "transcript" in value &&
-    "createdAt" in value
-  );
-}

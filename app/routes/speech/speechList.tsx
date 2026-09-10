@@ -1,15 +1,12 @@
 import { Link } from "react-router";
+import { Box, Divider, Flex, Group, Stack, Text, Title } from "@mantine/core";
 import {
-  Box,
-  Divider,
-  Group,
-  Stack,
-  Text,
-  ThemeIcon,
-  Title,
-} from "@mantine/core";
-import { IconChevronRight, IconMicrophone } from "@tabler/icons-react";
+  IconChevronRight,
+  IconKeyboard,
+  IconMicrophone,
+} from "@tabler/icons-react";
 import { text } from "../../theme/typography";
+import { MAX_DURATION_SECONDS } from "./speechConstants";
 import {
   formatDuration,
   formatRecordingDate,
@@ -19,6 +16,41 @@ import type { SpeechRecording } from "./speechTypes";
 
 interface SpeechListProps {
   recordings: SpeechRecording[];
+}
+
+interface CompactEntryButtonProps {
+  to: string;
+  icon: React.ReactNode;
+  label: string;
+  caption: string;
+}
+function CompactEntryButton({
+  to,
+  icon,
+  label,
+  caption,
+}: CompactEntryButtonProps) {
+  return (
+    <Flex
+      component={Link}
+      to={to}
+      className="speech-entry-btn"
+      direction="column"
+      align="center"
+      justify="center"
+      gap={7}
+      py={12}
+      bdrs={13}
+      td="none">
+      {icon}
+      <Text {...text.uiLabel} fz={13}>
+        {label}
+      </Text>
+      <Text {...text.label} c={undefined} className="speech-entry-btn-caption">
+        {caption}
+      </Text>
+    </Flex>
+  );
 }
 
 export function SpeechList({ recordings }: SpeechListProps) {
@@ -33,29 +65,27 @@ export function SpeechList({ recordings }: SpeechListProps) {
       </Box>
 
       <Box
-        component={Link}
-        to="/speech/record"
         bd="1.5px dashed rgba(0,0,0,.16)"
         bdrs={15}
-        p="18px 16px"
-        bg="var(--color-surface-warm)"
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: 12,
-          textDecoration: "none",
-          color: "inherit",
-        }}>
-        <ThemeIcon size={58} radius="50%" color="dark" variant="filled">
-          <IconMicrophone size={22} />
-        </ThemeIcon>
-        <Text {...text.displaySm} ta="center">
-          Say something, then make it sharper
+        p="17px 16px"
+        bg="var(--color-surface-warm)">
+        <Text {...text.displaySm} ta="center" mb={14}>
+          Say it, or write it — then make it sharper
         </Text>
-        <Text {...text.bodyXs} c="dimmed" ta="center">
-          Up to two minutes. A pitch, an answer, a voice note.
-        </Text>
+        <Group grow gap={10} wrap="nowrap">
+          <CompactEntryButton
+            to="/speech/record"
+            icon={<IconMicrophone size={20} />}
+            label="Record"
+            caption={`UP TO ${formatDuration(MAX_DURATION_SECONDS)}`}
+          />
+          <CompactEntryButton
+            to="/speech/type"
+            icon={<IconKeyboard size={20} />}
+            label="Type it"
+            caption="PASTE OR WRITE"
+          />
+        </Group>
       </Box>
 
       {recordings.length > 0 ? (
