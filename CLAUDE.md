@@ -182,14 +182,14 @@ a substitute: run both locally before reporting work as done.
 
 ### Edge function deploys
 
-A job `deploy-functions`, runs `supabase functions deploy` for all eleven functions
+A job `deploy-functions`, runs `supabase functions deploy` for all twelve functions
 on every push to `main`, gated on `needs: [checks, tests]`. It also accepts a manual
 `workflow_dispatch` run — the retry path when a deploy fails on a transient error, so you
 never need an empty commit. Pull requests never reach it (`github.ref` is pinned to
 `refs/heads/main`).
 
 Deploying every function rather than only the changed ones is deliberate: a change under
-`_shared/` affects all eleven, and a redeploy is idempotent, so "what is deployed equals
+`_shared/` affects all twelve, and a redeploy is idempotent, so "what is deployed equals
 what is on `main`" holds unconditionally. It exists because the frontend already
 auto-deploys via Vercel — manual function deploys let the two halves drift.
 
@@ -387,6 +387,7 @@ other value means mock, so the default never spends tokens:
 | `lookup`            | `LOOKUP_MODE`   | `supabase/functions/lookup/mock.ts`            |
 | `generate-sentence` | `GENERATE_MODE` | `supabase/functions/generate-sentence/mock.ts` |
 | `evaluate-sentence` | `EVALUATE_MODE` | `supabase/functions/evaluate-sentence/mock.ts` |
+| `sharpen`           | `SHARPEN_MODE`  | `supabase/functions/sharpen/mock.ts`           |
 
 ```bash
 supabase secrets set EVALUATE_MODE=real   # enable real calls
@@ -401,6 +402,9 @@ flag, since each guards a different cost.
 (matched case-insensitively): `real` runs the default Haiku→Sonnet fallback,
 `sonnet` pins generation to Sonnet only, and `haiku` pins it to Haiku only.
 Any other value (or unset) is still mock.
+
+`sharpen` has no real path yet — every value of `SHARPEN_MODE` mocks until a
+later change wires it up the same way `GENERATE_MODE` is.
 
 ## README screenshots
 

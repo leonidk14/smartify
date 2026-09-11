@@ -8,8 +8,6 @@ interface SpeechTypeViewProps {
   onChangeTranscript: (value: string) => void;
   characterCount: number;
   canSubmit: boolean;
-  isSaving: boolean;
-  errorMessage: string | null;
   onSubmit: () => void;
 }
 
@@ -18,8 +16,6 @@ export function SpeechTypeView({
   onChangeTranscript,
   characterCount,
   canSubmit,
-  isSaving,
-  errorMessage,
   onSubmit,
 }: SpeechTypeViewProps) {
   const isOverLimit = characterCount > MAX_TRANSCRIPT_CHARACTERS;
@@ -39,7 +35,6 @@ export function SpeechTypeView({
           styles={{ input: { padding: "14px 15px", ...textCss.body } }}
           value={transcript}
           onChange={(event) => onChangeTranscript(event.currentTarget.value)}
-          disabled={isSaving}
           autoComplete="off"
           data-autofocus
         />
@@ -47,12 +42,6 @@ export function SpeechTypeView({
         <Text {...text.meta} ta="right" c={isOverLimit ? "red" : "dimmed"}>
           {characterCount} / {MAX_TRANSCRIPT_CHARACTERS}
         </Text>
-
-        {errorMessage !== null ? (
-          <Text {...text.bodySm} c="red">
-            {errorMessage}
-          </Text>
-        ) : null}
       </Stack>
 
       <ActionBar>
@@ -61,7 +50,6 @@ export function SpeechTypeView({
           h={50}
           radius={13}
           color="black"
-          loading={isSaving}
           disabled={!canSubmit}
           onClick={onSubmit}>
           Improve this

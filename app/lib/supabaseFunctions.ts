@@ -37,11 +37,13 @@ export async function postFunction<T = unknown>(
   name: string,
   payload: unknown = {},
   extraHeaders: Record<string, string> = {},
+  signal?: AbortSignal,
 ): Promise<T> {
   const { url, anonKey } = requireSupabaseConfig();
 
   const response = await axios.post<T>(`${url}/functions/v1/${name}`, payload, {
     headers: await authHeaders(anonKey, extraHeaders),
+    signal,
   });
   return response.data;
 }

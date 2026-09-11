@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import axios from "axios";
+import { AnimatedAppMark } from "../lib/animatedAppMark";
+import { SpeechAnalysisError } from "./speech/speechAnalysisError";
 import { SpeechTypeView } from "./speech/speechTypeView";
-import { saveSpeechEntry } from "./speech/speechApi";
+import { analyzeSpeech, saveSpeechEntry } from "./speech/speechApi";
 import {
   countCharacters,
   countWords,
@@ -10,11 +12,17 @@ import {
 } from "./speech/speechTextRules";
 import { MAX_TRANSCRIPT_CHARACTERS } from "./speech/speechConstants";
 
+type Phase = "typing" | "analyzing" | "error";
+
 export default function SpeechTypeRoute() {
   const navigate = useNavigate();
   const [transcript, setTranscript] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [phase, setPhase] = useState<Phase>("typing");
+  const controllerRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    return () => controllerRef.current?.abort();
+  }, []);
 
   const characterCount = countCharacters(transcript);
   const canSubmit =
@@ -25,30 +33,50 @@ export default function SpeechTypeRoute() {
       return;
     }
 
-    setErrorMessage(null);
-    setIsSaving(true);
+    setPhase("analyzing");
+    const controller = new AbortController();
+    controllerRef.current = controller;
 
     const trimmed = transcript.trim();
     try {
-      const entry = await saveSpeechEntry({
-        title: deriveTitle(trimmed),
-        transcript: trimmed,
-        wordCount: countWords(trimmed),
-        durationSeconds: null,
-        segments: [{ text: trimmed, suggestionId: null }],
-        suggestions: [],
-      });
+      const { segments, suggestions } = await analyzeSpeech(
+        trimmed,
+        controller.signal,
+      );
+      const entry = await saveSpeechEntry(
+        {
+          title: deriveTitle(trimmed),
+          transcript: trimmed,
+          wordCount: countWords(trimmed),
+          durationSeconds: null,
+          segments,
+          suggestions,
+        },
+        controller.signal,
+      );
+
       await navigate(`/speech/${entry.id}`);
     } catch (error) {
-      console.error("Failed to save speech entry", error);
-      const message =
-        axios.isAxiosError(error) && error.response?.status === 401
-          ? "Sign in to save this."
-          : "Couldn't save that. Try again.";
-      setErrorMessage(message);
-      setIsSaving(false);
+      if (axios.isCancel(error)) {
+        return;
+      }
+      console.error("Failed to analyze speech entry", error);
+      setPhase("error");
     }
   };
+
+  if (phase === "analyzing") {
+    return <AnimatedAppMark caption="Reading what you said…" />;
+  }
+
+  if (phase === "error") {
+    return (
+      <SpeechAnalysisError
+        onRetry={() => void handleSubmit()}
+        onBack={() => setPhase("typing")}
+      />
+    );
+  }
 
   return (
     <SpeechTypeView
@@ -56,8 +84,6 @@ export default function SpeechTypeRoute() {
       onChangeTranscript={setTranscript}
       characterCount={characterCount}
       canSubmit={canSubmit}
-      isSaving={isSaving}
-      errorMessage={errorMessage}
       onSubmit={() => void handleSubmit()}
     />
   );

@@ -1,4 +1,5 @@
 import { getFunction, postFunction } from "../../lib/supabaseFunctions";
+import { logTokenUsage, type TokenUsage } from "../wordSearch/usage";
 import type { SpeechSuggestion, TranscriptSegment } from "./speechTypes";
 
 export interface SpeechEntry {
@@ -7,8 +8,6 @@ export interface SpeechEntry {
   transcript: string;
   segments: TranscriptSegment[];
   suggestions: SpeechSuggestion[];
-  // Not yet given a concrete shape — #06/#07 define what a chosen alternative
-  // looks like. Every entry ticket 01 creates has none.
   chosenAlternatives: unknown;
   durationSeconds: number | null;
   wordCount: number;
@@ -16,9 +15,6 @@ export interface SpeechEntry {
   createdAt: string;
 }
 
-// layout.tsx reads the `/speech/:id` route's loaderData via useMatches() to
-// render that screen's header, and useMatches() types match data as unknown —
-// this is what narrows it back to a SpeechEntry.
 export function isSpeechEntry(value: unknown): value is SpeechEntry {
   return (
     typeof value === "object" &&
@@ -29,17 +25,22 @@ export function isSpeechEntry(value: unknown): value is SpeechEntry {
   );
 }
 
-export async function saveSpeechEntry(input: {
-  title: string;
-  transcript: string;
-  wordCount: number;
-  durationSeconds: number | null;
-  segments: TranscriptSegment[];
-  suggestions: SpeechSuggestion[];
-}): Promise<SpeechEntry> {
+export async function saveSpeechEntry(
+  input: {
+    title: string;
+    transcript: string;
+    wordCount: number;
+    durationSeconds: number | null;
+    segments: TranscriptSegment[];
+    suggestions: SpeechSuggestion[];
+  },
+  signal?: AbortSignal,
+): Promise<SpeechEntry> {
   const { entry } = await postFunction<{ entry: SpeechEntry }>(
     "speech-save",
     input,
+    {},
+    signal,
   );
   return entry;
 }
@@ -47,4 +48,21 @@ export async function saveSpeechEntry(input: {
 export async function getSpeechEntry(id: string): Promise<SpeechEntry> {
   const { entry } = await getFunction<{ entry: SpeechEntry }>("speech-get", id);
   return entry;
+}
+
+export interface SpeechAnalysis {
+  segments: TranscriptSegment[];
+  suggestions: SpeechSuggestion[];
+}
+
+export async function analyzeSpeech(
+  transcript: string,
+  signal?: AbortSignal,
+): Promise<SpeechAnalysis> {
+  const { segments, suggestions, usage, source } = await postFunction<
+    SpeechAnalysis & { usage: TokenUsage; source: string }
+  >("sharpen", { transcript }, {}, signal);
+
+  logTokenUsage({ usage, label: `sharpen (${source})` });
+  return { segments, suggestions };
 }

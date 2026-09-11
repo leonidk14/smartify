@@ -16,7 +16,7 @@ export interface SuggestionAlternative {
 export interface SpeechSuggestion {
   id: string;
   original: string;
-  // Always exactly three: one neutral, one formal, one plain, in that order.
+  // One to three, in the order anchoring kept them.
   alternatives: SuggestionAlternative[];
 }
 
