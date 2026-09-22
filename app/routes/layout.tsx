@@ -28,7 +28,6 @@ import { text } from "../theme/typography";
 import { supabase } from "../lib/supabaseClient";
 import { readVocabulary } from "./wordSearch/vocabulary";
 import { IS_SPEECH_ENABLED } from "../featureFlags";
-import { MAX_DURATION_SECONDS } from "./speech/speechConstants";
 import {
   formatDuration,
   formatRecordingDate,
@@ -135,7 +134,6 @@ export default function Layout() {
   const isSelectScreen = location.pathname === "/practice/select";
   const selectMode = new URLSearchParams(location.search).get("mode") ?? "both";
 
-  const isSpeechRecordScreen = location.pathname === "/speech/record";
   const isSpeechTypeScreen = location.pathname === "/speech/type";
 
   // /speech/:id's header needs the recording's date and duration, which live
@@ -169,21 +167,6 @@ export default function Layout() {
                 Which words?
               </Text>
             </Box>
-          </Group>
-        </Box>
-      ) : null}
-
-      {isSpeechRecordScreen ? (
-        <Box p="16px 16px 0">
-          <Group justify="space-between" align="center" wrap="nowrap">
-            <IconX
-              size={22}
-              onClick={() => void navigate("/speech")}
-              style={{ color: "rgba(0,0,0,.45)", cursor: "pointer" }}
-            />
-            <Text {...text.meta} style={{ letterSpacing: ".6px" }}>
-              MAX {formatDuration(MAX_DURATION_SECONDS)}
-            </Text>
           </Group>
         </Box>
       ) : null}

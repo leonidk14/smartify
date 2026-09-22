@@ -109,8 +109,8 @@ export const STANDUP_RECORDING: SpeechRecording = {
   createdAt: new Date(Date.now() - 3 * HOUR_MS).toISOString(),
 };
 
-// The 15 static bar heights (0..1) 9c draws — a stand-in for live amplitudes
-// until stage 1b feeds this from the level meter.
+// The 15 static bar heights (0..1) 9c draws. The bars stay decorative: speech
+// recognition gives no audio to measure.
 export const RECORDER_PREVIEW_LEVELS: number[] = [
   0.25, 0.54, 0.86, 0.39, 0.71, 0.21, 0.61, 0.93, 0.46, 0.32, 0.79, 0.54, 0.18,
   0.64, 0.36,
