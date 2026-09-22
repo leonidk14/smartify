@@ -29,7 +29,11 @@ import { supabase } from "../lib/supabaseClient";
 import { readVocabulary } from "./wordSearch/vocabulary";
 import { IS_SPEECH_ENABLED } from "../featureFlags";
 import { MAX_DURATION_SECONDS } from "./speech/speechConstants";
-import { formatDuration, formatRecordingDate } from "./speech/speechFormat";
+import {
+  formatDuration,
+  formatRecordingDate,
+  formatWordCount,
+} from "./speech/speechFormat";
 import { isSpeechEntry } from "./speech/speechApi";
 
 const TOP_LEVEL_PATHS: string[] = (IS_SPEECH_ENABLED as boolean)
@@ -210,9 +214,7 @@ export default function Layout() {
               {formatRecordingDate(speechRecording.createdAt)} ·{" "}
               {speechRecording.durationSeconds !== null
                 ? formatDuration(speechRecording.durationSeconds)
-                : `${speechRecording.wordCount} ${
-                    speechRecording.wordCount === 1 ? "word" : "words"
-                  }`}
+                : formatWordCount(speechRecording.wordCount)}
             </Text>
             <IconDots size={16} style={{ color: "rgba(0,0,0,.45)" }} />
           </Group>

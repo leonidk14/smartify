@@ -10,12 +10,12 @@ import { MAX_DURATION_SECONDS } from "./speechConstants";
 import {
   formatDuration,
   formatRecordingDate,
-  formatSavedBadge,
+  formatWordCount,
 } from "./speechFormat";
-import type { SpeechRecording } from "./speechTypes";
+import type { SpeechEntrySummary } from "./speechApi";
 
 interface SpeechListProps {
-  recordings: SpeechRecording[];
+  recordings: SpeechEntrySummary[];
 }
 
 interface CompactEntryButtonProps {
@@ -109,8 +109,9 @@ export function SpeechList({ recordings }: SpeechListProps) {
                       <Text {...text.displaySm}>{recording.title}</Text>
                       <Text {...text.meta} mt={2}>
                         {formatRecordingDate(recording.createdAt)} ·{" "}
-                        {formatDuration(recording.durationSeconds)} ·{" "}
-                        {formatSavedBadge(recording.savedWords)}
+                        {recording.durationSeconds !== null
+                          ? formatDuration(recording.durationSeconds)
+                          : formatWordCount(recording.wordCount)}
                       </Text>
                     </Box>
                     <IconChevronRight

@@ -25,6 +25,18 @@ export function isSpeechEntry(value: unknown): value is SpeechEntry {
   );
 }
 
+export type SpeechEntrySummary = Omit<
+  SpeechEntry,
+  "transcript" | "segments" | "suggestions" | "chosenAlternatives"
+>;
+
+export async function listSpeechEntries(): Promise<SpeechEntrySummary[]> {
+  const { entries } = await postFunction<{ entries: SpeechEntrySummary[] }>(
+    "speech-list",
+  );
+  return entries;
+}
+
 export async function saveSpeechEntry(
   input: {
     title: string;

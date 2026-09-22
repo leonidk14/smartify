@@ -182,7 +182,7 @@ a substitute: run both locally before reporting work as done.
 
 ### Edge function deploys
 
-A job `deploy-functions`, runs `supabase functions deploy` for all twelve functions
+A job `deploy-functions`, runs `supabase functions deploy` for all thirteen functions
 on every push to `main`, gated on `needs: [checks, tests]`. It also accepts a manual
 `workflow_dispatch` run — the retry path when a deploy fails on a transient error, so you
 never need an empty commit. Pull requests never reach it (`github.ref` is pinned to
