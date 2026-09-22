@@ -2,7 +2,6 @@ import { useEffect } from "react";
 import {
   Outlet,
   useLocation,
-  useMatches,
   useNavigate,
   useRevalidator,
   Link,
@@ -27,12 +26,6 @@ import { text } from "../theme/typography";
 import { supabase } from "../lib/supabaseClient";
 import { readVocabulary } from "./wordSearch/vocabulary";
 import { IS_SPEECH_ENABLED } from "../featureFlags";
-import {
-  formatDuration,
-  formatRecordingDate,
-  formatWordCount,
-} from "./speech/speechFormat";
-import { isSpeechEntry } from "./speech/speechApi";
 
 const TOP_LEVEL_PATHS: string[] = (IS_SPEECH_ENABLED as boolean)
   ? ["/", "/speech", "/practice"]
@@ -97,7 +90,6 @@ export default function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
   const revalidator = useRevalidator();
-  const matches = useMatches();
 
   useEffect(() => {
     const {
@@ -135,17 +127,6 @@ export default function Layout() {
 
   const isSpeechTypeScreen = location.pathname === "/speech/type";
 
-  // /speech/:id's header needs the recording's date and duration, which live
-  // in that route's own loaderData — read via useMatches() rather than
-  // duplicating the fetch here, since layout.tsx otherwise only loads the
-  // vocabulary.
-  const speechRecordingMatch = matches.find(
-    (match) => match.id === "routes/speechRecording",
-  );
-  const speechRecording = isSpeechEntry(speechRecordingMatch?.loaderData)
-    ? speechRecordingMatch.loaderData
-    : null;
-
   return (
     <Flex direction="column" style={{ minHeight: "100vh" }}>
       {isSelectScreen ? (
@@ -177,28 +158,6 @@ export default function Layout() {
             onClick={() => void navigate("/speech")}
             style={{ color: "rgba(0,0,0,.45)", cursor: "pointer" }}
           />
-        </Box>
-      ) : null}
-
-      {speechRecording ? (
-        <Box p="16px 16px 0">
-          <Group gap={6} align="center" wrap="nowrap">
-            <ActionIcon
-              component={Link}
-              to="/speech"
-              variant="subtle"
-              color="gray"
-              size="md"
-              aria-label="Back to Speech">
-              <IconChevronLeft size={20} />
-            </ActionIcon>
-            <Text {...text.meta}>
-              {formatRecordingDate(speechRecording.createdAt)} ·{" "}
-              {speechRecording.durationSeconds !== null
-                ? formatDuration(speechRecording.durationSeconds)
-                : formatWordCount(speechRecording.wordCount)}
-            </Text>
-          </Group>
         </Box>
       ) : null}
 

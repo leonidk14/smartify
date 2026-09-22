@@ -1,12 +1,23 @@
 import { useState } from "react";
-import { Box, Button, Group, Stack, Text } from "@mantine/core";
-import { IconCheck, IconChevronRight } from "@tabler/icons-react";
+import { Link, Navigate, useNavigate, useOutlet } from "react-router";
+import { ActionIcon, Box, Button, Group, Stack, Text } from "@mantine/core";
+import {
+  IconCheck,
+  IconChevronLeft,
+  IconChevronRight,
+} from "@tabler/icons-react";
 import { text } from "../../theme/typography";
 import { ActionBar } from "../practice/actionBar";
 import { MarkedTranscript } from "./markedTranscript";
 import { sharpenTranscript } from "./sharpenedTranscript";
 import { SuggestionSheet } from "./suggestionSheet";
 import type { SpeechEntry } from "./speechApi";
+import {
+  formatDuration,
+  formatRecordingDate,
+  formatWordCount,
+} from "./speechFormat";
+import type { SpeechReviewContext } from "./speechReviewContext";
 import type { ChosenAlternatives } from "./speechTypes";
 
 interface SpeechRecordingViewProps {
@@ -20,9 +31,29 @@ interface SheetState {
 }
 
 export function SpeechRecordingView({ recording }: SpeechRecordingViewProps) {
+  const navigate = useNavigate();
   const [chosenAlternatives, setChosenAlternatives] =
     useState<ChosenAlternatives>(recording.chosenAlternatives);
   const [sheet, setSheet] = useState<SheetState | null>(null);
+  const [hasContinued, setHasContinued] = useState(false);
+
+  const keepScreen = useOutlet({
+    recording,
+    chosenAlternatives,
+  } satisfies SpeechReviewContext);
+
+  if (keepScreen !== null) {
+    return hasContinued ? (
+      keepScreen
+    ) : (
+      <Navigate to={`/speech/${recording.id}`} replace />
+    );
+  }
+
+  const continueToKeep = () => {
+    setHasContinued(true);
+    void navigate(`/speech/${recording.id}/keep`);
+  };
 
   const { spans, keepRows } = sharpenTranscript({
     segments: recording.segments,
@@ -80,6 +111,26 @@ export function SpeechRecordingView({ recording }: SpeechRecordingViewProps) {
 
   return (
     <>
+      <Box p="16px 16px 0">
+        <Group gap={6} align="center" wrap="nowrap">
+          <ActionIcon
+            component={Link}
+            to="/speech"
+            variant="subtle"
+            color="gray"
+            size="md"
+            aria-label="Back to Speech">
+            <IconChevronLeft size={20} />
+          </ActionIcon>
+          <Text {...text.meta}>
+            {formatRecordingDate(recording.createdAt)} ·{" "}
+            {recording.durationSeconds !== null
+              ? formatDuration(recording.durationSeconds)
+              : formatWordCount(recording.wordCount)}
+          </Text>
+        </Group>
+      </Box>
+
       <Box p={16} pb={110} flex={1}>
         <Stack gap={15}>
           <Box>
@@ -155,8 +206,12 @@ export function SpeechRecordingView({ recording }: SpeechRecordingViewProps) {
 
       {hasSuggestions ? (
         <ActionBar>
-          {/* TODO(speech): #07 — open /speech/:id/keep with the swaps. */}
-          <Button fullWidth h={50} radius={13} color="black" disabled>
+          <Button
+            fullWidth
+            h={50}
+            radius={13}
+            color="black"
+            onClick={continueToKeep}>
             Continue
           </Button>
         </ActionBar>

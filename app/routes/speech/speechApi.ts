@@ -19,16 +19,6 @@ export interface SpeechEntry {
   createdAt: string;
 }
 
-export function isSpeechEntry(value: unknown): value is SpeechEntry {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    "id" in value &&
-    "transcript" in value &&
-    "createdAt" in value
-  );
-}
-
 export type SpeechEntrySummary = Omit<
   SpeechEntry,
   "transcript" | "segments" | "suggestions" | "chosenAlternatives"
@@ -64,6 +54,13 @@ export async function saveSpeechEntry(
 export async function getSpeechEntry(id: string): Promise<SpeechEntry> {
   const { entry } = await getFunction<{ entry: SpeechEntry }>("speech-get", id);
   return entry;
+}
+
+export async function finishSpeechReview(input: {
+  id: string;
+  chosenAlternatives: ChosenAlternatives;
+}): Promise<void> {
+  await postFunction("speech-update", input);
 }
 
 export interface SpeechAnalysis {

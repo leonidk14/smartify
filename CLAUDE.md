@@ -182,14 +182,14 @@ a substitute: run both locally before reporting work as done.
 
 ### Edge function deploys
 
-A job `deploy-functions`, runs `supabase functions deploy` for all thirteen functions
+A job `deploy-functions`, runs `supabase functions deploy` for all fourteen functions
 on every push to `main`, gated on `needs: [checks, tests]`. It also accepts a manual
 `workflow_dispatch` run — the retry path when a deploy fails on a transient error, so you
 never need an empty commit. Pull requests never reach it (`github.ref` is pinned to
 `refs/heads/main`).
 
 Deploying every function rather than only the changed ones is deliberate: a change under
-`_shared/` affects all thirteen, and a redeploy is idempotent, so "what is deployed equals
+`_shared/` affects all fourteen, and a redeploy is idempotent, so "what is deployed equals
 what is on `main`" holds unconditionally. It exists because the frontend already
 auto-deploys via Vercel — manual function deploys let the two halves drift.
 
