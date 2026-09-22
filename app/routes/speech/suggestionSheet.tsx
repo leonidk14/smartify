@@ -1,94 +1,84 @@
-import { useState } from "react";
-import { Box, Flex, Group, Stack, Text, ThemeIcon } from "@mantine/core";
-import { IconCheck } from "@tabler/icons-react";
+import { Box, Flex, Group, Radio, Stack, Text } from "@mantine/core";
 import { BottomSheet } from "../../lib/bottomSheet";
 import { text } from "../../theme/typography";
 import type { SpeechSuggestion } from "./speechTypes";
 
 interface SuggestionSheetProps {
+  isOpen: boolean;
   suggestion: SpeechSuggestion | null;
-  selectedWords: Set<string>;
-  onToggleWord: (vocabularyWord: string) => void;
+  selectedIndex: number;
+  onSelect: (alternativeIndex: number) => void;
+  onSwapIn: () => void;
+  onKeepOriginal: () => void;
   onClose: () => void;
 }
 
 export function SuggestionSheet({
+  isOpen,
   suggestion,
-  selectedWords,
-  onToggleWord,
+  selectedIndex,
+  onSelect,
+  onSwapIn,
+  onKeepOriginal,
   onClose,
 }: SuggestionSheetProps) {
-  // The sheet's content must survive its own close animation, so the last
-  // suggestion shown is kept around rather than disappearing the instant
-  // `suggestion` goes back to null. Adjusted during render rather than in an
-  // effect, per https://react.dev/learn/you-might-not-need-an-effect.
-  const [lastSuggestion, setLastSuggestion] = useState<SpeechSuggestion | null>(
-    null,
-  );
-  if (suggestion !== null && suggestion !== lastSuggestion) {
-    setLastSuggestion(suggestion);
-  }
-
-  const shown = suggestion ?? lastSuggestion;
-
   return (
     <BottomSheet
-      isOpen={suggestion !== null}
+      isOpen={isOpen}
       onClose={onClose}
-      primaryAction={{ label: "Done", onClick: onClose }}>
-      {shown ? (
+      secondaryAction={{ label: "Keep mine", onClick: onKeepOriginal }}
+      primaryAction={{ label: "Use this one", onClick: onSwapIn }}>
+      {suggestion ? (
         <Stack gap={18}>
           <Box>
             <Text {...text.label}>YOU SAID</Text>
             <Text {...text.displayMd} c="dimmed" mt={5}>
-              {shown.original}
+              {suggestion.original}
             </Text>
           </Box>
 
-          <Stack gap={9}>
-            {shown.alternatives.map((alternative) => {
-              const isSelected = selectedWords.has(alternative.vocabularyWord);
-              return (
-                <Group
-                  key={alternative.vocabularyWord}
-                  align="flex-start"
-                  gap={12}
-                  wrap="nowrap"
-                  onClick={() => onToggleWord(alternative.vocabularyWord)}
+          <Radio.Group
+            value={String(selectedIndex)}
+            onChange={(value) => onSelect(Number(value))}>
+            <Stack gap={9}>
+              {suggestion.alternatives.map((alternative, index) => (
+                <Radio.Card
+                  key={alternative.phrase}
+                  value={String(index)}
+                  withBorder={false}
+                  radius={14}
                   p={14}
-                  bdrs={14}
+                  ta="left"
                   bd={
-                    isSelected
+                    index === selectedIndex
                       ? "1.5px solid var(--color-text)"
                       : "1.5px solid rgba(0,0,0,.14)"
-                  }
-                  style={{ cursor: "pointer" }}>
-                  <Box flex={1} miw={0}>
-                    <Flex columnGap={8} rowGap={2} align="baseline" wrap="wrap">
-                      <Text {...text.displaySm}>{alternative.phrase}</Text>
-                      <Text {...text.label}>{alternative.register}</Text>
-                    </Flex>
-                    <Text
-                      mt={5}
-                      ff="var(--font-family-serif)"
-                      fz={14}
-                      lh={1.5}
-                      c="dimmed">
-                      “{alternative.inSentence}”
-                    </Text>
-                  </Box>
-                  <ThemeIcon
-                    size={22}
-                    radius={6}
-                    mt={2}
-                    variant={isSelected ? "filled" : "outline"}
-                    color={isSelected ? "dark" : "gray"}>
-                    {isSelected ? <IconCheck size={12} /> : <span />}
-                  </ThemeIcon>
-                </Group>
-              );
-            })}
-          </Stack>
+                  }>
+                  <Group align="flex-start" gap={12} wrap="nowrap">
+                    <Box flex={1} miw={0}>
+                      <Flex
+                        columnGap={8}
+                        rowGap={2}
+                        align="baseline"
+                        wrap="wrap">
+                        <Text {...text.displaySm}>{alternative.phrase}</Text>
+                        <Text {...text.label}>{alternative.register}</Text>
+                      </Flex>
+                      <Text
+                        mt={5}
+                        ff="var(--font-family-serif)"
+                        fz={14}
+                        lh={1.5}
+                        c="dimmed">
+                        “{alternative.inSentence}”
+                      </Text>
+                    </Box>
+                    <Radio.Indicator mt={2} />
+                  </Group>
+                </Radio.Card>
+              ))}
+            </Stack>
+          </Radio.Group>
         </Stack>
       ) : null}
     </BottomSheet>

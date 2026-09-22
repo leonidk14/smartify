@@ -1,6 +1,10 @@
 import { getFunction, postFunction } from "../../lib/supabaseFunctions";
 import { logTokenUsage, type TokenUsage } from "../wordSearch/usage";
-import type { SpeechSuggestion, TranscriptSegment } from "./speechTypes";
+import type {
+  ChosenAlternatives,
+  SpeechSuggestion,
+  TranscriptSegment,
+} from "./speechTypes";
 
 export interface SpeechEntry {
   id: string;
@@ -8,7 +12,7 @@ export interface SpeechEntry {
   transcript: string;
   segments: TranscriptSegment[];
   suggestions: SpeechSuggestion[];
-  chosenAlternatives: unknown;
+  chosenAlternatives: ChosenAlternatives;
   durationSeconds: number | null;
   wordCount: number;
   reviewedAt: string | null;

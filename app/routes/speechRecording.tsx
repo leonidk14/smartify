@@ -24,5 +24,5 @@ export default function SpeechRecordingRoute({
 }: {
   loaderData: Awaited<ReturnType<typeof clientLoader>>;
 }) {
-  return <SpeechRecordingView recording={loaderData} />;
+  return <SpeechRecordingView key={loaderData.id} recording={loaderData} />;
 }

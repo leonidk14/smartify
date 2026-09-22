@@ -19,7 +19,6 @@ import type { ShouldRevalidateFunctionArgs } from "react-router";
 import {
   IconBook,
   IconChevronLeft,
-  IconDots,
   IconMicrophone,
   IconPlayerPlay,
   IconX,
@@ -183,7 +182,7 @@ export default function Layout() {
 
       {speechRecording ? (
         <Box p="16px 16px 0">
-          <Group justify="space-between" align="center" wrap="nowrap">
+          <Group gap={6} align="center" wrap="nowrap">
             <ActionIcon
               component={Link}
               to="/speech"
@@ -199,7 +198,6 @@ export default function Layout() {
                 ? formatDuration(speechRecording.durationSeconds)
                 : formatWordCount(speechRecording.wordCount)}
             </Text>
-            <IconDots size={16} style={{ color: "rgba(0,0,0,.45)" }} />
           </Group>
         </Box>
       ) : null}

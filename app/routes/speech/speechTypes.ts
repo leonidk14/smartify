@@ -23,6 +23,8 @@ export interface TranscriptSegment {
   suggestionId: string | null;
 }
 
+export type ChosenAlternatives = Record<string, number>;
+
 export interface SpeechRecording {
   id: string;
   title: string;

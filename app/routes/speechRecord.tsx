@@ -56,49 +56,32 @@ function SpeechTake({ onRecordAgain }: SpeechTakeProps) {
     void analyze({ transcript, durationSeconds: elapsedSeconds });
   };
 
-  if (status === "denied" || status === "unreachable") {
-    return (
-      <>
-        <SpeechRecordHeader />
-        <MicrophoneError failure={status} />
-      </>
-    );
-  }
+  const renderContent = () => {
+    if (status === "denied" || status === "unreachable") {
+      return <MicrophoneError failure={status} />;
+    }
 
-  if (isListening(status)) {
-    return (
-      <>
-        <SpeechRecordHeader isMaxShown />
+    if (isListening(status)) {
+      return (
         <SpeechRecorder
           status={status}
           elapsedSeconds={elapsedSeconds}
           onStop={stop}
         />
-      </>
-    );
-  }
+      );
+    }
 
-  if (phase === "analyzing") {
-    return (
-      <>
-        <SpeechRecordHeader />
-        <AnimatedAppMark caption="Reading what you said…" />
-      </>
-    );
-  }
+    if (phase === "analyzing") {
+      return <AnimatedAppMark caption="Reading what you said…" />;
+    }
 
-  if (phase === "error") {
-    return (
-      <>
-        <SpeechRecordHeader />
+    if (phase === "error") {
+      return (
         <SpeechAnalysisError onRetry={handleSubmit} onBack={returnToEditing} />
-      </>
-    );
-  }
+      );
+    }
 
-  return (
-    <>
-      <SpeechRecordHeader />
+    return (
       <SpeechCheckView
         transcript={transcript}
         durationSeconds={elapsedSeconds}
@@ -107,6 +90,13 @@ function SpeechTake({ onRecordAgain }: SpeechTakeProps) {
         onSubmit={handleSubmit}
         onRecordAgain={onRecordAgain}
       />
+    );
+  };
+
+  return (
+    <>
+      <SpeechRecordHeader isMaxShown={isListening(status)} />
+      {renderContent()}
     </>
   );
 }
