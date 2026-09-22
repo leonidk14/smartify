@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Box, Group, Stack, Text, ThemeIcon } from "@mantine/core";
+import { Box, Flex, Group, Stack, Text, ThemeIcon } from "@mantine/core";
 import { IconCheck } from "@tabler/icons-react";
 import { BottomSheet } from "../../lib/bottomSheet";
 import { text } from "../../theme/typography";
@@ -64,10 +64,10 @@ export function SuggestionSheet({
                   }
                   style={{ cursor: "pointer" }}>
                   <Box flex={1} miw={0}>
-                    <Group gap={8} align="baseline" wrap="nowrap">
+                    <Flex columnGap={8} rowGap={2} align="baseline" wrap="wrap">
                       <Text {...text.displaySm}>{alternative.phrase}</Text>
                       <Text {...text.label}>{alternative.register}</Text>
-                    </Group>
+                    </Flex>
                     <Text
                       mt={5}
                       ff="var(--font-family-serif)"

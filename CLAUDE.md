@@ -189,7 +189,7 @@ never need an empty commit. Pull requests never reach it (`github.ref` is pinned
 `refs/heads/main`).
 
 Deploying every function rather than only the changed ones is deliberate: a change under
-`_shared/` affects all twelve, and a redeploy is idempotent, so "what is deployed equals
+`_shared/` affects all thirteen, and a redeploy is idempotent, so "what is deployed equals
 what is on `main`" holds unconditionally. It exists because the frontend already
 auto-deploys via Vercel — manual function deploys let the two halves drift.
 
@@ -403,8 +403,11 @@ flag, since each guards a different cost.
 `sonnet` pins generation to Sonnet only, and `haiku` pins it to Haiku only.
 Any other value (or unset) is still mock.
 
-`sharpen` has no real path yet — every value of `SHARPEN_MODE` mocks until a
-later change wires it up the same way `GENERATE_MODE` is.
+`SHARPEN_MODE` is the same kind of model selector, matched the same way: `real`
+analyses with Haiku and retries once on Sonnet only when Haiku reports an error
+itself (the response's `source` is then `haiku+sonnet`, with both calls' usage
+summed), `haiku` and `sonnet` pin that one model, and any other value (or unset)
+is mock.
 
 ## README screenshots
 

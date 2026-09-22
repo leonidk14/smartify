@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate, useNavigation } from "react-router";
 import axios from "axios";
 import { AnimatedAppMark } from "../lib/animatedAppMark";
 import { SpeechAnalysisError } from "./speech/speechAnalysisError";
@@ -16,9 +16,21 @@ type Phase = "typing" | "analyzing" | "error";
 
 export default function SpeechTypeRoute() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const navigation = useNavigation();
   const [transcript, setTranscript] = useState("");
   const [phase, setPhase] = useState<Phase>("typing");
   const controllerRef = useRef<AbortController | null>(null);
+
+  const isLeaving =
+    navigation.location !== undefined &&
+    navigation.location.pathname !== location.pathname;
+
+  useEffect(() => {
+    if (isLeaving) {
+      controllerRef.current?.abort();
+    }
+  }, [isLeaving]);
 
   useEffect(() => {
     return () => controllerRef.current?.abort();

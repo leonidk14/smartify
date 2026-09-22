@@ -89,6 +89,11 @@ export function anchorSuggestions({
       continue;
     }
 
+    if (suggestion.original.trim() === "") {
+      drop(suggestion, "original is blank");
+      continue;
+    }
+
     const occurrences = findOccurrences(transcript, suggestion.original);
     if (occurrences.length === 0) {
       drop(suggestion, "original does not occur verbatim in the transcript");
@@ -102,7 +107,7 @@ export function anchorSuggestions({
     ) {
       drop(
         suggestion,
-        `occurrence index ${suggestion.occurrenceIndex} is past the last of ${occurrences.length}`,
+        `occurrence index ${suggestion.occurrenceIndex} is not between 1 and ${occurrences.length}`,
       );
       continue;
     }

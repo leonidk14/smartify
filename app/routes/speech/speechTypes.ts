@@ -1,8 +1,6 @@
-export type Register = "neutral" | "formal" | "plain";
-
 export interface SuggestionAlternative {
   phrase: string;
-  register: Register;
+  register: string;
   // The user's own sentence with `phrase` substituted for the suggestion's
   // `original`, shown so the fit can be judged in context rather than in
   // isolation.
