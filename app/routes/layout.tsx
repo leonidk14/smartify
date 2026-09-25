@@ -2,7 +2,6 @@ import { useEffect } from "react";
 import {
   Outlet,
   useLocation,
-  useMatches,
   useNavigate,
   useRevalidator,
   Link,
@@ -19,7 +18,6 @@ import type { ShouldRevalidateFunctionArgs } from "react-router";
 import {
   IconBook,
   IconChevronLeft,
-  IconDots,
   IconMicrophone,
   IconPlayerPlay,
   IconX,
@@ -28,9 +26,6 @@ import { text } from "../theme/typography";
 import { supabase } from "../lib/supabaseClient";
 import { readVocabulary } from "./wordSearch/vocabulary";
 import { IS_SPEECH_ENABLED } from "../featureFlags";
-import { MAX_DURATION_SECONDS } from "./speech/speechConstants";
-import { formatDuration, formatRecordingDate } from "./speech/speechFormat";
-import { isSpeechRecording } from "./speech/speechTypes";
 
 const TOP_LEVEL_PATHS: string[] = (IS_SPEECH_ENABLED as boolean)
   ? ["/", "/speech", "/practice"]
@@ -95,7 +90,6 @@ export default function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
   const revalidator = useRevalidator();
-  const matches = useMatches();
 
   useEffect(() => {
     const {
@@ -131,18 +125,7 @@ export default function Layout() {
   const isSelectScreen = location.pathname === "/practice/select";
   const selectMode = new URLSearchParams(location.search).get("mode") ?? "both";
 
-  const isSpeechRecordScreen = location.pathname === "/speech/record";
-
-  // /speech/:id's header needs the recording's date and duration, which live
-  // in that route's own loaderData — read via useMatches() rather than
-  // duplicating the fetch here, since layout.tsx otherwise only loads the
-  // vocabulary.
-  const speechRecordingMatch = matches.find(
-    (match) => match.id === "routes/speechRecording",
-  );
-  const speechRecording = isSpeechRecording(speechRecordingMatch?.loaderData)
-    ? speechRecordingMatch.loaderData
-    : null;
+  const isSpeechTypeScreen = location.pathname === "/speech/type";
 
   return (
     <Flex direction="column" style={{ minHeight: "100vh" }}>
@@ -168,39 +151,13 @@ export default function Layout() {
         </Box>
       ) : null}
 
-      {isSpeechRecordScreen ? (
+      {isSpeechTypeScreen ? (
         <Box p="16px 16px 0">
-          <Group justify="space-between" align="center" wrap="nowrap">
-            <IconX
-              size={22}
-              onClick={() => void navigate("/speech")}
-              style={{ color: "rgba(0,0,0,.45)", cursor: "pointer" }}
-            />
-            <Text {...text.meta} style={{ letterSpacing: ".6px" }}>
-              MAX {formatDuration(MAX_DURATION_SECONDS)}
-            </Text>
-          </Group>
-        </Box>
-      ) : null}
-
-      {speechRecording ? (
-        <Box p="16px 16px 0">
-          <Group justify="space-between" align="center" wrap="nowrap">
-            <ActionIcon
-              component={Link}
-              to="/speech"
-              variant="subtle"
-              color="gray"
-              size="md"
-              aria-label="Back to Speech">
-              <IconChevronLeft size={20} />
-            </ActionIcon>
-            <Text {...text.meta}>
-              {formatRecordingDate(speechRecording.createdAt)} ·{" "}
-              {formatDuration(speechRecording.durationSeconds)}
-            </Text>
-            <IconDots size={16} style={{ color: "rgba(0,0,0,.45)" }} />
-          </Group>
+          <IconX
+            size={22}
+            onClick={() => void navigate("/speech")}
+            style={{ color: "rgba(0,0,0,.45)", cursor: "pointer" }}
+          />
         </Box>
       ) : null}
 
