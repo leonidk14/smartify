@@ -9,14 +9,15 @@ export interface TokenUsage {
 
 // ── Pricing (USD per token) ────────────────────────────────────────────────────
 // Claude Haiku 4.5: $1.00 / 1M input, $5.00 / 1M output
-// Claude Sonnet 5:  $3.00 / 1M input, $15.00 / 1M output
-// Source: https://www.anthropic.com/pricing — verify if prices change.
+// Claude Sonnet 5:  $2.00 / 1M input, $10.00 / 1M output
+// Source: https://platform.claude.com/docs/en/about-claude/pricing — verify if
+// prices change.
 
 export type PricingModel = "haiku" | "sonnet";
 
 const PRICING: Record<PricingModel, { input: number; output: number }> = {
   haiku: { input: 1.0 / 1_000_000, output: 5.0 / 1_000_000 },
-  sonnet: { input: 3.0 / 1_000_000, output: 15.0 / 1_000_000 },
+  sonnet: { input: 2.0 / 1_000_000, output: 10.0 / 1_000_000 },
 };
 
 export function buildTokenUsage({

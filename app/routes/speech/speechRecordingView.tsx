@@ -1,78 +1,143 @@
 import { useState } from "react";
-import { useNavigate } from "react-router";
-import { Box, Button, Group, Stack, Text } from "@mantine/core";
-import { IconChevronRight } from "@tabler/icons-react";
-import { AnimatedAppMark } from "../../lib/animatedAppMark";
+import { Link, Navigate, useNavigate, useOutlet } from "react-router";
+import { ActionIcon, Box, Button, Group, Stack, Text } from "@mantine/core";
+import {
+  IconCheck,
+  IconChevronLeft,
+  IconChevronRight,
+} from "@tabler/icons-react";
 import { text } from "../../theme/typography";
 import { ActionBar } from "../practice/actionBar";
 import { MarkedTranscript } from "./markedTranscript";
+import { sharpenTranscript } from "./sharpenedTranscript";
 import { SuggestionSheet } from "./suggestionSheet";
-import type { SpeechRecording } from "./speechTypes";
+import type { SpeechEntry } from "./speechApi";
+import {
+  formatDuration,
+  formatRecordingDate,
+  formatWordCount,
+} from "./speechFormat";
+import type { SpeechReviewContext } from "./speechReviewContext";
+import type { ChosenAlternatives } from "./speechTypes";
 
 interface SpeechRecordingViewProps {
-  recording: SpeechRecording;
+  recording: SpeechEntry;
 }
 
-const SAVE_STUB_DELAY_MS = 900;
-// Above the layout header (a static, non-positioned Box) — position:fixed
-// alone already paints above static content regardless of z-index or DOM
-// order, this just makes the intent explicit.
-const OVERLAY_Z_INDEX = 100;
+interface SheetState {
+  suggestionId: string;
+  alternativeIndex: number;
+  isOpen: boolean;
+}
 
 export function SpeechRecordingView({ recording }: SpeechRecordingViewProps) {
   const navigate = useNavigate();
-  const [openSuggestionId, setOpenSuggestionId] = useState<string | null>(null);
-  const [selectedWords, setSelectedWords] = useState<Set<string>>(
-    () => new Set(),
-  );
-  const [isSaving, setIsSaving] = useState(false);
+  const [chosenAlternatives, setChosenAlternatives] =
+    useState<ChosenAlternatives>(recording.chosenAlternatives);
+  const [sheet, setSheet] = useState<SheetState | null>(null);
+  const [hasContinued, setHasContinued] = useState(false);
 
-  const toggleWord = (vocabularyWord: string) => {
-    setSelectedWords((prev) => {
-      const next = new Set(prev);
-      if (next.has(vocabularyWord)) {
-        next.delete(vocabularyWord);
-      } else {
-        next.add(vocabularyWord);
-      }
-      return next;
-    });
-  };
+  const keepScreen = useOutlet({
+    recording,
+    chosenAlternatives,
+  } satisfies SpeechReviewContext);
 
-  const handleSave = () => {
-    // TODO(speech): real save in stage 1b — lookupWord/saveWord/setPracticeLater
-    // per selected word, then markSavedWords for this recording.
-    setIsSaving(true);
-    window.setTimeout(() => void navigate("/"), SAVE_STUB_DELAY_MS);
-  };
-
-  if (isSaving) {
-    const count = selectedWords.size;
-    return (
-      <Box pos="fixed" inset={0} style={{ zIndex: OVERLAY_Z_INDEX }}>
-        <AnimatedAppMark
-          caption={`Saving ${count} ${count === 1 ? "word" : "words"}…`}
-        />
-      </Box>
+  if (keepScreen !== null) {
+    return hasContinued ? (
+      keepScreen
+    ) : (
+      <Navigate to={`/speech/${recording.id}`} replace />
     );
   }
 
-  const openSuggestion =
-    recording.suggestions.find((s) => s.id === openSuggestionId) ?? null;
+  const continueToKeep = () => {
+    setHasContinued(true);
+    void navigate(`/speech/${recording.id}/keep`);
+  };
+
+  const { spans, keepRows } = sharpenTranscript({
+    segments: recording.segments,
+    suggestions: recording.suggestions,
+    chosenAlternatives,
+  });
+
+  const openSheet = (suggestionId: string) => {
+    setSheet({
+      suggestionId,
+      alternativeIndex: chosenAlternatives[suggestionId] ?? 0,
+      isOpen: true,
+    });
+  };
+
+  const closeSheet = () => {
+    setSheet((prev) => (prev === null ? null : { ...prev, isOpen: false }));
+  };
+
+  const selectAlternative = (alternativeIndex: number) => {
+    setSheet((prev) => (prev === null ? null : { ...prev, alternativeIndex }));
+  };
+
+  const swapIn = () => {
+    if (sheet === null) {
+      return;
+    }
+    const { suggestionId, alternativeIndex } = sheet;
+    setChosenAlternatives((prev) => ({
+      ...prev,
+      [suggestionId]: alternativeIndex,
+    }));
+    closeSheet();
+  };
+
+  const keepOriginal = () => {
+    if (sheet === null) {
+      return;
+    }
+    const { suggestionId } = sheet;
+    setChosenAlternatives((prev) =>
+      Object.fromEntries(
+        Object.entries(prev).filter(([id]) => id !== suggestionId),
+      ),
+    );
+    closeSheet();
+  };
+
+  const sheetSuggestion =
+    sheet === null
+      ? null
+      : (recording.suggestions.find(({ id }) => id === sheet.suggestionId) ??
+        null);
   const hasSuggestions = recording.suggestions.length > 0;
 
   return (
     <>
+      <Box p="16px 16px 0">
+        <Group gap={6} align="center" wrap="nowrap">
+          <ActionIcon
+            component={Link}
+            to="/speech"
+            variant="subtle"
+            color="gray"
+            size="md"
+            aria-label="Back to Speech">
+            <IconChevronLeft size={20} />
+          </ActionIcon>
+          <Text {...text.meta}>
+            {formatRecordingDate(recording.createdAt)} ·{" "}
+            {recording.durationSeconds !== null
+              ? formatDuration(recording.durationSeconds)
+              : formatWordCount(recording.wordCount)}
+          </Text>
+        </Group>
+      </Box>
+
       <Box p={16} pb={110} flex={1}>
         <Stack gap={15}>
           <Box>
             <Text {...text.label} mb={7}>
               WHAT YOU SAID
             </Text>
-            <MarkedTranscript
-              segments={recording.segments}
-              onSelectSuggestion={setOpenSuggestionId}
-            />
+            <MarkedTranscript spans={spans} onSelectSuggestion={openSheet} />
           </Box>
 
           {hasSuggestions ? (
@@ -82,6 +147,9 @@ export function SpeechRecordingView({ recording }: SpeechRecordingViewProps) {
               </Text>
               <Stack gap={0}>
                 {recording.suggestions.map((suggestion) => {
+                  const swapped = keepRows.find(
+                    ({ suggestionId }) => suggestionId === suggestion.id,
+                  );
                   const [firstAlternative, ...rest] = suggestion.alternatives;
                   return (
                     <Group
@@ -92,7 +160,7 @@ export function SpeechRecordingView({ recording }: SpeechRecordingViewProps) {
                       wrap="nowrap"
                       gap={11}
                       py={11}
-                      onClick={() => setOpenSuggestionId(suggestion.id)}
+                      onClick={() => openSheet(suggestion.id)}
                       style={{
                         borderBottom: "1px solid rgba(0,0,0,.07)",
                         cursor: "pointer",
@@ -102,7 +170,7 @@ export function SpeechRecordingView({ recording }: SpeechRecordingViewProps) {
                           {suggestion.original}
                         </Text>
                         <Text {...text.displaySm} mt={3}>
-                          {firstAlternative?.phrase}
+                          {swapped?.phrase ?? firstAlternative?.phrase}
                           {rest.length > 0 ? (
                             <Text {...text.meta} span ml={6}>
                               +{rest.length} more
@@ -110,6 +178,15 @@ export function SpeechRecordingView({ recording }: SpeechRecordingViewProps) {
                           ) : null}
                         </Text>
                       </Box>
+                      {swapped ? (
+                        <IconCheck
+                          size={15}
+                          style={{
+                            color: "var(--color-text-success)",
+                            flex: "none",
+                          }}
+                        />
+                      ) : null}
                       <IconChevronRight
                         size={15}
                         style={{ color: "rgba(0,0,0,.28)", flex: "none" }}
@@ -134,19 +211,20 @@ export function SpeechRecordingView({ recording }: SpeechRecordingViewProps) {
             h={50}
             radius={13}
             color="black"
-            disabled={selectedWords.size === 0}
-            onClick={handleSave}>
-            Save {selectedWords.size}{" "}
-            {selectedWords.size === 1 ? "phrase" : "phrases"} to practise
+            onClick={continueToKeep}>
+            Continue
           </Button>
         </ActionBar>
       ) : null}
 
       <SuggestionSheet
-        suggestion={openSuggestion}
-        selectedWords={selectedWords}
-        onToggleWord={toggleWord}
-        onClose={() => setOpenSuggestionId(null)}
+        isOpen={sheet?.isOpen ?? false}
+        suggestion={sheetSuggestion}
+        selectedIndex={sheet?.alternativeIndex ?? 0}
+        onSelect={selectAlternative}
+        onSwapIn={swapIn}
+        onKeepOriginal={keepOriginal}
+        onClose={closeSheet}
       />
     </>
   );
