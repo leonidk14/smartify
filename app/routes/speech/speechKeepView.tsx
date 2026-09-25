@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router";
+import { useFetcher, useNavigate } from "react-router";
 import {
   ActionIcon,
   Box,
@@ -11,8 +11,10 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { IconChevronLeft } from "@tabler/icons-react";
+import { AnimatedAppMark } from "../../lib/animatedAppMark";
 import { text } from "../../theme/typography";
 import { ActionBar } from "../practice/actionBar";
+import type { KeepSaveFailure } from "./keptWords";
 import { sharpenTranscript } from "./sharpenedTranscript";
 import { finishSpeechReview, type SpeechEntry } from "./speechApi";
 import { formatWordCount } from "./speechFormat";
@@ -28,6 +30,7 @@ export function SpeechKeepView({
   chosenAlternatives,
 }: SpeechKeepViewProps) {
   const navigate = useNavigate();
+  const saveFetcher = useFetcher<KeepSaveFailure>();
   const { keepRows } = sharpenTranscript({
     segments: recording.segments,
     suggestions: recording.suggestions,
@@ -39,6 +42,27 @@ export function SpeechKeepView({
   const [isFinishing, setIsFinishing] = useState(false);
 
   const hasRows = keepRows.length > 0;
+  const tickedRows = keepRows.filter(({ suggestionId }) =>
+    tickedIds.includes(suggestionId),
+  );
+  const isSaving = saveFetcher.state !== "idle";
+  const saveFailure = saveFetcher.data;
+  const failedWords =
+    saveFailure?.reason === "words" ? saveFailure.failedWords : [];
+
+  const saveTicked = () => {
+    void saveFetcher.submit(
+      {
+        words: tickedRows.map(({ vocabularyWord }) => vocabularyWord),
+        chosenAlternatives,
+      },
+      {
+        method: "post",
+        action: `/speech/${recording.id}/keep`,
+        encType: "application/json",
+      },
+    );
+  };
 
   const finishWithoutSaving = async () => {
     setIsFinishing(true);
@@ -55,6 +79,14 @@ export function SpeechKeepView({
     }
     void navigate("/speech", { replace: true });
   };
+
+  if (isSaving) {
+    return (
+      <AnimatedAppMark
+        caption={`Saving ${formatWordCount(tickedRows.length)}…`}
+      />
+    );
+  }
 
   return (
     <>
@@ -96,12 +128,27 @@ export function SpeechKeepView({
                         <Text {...text.bodyXs} c="dimmed" mt={3}>
                           instead of “{row.replaced}”
                         </Text>
+                        {failedWords.includes(row.vocabularyWord) ? (
+                          <Text
+                            {...text.bodyXs}
+                            c="var(--color-text-error)"
+                            mt={3}>
+                            Couldn’t save “{row.vocabularyWord}”
+                          </Text>
+                        ) : null}
                       </Box>
                     </Group>
                   </Checkbox.Card>
                 ))}
               </Stack>
             </Checkbox.Group>
+            {saveFailure ? (
+              <Text {...text.bodySm} c="var(--color-text-error)" mt={14}>
+                {saveFailure.reason === "words"
+                  ? "Try again, or untick the words that failed to finish without them."
+                  : "Your words are saved, but the review couldn’t be finished. Please try again."}
+              </Text>
+            ) : null}
           </>
         ) : (
           <Text {...text.bodySm} c="dimmed">
@@ -123,15 +170,15 @@ export function SpeechKeepView({
             Not this time
           </Button>
           {hasRows ? (
-            // TODO(speech): #08 — save the ticked headwords.
             <Button
               variant="filled"
               color="black"
               h={50}
               radius={13}
               flex={1}
-              disabled>
-              Save {formatWordCount(tickedIds.length)}
+              disabled={tickedRows.length === 0 || isFinishing}
+              onClick={saveTicked}>
+              Save {formatWordCount(tickedRows.length)}
             </Button>
           ) : null}
         </Group>
