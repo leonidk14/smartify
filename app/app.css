@@ -49,3 +49,27 @@ body > div {
 .swipe-track::-webkit-scrollbar {
   display: none;
 }
+
+/* :active can't be expressed via Mantine style props (they compile to inline
+   styles, which no stylesheet rule — :active included — can outrank), so the
+   background/border/color pair that changes on press lives here entirely
+   instead of being split between a Mantine prop and a class. */
+.speech-entry-btn {
+  background-color: var(--color-surface);
+  border: 1.5px solid rgba(0, 0, 0, 0.22);
+  color: rgba(0, 0, 0, 0.7);
+  transition:
+    background-color 220ms ease,
+    border-color 220ms ease,
+    color 220ms ease;
+}
+
+.speech-entry-btn:active {
+  background-color: var(--color-surface-inverse);
+  border-color: transparent;
+  color: var(--color-text-on-inverse);
+}
+
+.speech-entry-btn:active .speech-entry-btn-caption {
+  color: var(--color-text-on-inverse-dimmed);
+}

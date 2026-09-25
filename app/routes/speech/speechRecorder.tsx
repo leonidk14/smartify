@@ -1,119 +1,30 @@
-import { Box, Button, Center, Flex, Text, Textarea } from "@mantine/core";
-import { IconMicrophoneOff, IconRefresh } from "@tabler/icons-react";
-import { text, textCss } from "../../theme/typography";
+import { Box, Button, Flex, Text } from "@mantine/core";
+import { text } from "../../theme/typography";
 import { formatDuration } from "./speechFormat";
 import { LevelBars } from "./levelBars";
-
-type RecorderStatus = "awaitingPermission" | "recording" | "error";
+import {
+  FLAT_RECORDER_LEVELS,
+  RECORDER_PREVIEW_LEVELS,
+} from "./speechFixtures";
+import type { ListeningStatus } from "./useSpeechRecorder";
 
 interface SpeechRecorderProps {
-  isSupported: boolean;
-  status: RecorderStatus;
+  status: ListeningStatus;
   elapsedSeconds: number;
-  levels: number[];
-  errorMessage?: string;
-  typedValue?: string;
-  onTypedValueChange?: (value: string) => void;
   onStop: () => void;
-  onCancel: () => void;
 }
 
-const STATUS_LABEL: Record<RecorderStatus, string> = {
-  awaitingPermission: "WAITING FOR THE MIC",
+const STATUS_LABEL: Record<ListeningStatus, string> = {
+  starting: "WAITING FOR THE MIC",
   recording: "RECORDING",
-  error: "",
+  finishing: "READING IT BACK",
 };
 
 export function SpeechRecorder({
-  isSupported,
   status,
   elapsedSeconds,
-  levels,
-  errorMessage,
-  typedValue = "",
-  onTypedValueChange,
   onStop,
-  onCancel,
 }: SpeechRecorderProps) {
-  if (!isSupported) {
-    return (
-      <Flex direction="column" p={16} gap={20} flex={1}>
-        <Flex direction="column" flex={1} gap={16} justify="center">
-          <Text {...text.displaySm}>Type what you&apos;d say</Text>
-          <Text {...text.bodyXs} c="dimmed">
-            Speech recognition isn&apos;t available here — type it instead and
-            we&apos;ll analyze the wording the same way.
-          </Text>
-          <Textarea
-            bd="1.5px dashed rgba(0,0,0,.22)"
-            bdrs={14}
-            styles={{ input: { padding: "14px 15px", ...textCss.body } }}
-            variant="unstyled"
-            placeholder="Say something, then make it sharper…"
-            autosize
-            minRows={5}
-            value={typedValue}
-            onChange={(event) =>
-              onTypedValueChange?.(event.currentTarget.value)
-            }
-            data-autofocus
-          />
-        </Flex>
-        <Button
-          fullWidth
-          h={52}
-          radius={14}
-          color="black"
-          disabled={!typedValue.trim()}
-          onClick={onStop}>
-          Continue
-        </Button>
-      </Flex>
-    );
-  }
-
-  if (status === "error") {
-    return (
-      <Flex direction="column" p={16} gap={20} flex={1}>
-        <Flex
-          direction="column"
-          flex={1}
-          align="center"
-          justify="center"
-          gap={16}
-          ta="center">
-          <Center
-            w={58}
-            h={58}
-            bg="var(--color-surface-error-2)"
-            style={{ borderRadius: "50%" }}>
-            <IconMicrophoneOff
-              size={26}
-              style={{ color: "var(--color-text-error-strong)" }}
-            />
-          </Center>
-          <Box>
-            <Text {...text.displaySm}>Couldn&apos;t reach the microphone</Text>
-            <Text {...text.bodyXs} c="dimmed" mt={6}>
-              {errorMessage ??
-                "Check the app has microphone permission and try again."}
-            </Text>
-          </Box>
-        </Flex>
-        <Button
-          fullWidth
-          h={52}
-          radius={14}
-          variant="outline"
-          color="dark"
-          leftSection={<IconRefresh size={16} />}
-          onClick={onCancel}>
-          Back to Speech
-        </Button>
-      </Flex>
-    );
-  }
-
   return (
     <Flex direction="column" p={16} gap={0} flex={1}>
       <Flex
@@ -129,7 +40,13 @@ export function SpeechRecorder({
           style={{ letterSpacing: "-1px" }}>
           {formatDuration(elapsedSeconds)}
         </Text>
-        <LevelBars levels={levels} />
+        <LevelBars
+          levels={
+            status === "recording"
+              ? RECORDER_PREVIEW_LEVELS
+              : FLAT_RECORDER_LEVELS
+          }
+        />
         <Text {...text.meta} style={{ letterSpacing: ".6px" }}>
           {STATUS_LABEL[status]}
         </Text>
@@ -140,9 +57,10 @@ export function SpeechRecorder({
           h={52}
           radius={14}
           color="black"
-          disabled={status !== "recording"}
+          disabled={status === "starting"}
+          loading={status === "finishing"}
           onClick={onStop}>
-          Stop and analyze it
+          Stop and read it back
         </Button>
       </Box>
     </Flex>

@@ -1,39 +1,55 @@
 import { Text } from "@mantine/core";
 import { text } from "../../theme/typography";
-import type { TranscriptSegment } from "./speechTypes";
+import type { TranscriptSpan } from "./sharpenedTranscript";
+
+const MARK_COLORS = {
+  suggested: {
+    background: "var(--color-surface-warning)",
+    underline: "var(--color-warning)",
+  },
+  swapped: {
+    background: "var(--color-surface-success)",
+    underline: "var(--color-text-success)",
+  },
+};
 
 interface MarkedTranscriptProps {
-  segments: TranscriptSegment[];
-  onSelectSuggestion: (suggestionId: string) => void;
+  spans: TranscriptSpan[];
+  onSelectSuggestion?: (suggestionId: string) => void;
 }
 
 export function MarkedTranscript({
-  segments,
+  spans,
   onSelectSuggestion,
 }: MarkedTranscriptProps) {
   return (
     <Text {...text.proseSm}>
-      {segments.map((segment, index) => {
-        const suggestionId = segment.suggestionId;
-        if (suggestionId === null) {
+      {spans.map((span, index) => {
+        if (span.kind === "plain") {
           return (
             <Text key={index} span>
-              {segment.text}
+              {span.text}
             </Text>
           );
         }
+        const { suggestionId } = span;
+        const colors = MARK_COLORS[span.kind];
         return (
           <Text
             key={index}
             span
             data-testid={`transcript-mark-${suggestionId}`}
-            onClick={() => onSelectSuggestion(suggestionId)}
-            bg="var(--color-surface-warning)"
+            onClick={
+              onSelectSuggestion === undefined
+                ? undefined
+                : () => onSelectSuggestion(suggestionId)
+            }
+            bg={colors.background}
             style={{
-              borderBottom: "2px solid var(--color-warning)",
-              cursor: "pointer",
+              borderBottom: `2px solid ${colors.underline}`,
+              cursor: onSelectSuggestion === undefined ? undefined : "pointer",
             }}>
-            {segment.text}
+            {span.text}
           </Text>
         );
       })}

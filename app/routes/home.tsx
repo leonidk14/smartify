@@ -1,12 +1,11 @@
 import { useMemo } from "react";
 import type { Route } from "./+types/home";
 import { readTextField } from "../lib/formData";
-import { lookupWord } from "./wordSearch/actions";
+import { ensureInVocabulary } from "./wordSearch/ensureInVocabulary";
 import { toKey } from "./wordSearch/normalize";
 import {
   deleteWord,
   readVocabulary,
-  saveWord,
   setPracticeLater,
   type VocabularyEntry,
 } from "./wordSearch/vocabulary";
@@ -49,47 +48,28 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
   });
 
   const { store } = await readVocabulary();
+  const ensured = await ensureInVocabulary({ word: searchItem, store });
 
-  const preCached = store[toKey(searchItem)];
-  if (preCached && preCached.groups.length > 0) {
-    return toCachedResult(preCached, toKey(searchItem));
+  if (ensured.kind === "existing") {
+    return toCachedResult(ensured.entry, ensured.key);
   }
 
-  const result = await lookupWord(searchItem);
-
-  if (result.dictionary.groups.length === 0) {
+  if (ensured.kind === "notFound") {
     return {
-      ...result,
+      ...ensured.lookup,
       originalSearchItem: searchItem,
       shouldPracticeLater: false,
     };
   }
 
-  const normalizedDisplay = (result.dictionary.normalized || searchItem)
-    .trim()
-    .toLowerCase();
-  const key = toKey(normalizedDisplay);
-
-  const existing = store[key];
-  if (existing && existing.groups.length > 0) {
-    return toCachedResult(existing, key);
-  }
-
-  const saved = await saveWord({
-    word: key,
-    display: normalizedDisplay,
-    typed: searchItem,
-    groups: result.dictionary.groups,
-  });
-
   return {
-    ...result,
-    dictionary: { ...result.dictionary, groups: saved.groups },
+    ...ensured.lookup,
+    dictionary: { ...ensured.lookup.dictionary, groups: ensured.entry.groups },
     originalSearchItem: searchItem,
-    normalizedDisplay,
+    normalizedDisplay: ensured.display,
     shouldPracticeLater: false,
-    isPublic: saved.isPublic,
-    key,
+    isPublic: ensured.entry.isPublic,
+    key: ensured.key,
   };
 }
 
