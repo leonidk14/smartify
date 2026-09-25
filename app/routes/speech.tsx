@@ -1,14 +1,14 @@
 import { SpeechList } from "./speech/speechList";
-import { SPEECH_FIXTURES } from "./speech/speechFixtures";
+import { listSpeechEntries } from "./speech/speechApi";
 
-export function clientLoader() {
-  return SPEECH_FIXTURES;
+export async function clientLoader() {
+  return listSpeechEntries();
 }
 
 export default function SpeechRoute({
   loaderData,
 }: {
-  loaderData: ReturnType<typeof clientLoader>;
+  loaderData: Awaited<ReturnType<typeof clientLoader>>;
 }) {
   return <SpeechList recordings={loaderData} />;
 }

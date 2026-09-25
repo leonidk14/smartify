@@ -48,6 +48,7 @@
     "@storybook/addon-vitest": "^10.5.7",
     "@storybook/react-vite": "^10.5.7",
     "@tailwindcss/vite": "^4.2.2",
+    "@types/dom-speech-recognition": "^0.0.12",
     "@types/node": "^22",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",

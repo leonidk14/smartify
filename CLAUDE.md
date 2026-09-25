@@ -258,6 +258,13 @@ part of the ref rule.
 - **Don't store values in refs.** `useRef` for DOM nodes / imperative handles is
   fine; using a ref as a mutable value store to avoid re-renders is not (rare edge
   cases only).
+- **Import a constant where it's read; don't prop-drill it.** A fixed value (a
+  limit, a flag) that never varies per caller belongs in the module that uses it,
+  imported directly — not threaded through props from a parent that only forwards
+  it. Reserve props for values that actually vary per render or per caller (state,
+  computed values, callbacks). If a container and the view it renders both need the
+  same constant for different reasons (validation vs. display), each imports it
+  independently rather than one passing it to the other.
 - **Always brace `if` bodies.** Even a single-line guard clause with a pure return
   gets curly braces — write `if (a) { return null; }`, never `if (a) return null;`.
   Applies equally to `continue` / `break` / `throw` guard clauses.
