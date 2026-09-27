@@ -1,34 +1,18 @@
-// Mirrors the shapes in app/routes/speech/speechTypes.ts (SuggestionAlternative,
-// SpeechSuggestion, TranscriptSegment) — Deno functions can't import from app/,
-// so they're duplicated here.
-
-export interface RawAlternative {
-  phrase: string;
-  register: string;
-  inSentence: string;
-  vocabularyWord: string;
-}
+import type {
+  SpeechSuggestion,
+  SuggestionAlternative,
+  TranscriptSegment,
+} from "../_shared/speechTypes.ts";
 
 export interface RawSuggestion {
   original: string;
   occurrenceIndex: number;
-  alternatives: RawAlternative[];
-}
-
-export interface AnchoredSuggestion {
-  id: string;
-  original: string;
-  alternatives: RawAlternative[];
-}
-
-export interface TranscriptSegment {
-  text: string;
-  suggestionId: string | null;
+  alternatives: SuggestionAlternative[];
 }
 
 export interface AnchoringResult {
   segments: TranscriptSegment[];
-  suggestions: AnchoredSuggestion[];
+  suggestions: SpeechSuggestion[];
   droppedCount: number;
 }
 
@@ -39,7 +23,7 @@ interface Anchor {
   start: number;
   end: number;
   original: string;
-  alternatives: RawAlternative[];
+  alternatives: SuggestionAlternative[];
 }
 
 function findOccurrences(transcript: string, original: string): number[] {
@@ -63,13 +47,13 @@ function overlaps(
   return a.start < b.end && b.start < a.end;
 }
 
-export function anchorSuggestions({
+function toAnchors({
   transcript,
   raw,
 }: {
   transcript: string;
   raw: RawSuggestion[];
-}): AnchoringResult {
+}): { anchors: Anchor[]; droppedCount: number } {
   const anchors: Anchor[] = [];
   let droppedCount = 0;
 
@@ -130,8 +114,20 @@ export function anchorSuggestions({
 
   anchors.sort((a, b) => a.start - b.start);
 
+  return { anchors, droppedCount };
+}
+
+export function anchorSuggestions({
+  transcript,
+  raw,
+}: {
+  transcript: string;
+  raw: RawSuggestion[];
+}): AnchoringResult {
+  const { anchors, droppedCount } = toAnchors({ transcript, raw });
+
   const segments: TranscriptSegment[] = [];
-  const suggestions: AnchoredSuggestion[] = [];
+  const suggestions: SpeechSuggestion[] = [];
   let cursor = 0;
 
   for (const [index, anchor] of anchors.entries()) {

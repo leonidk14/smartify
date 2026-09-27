@@ -2,24 +2,24 @@ import Anthropic from "npm:@anthropic-ai/sdk@0.110.0";
 import {
   buildTokenUsage,
   type PricingModel,
-  sumTokenUsage,
   type TokenUsage,
 } from "../_shared/usage.ts";
-import type { RawAlternative, RawSuggestion } from "./anchoring.ts";
-
-export type AnalysisSource = "haiku" | "sonnet" | "haiku+sonnet";
-
-export type AnalysisModel = "auto" | "haiku" | "sonnet";
+import type { RawSuggestion } from "./anchoring.ts";
 
 export type AnalysisOutcome =
   | { status: "ok"; suggestions: RawSuggestion[] }
   | { status: "reported-error"; reason: string }
+  | { status: "incomplete"; reason: string }
   | { status: "malformed"; reason: string };
 
 export interface Analysis {
   outcome: AnalysisOutcome;
   usage: TokenUsage;
-  source: AnalysisSource;
+}
+
+interface AnalysisResponse {
+  suggestions: RawSuggestion[];
+  error: string;
 }
 
 const ANALYSIS_SYSTEM_PROMPT =
@@ -89,125 +89,58 @@ const ANALYSIS_MODELS: Record<PricingModel, { id: string; maxTokens: number }> =
     sonnet: { id: "claude-sonnet-5", maxTokens: 4096 },
   };
 
-function toRawAlternative(value: unknown): RawAlternative | null {
-  if (typeof value !== "object" || value === null) {
-    return null;
-  }
-  const { phrase, register, inSentence, vocabularyWord } = value as Record<
-    string,
-    unknown
-  >;
-  if (
-    typeof phrase !== "string" ||
-    typeof register !== "string" ||
-    typeof inSentence !== "string" ||
-    typeof vocabularyWord !== "string"
-  ) {
-    return null;
-  }
-  return { phrase, register, inSentence, vocabularyWord };
-}
-
-function toRawSuggestion(value: unknown): RawSuggestion | null {
-  if (typeof value !== "object" || value === null) {
-    return null;
-  }
-  const { original, occurrenceIndex, alternatives } = value as Record<
-    string,
-    unknown
-  >;
-  if (
-    typeof original !== "string" ||
-    typeof occurrenceIndex !== "number" ||
-    !Array.isArray(alternatives)
-  ) {
-    return null;
-  }
-  const parsedAlternatives = alternatives.map(toRawAlternative);
-  if (parsedAlternatives.some((alternative) => alternative === null)) {
-    return null;
-  }
-  return {
-    original,
-    occurrenceIndex,
-    alternatives: parsedAlternatives.filter(
-      (alternative): alternative is RawAlternative => alternative !== null,
-    ),
-  };
-}
-
-export function parseAnalysisResponse(text: string): AnalysisOutcome {
-  let parsed: unknown;
+function parseAnalysisResponse(text: string): AnalysisOutcome {
+  let response: AnalysisResponse;
   try {
-    parsed = JSON.parse(text);
+    response = JSON.parse(text);
   } catch {
     return { status: "malformed", reason: "response is not valid JSON" };
   }
 
-  if (typeof parsed !== "object" || parsed === null) {
-    return { status: "malformed", reason: "response is not a JSON object" };
+  if (response.error.trim()) {
+    return { status: "reported-error", reason: response.error };
   }
 
-  const { suggestions, error } = parsed as Record<string, unknown>;
-
-  if (typeof error === "string" && error.trim()) {
-    return { status: "reported-error", reason: error };
-  }
-
-  if (!Array.isArray(suggestions)) {
-    return { status: "malformed", reason: '"suggestions" is not a list' };
-  }
-
-  const parsedSuggestions = suggestions.map(toRawSuggestion);
-  if (parsedSuggestions.some((suggestion) => suggestion === null)) {
-    return {
-      status: "malformed",
-      reason: "a suggestion is missing a field or has one of the wrong type",
-    };
-  }
-
-  return {
-    status: "ok",
-    suggestions: parsedSuggestions.filter(
-      (suggestion): suggestion is RawSuggestion => suggestion !== null,
-    ),
-  };
+  return { status: "ok", suggestions: response.suggestions };
 }
 
-async function runAnalysis({
+export async function analyzeTranscript({
   client,
-  pricing,
-  userContent,
+  transcript,
+  model,
 }: {
   client: Anthropic;
-  pricing: PricingModel;
-  userContent: string;
-}): Promise<{ outcome: AnalysisOutcome; usage: TokenUsage }> {
-  const { id, maxTokens } = ANALYSIS_MODELS[pricing];
+  transcript: string;
+  model: PricingModel;
+}): Promise<Analysis> {
+  const { id, maxTokens } = ANALYSIS_MODELS[model];
   const response = await client.messages.create({
     model: id,
     max_tokens: maxTokens,
     system: ANALYSIS_SYSTEM_PROMPT,
     output_config: { format: ANALYSIS_OUTPUT_FORMAT },
-    messages: [{ role: "user", content: userContent }],
+    messages: [
+      { role: "user", content: `<transcript>\n${transcript}\n</transcript>` },
+    ],
   });
 
   const usage = buildTokenUsage({
     inputTokens: response.usage.input_tokens,
     outputTokens: response.usage.output_tokens,
-    model: pricing,
+    model,
   });
 
-  // Structured output only guarantees the schema when the model finishes its
-  // turn; a truncated or refused response can be cut off mid-object.
+  // Structured output guarantees the schema only when the model finishes its
+  // turn, which is why parseAnalysisResponse can trust the shape past this
+  // check; a truncated or refused response can be cut off mid-object.
   if (
     response.stop_reason === "max_tokens" ||
     response.stop_reason === "refusal"
   ) {
     return {
       outcome: {
-        status: "malformed",
-        reason: `${pricing} stopped on ${response.stop_reason}`,
+        status: "incomplete",
+        reason: `${model} stopped on ${response.stop_reason}`,
       },
       usage,
     };
@@ -225,43 +158,4 @@ async function runAnalysis({
   }
 
   return { outcome: parseAnalysisResponse(textBlock.text), usage };
-}
-
-export async function analyzeTranscript({
-  client,
-  transcript,
-  model,
-}: {
-  client: Anthropic;
-  transcript: string;
-  model: AnalysisModel;
-}): Promise<Analysis> {
-  const userContent = `<transcript>\n${transcript}\n</transcript>`;
-
-  if (model === "sonnet") {
-    const sonnet = await runAnalysis({
-      client,
-      pricing: "sonnet",
-      userContent,
-    });
-    return { ...sonnet, source: "sonnet" };
-  }
-
-  const haiku = await runAnalysis({ client, pricing: "haiku", userContent });
-
-  if (model === "haiku" || haiku.outcome.status !== "reported-error") {
-    return { ...haiku, source: "haiku" };
-  }
-
-  console.warn(
-    `[sharpen] Haiku could not analyse the transcript, retrying with Sonnet: ${haiku.outcome.reason}`,
-  );
-
-  const sonnet = await runAnalysis({ client, pricing: "sonnet", userContent });
-
-  return {
-    outcome: sonnet.outcome,
-    usage: sumTokenUsage(haiku.usage, sonnet.usage),
-    source: "haiku+sonnet",
-  };
 }

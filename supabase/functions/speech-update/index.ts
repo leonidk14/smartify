@@ -3,27 +3,37 @@ import { serveFunction } from "../_shared/handler.ts";
 import {
   errorResponse,
   INTERNAL_ERROR,
+  isRecord,
   jsonResponse,
 } from "../_shared/http.ts";
 import { createUserClient } from "../_shared/supabase.ts";
 import type { SpeechRow } from "../_shared/speechRows.ts";
+import type { ChosenAlternatives } from "../_shared/speechTypes.ts";
 
-interface UpdateBody {
-  id?: unknown;
-  chosenAlternatives?: unknown;
+interface UpdateRequest {
+  id: string;
+  chosenAlternatives: ChosenAlternatives;
 }
 
-function isChosenAlternatives(
-  value: unknown,
-): value is Record<string, number> {
+function isChosenAlternatives(value: unknown): value is ChosenAlternatives {
   return (
-    typeof value === "object" &&
-    value !== null &&
-    !Array.isArray(value) &&
+    isRecord(value) &&
     Object.values(value).every(
       (index) =>
         typeof index === "number" && Number.isInteger(index) && index >= 0,
     )
+  );
+}
+
+function isUpdateRequest(body: unknown): body is UpdateRequest {
+  if (!isRecord(body)) {
+    return false;
+  }
+  const { id, chosenAlternatives } = body;
+  return (
+    typeof id === "string" &&
+    id.trim() !== "" &&
+    isChosenAlternatives(chosenAlternatives)
   );
 }
 
@@ -37,26 +47,21 @@ serveFunction(async (req) => {
     return errorResponse("Unauthorized", 401);
   }
 
-  let body: UpdateBody;
+  let body: unknown;
   try {
     body = await req.json();
   } catch {
     return errorResponse("Invalid JSON body");
   }
 
-  const { id, chosenAlternatives } = body;
-  if (
-    typeof id !== "string" ||
-    !id.trim() ||
-    !isChosenAlternatives(chosenAlternatives)
-  ) {
+  if (!isUpdateRequest(body)) {
     return errorResponse(
       "Expected { id: string, chosenAlternatives: { [suggestionId]: number } }",
     );
   }
 
   const changes: Pick<SpeechRow, "chosen_alternatives" | "reviewed_at"> = {
-    chosen_alternatives: chosenAlternatives,
+    chosen_alternatives: body.chosenAlternatives,
     reviewed_at: new Date().toISOString(),
   };
 
@@ -64,7 +69,7 @@ serveFunction(async (req) => {
   const { data, error } = await supabase
     .from("speeches")
     .update(changes)
-    .eq("id", id)
+    .eq("id", body.id)
     .select("id")
     .returns<Pick<SpeechRow, "id">[]>();
 
