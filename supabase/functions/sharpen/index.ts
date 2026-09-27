@@ -8,8 +8,8 @@ import {
   isRecord,
   jsonResponse,
 } from "../_shared/http.ts";
-import type { PricingModel, TokenUsage } from "../_shared/usage.ts";
-import { analyzeTranscript } from "./analysis.ts";
+import type { TokenUsage } from "../_shared/usage.ts";
+import { type AnalysisModel, analyzeTranscript } from "./analysis.ts";
 import { anchorSuggestions, type RawSuggestion } from "./anchoring.ts";
 import { sharpenMock } from "./mock.ts";
 
@@ -81,8 +81,8 @@ serveFunction(async (req) => {
 
   const { transcript } = body;
 
-  // "real" and "haiku" analyse with Haiku, "sonnet" with Sonnet. Any other
-  // value stays mock so the default never spends tokens.
+  // "real" runs Haiku with a Sonnet retry; "haiku"/"sonnet" pin one model.
+  // Any other value stays mock so the default never spends tokens.
   const sharpenMode = (Deno.env.get("SHARPEN_MODE") ?? "").toLowerCase();
   if (
     sharpenMode !== "real" &&
@@ -98,9 +98,9 @@ serveFunction(async (req) => {
     });
   }
 
-  const model: PricingModel = sharpenMode === "sonnet" ? "sonnet" : "haiku";
+  const model: AnalysisModel = sharpenMode === "real" ? "auto" : sharpenMode;
   const client = new Anthropic({ apiKey: requireEnv("ANTHROPIC_API_KEY") });
-  const { outcome, usage } = await analyzeTranscript({
+  const { outcome, usage, source } = await analyzeTranscript({
     client,
     transcript,
     model,
@@ -108,7 +108,7 @@ serveFunction(async (req) => {
 
   if (outcome.status !== "ok") {
     console.error(
-      `[sharpen] (${model}) — ${
+      `[sharpen] (${source}) — ${
         formatUsage(usage)
       } failed, ${outcome.status}: ${outcome.reason}`,
     );
@@ -119,6 +119,6 @@ serveFunction(async (req) => {
     transcript,
     raw: outcome.suggestions,
     usage,
-    source: model,
+    source,
   });
 });
