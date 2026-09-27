@@ -396,10 +396,11 @@ flag, since each guards a different cost.
 `sonnet` pins generation to Sonnet only, and `haiku` pins it to Haiku only.
 Any other value (or unset) is still mock.
 
-`SHARPEN_MODE` is the same kind of model selector, matched the same way, but
-without a fallback: `real` and `haiku` analyse with Haiku, `sonnet` with Sonnet,
-and a failed analysis is returned as an error rather than retried on the other
-model. Any other value (or unset) is mock.
+`SHARPEN_MODE` is the same kind of model selector, matched the same way: `real`
+analyses with Haiku and retries once on Sonnet only when Haiku reports an error
+itself (the response's `source` is then `haiku+sonnet`, with both calls' usage
+summed), `haiku` and `sonnet` pin that one model, and any other value (or unset)
+is mock.
 
 ## README screenshots
 
