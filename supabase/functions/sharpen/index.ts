@@ -5,17 +5,30 @@ import { serveFunction } from "../_shared/handler.ts";
 import {
   errorResponse,
   INTERNAL_ERROR,
+  isRecord,
   jsonResponse,
 } from "../_shared/http.ts";
-import type { TokenUsage } from "../_shared/usage.ts";
-import { type AnalysisModel, analyzeTranscript } from "./analysis.ts";
+import type { PricingModel, TokenUsage } from "../_shared/usage.ts";
+import { analyzeTranscript } from "./analysis.ts";
 import { anchorSuggestions, type RawSuggestion } from "./anchoring.ts";
 import { sharpenMock } from "./mock.ts";
 
 const MAX_TRANSCRIPT_CHARACTERS = 500;
 
-interface SharpenBody {
-  transcript?: unknown;
+interface SharpenRequest {
+  transcript: string;
+}
+
+function isSharpenRequest(body: unknown): body is SharpenRequest {
+  if (!isRecord(body)) {
+    return false;
+  }
+  const { transcript } = body;
+  return (
+    typeof transcript === "string" &&
+    transcript.trim() !== "" &&
+    transcript.length <= MAX_TRANSCRIPT_CHARACTERS
+  );
 }
 
 function formatUsage(usage: TokenUsage): string {
@@ -55,24 +68,21 @@ serveFunction(async (req) => {
     return errorResponse("Unauthorized", 401);
   }
 
-  let body: SharpenBody;
+  let body: unknown;
   try {
     body = await req.json();
   } catch {
     return errorResponse("Invalid JSON body");
   }
 
-  const { transcript } = body;
-  if (
-    typeof transcript !== "string" ||
-    !transcript.trim() ||
-    transcript.length > MAX_TRANSCRIPT_CHARACTERS
-  ) {
+  if (!isSharpenRequest(body)) {
     return errorResponse("Expected { transcript: string }");
   }
 
-  // "real" runs Haiku with a Sonnet retry; "haiku"/"sonnet" pin one model.
-  // Any other value stays mock so the default never spends tokens.
+  const { transcript } = body;
+
+  // "real" and "haiku" analyse with Haiku, "sonnet" with Sonnet. Any other
+  // value stays mock so the default never spends tokens.
   const sharpenMode = (Deno.env.get("SHARPEN_MODE") ?? "").toLowerCase();
   if (
     sharpenMode !== "real" &&
@@ -88,9 +98,9 @@ serveFunction(async (req) => {
     });
   }
 
-  const model: AnalysisModel = sharpenMode === "real" ? "auto" : sharpenMode;
+  const model: PricingModel = sharpenMode === "sonnet" ? "sonnet" : "haiku";
   const client = new Anthropic({ apiKey: requireEnv("ANTHROPIC_API_KEY") });
-  const { outcome, usage, source } = await analyzeTranscript({
+  const { outcome, usage } = await analyzeTranscript({
     client,
     transcript,
     model,
@@ -98,7 +108,7 @@ serveFunction(async (req) => {
 
   if (outcome.status !== "ok") {
     console.error(
-      `[sharpen] (${source}) — ${
+      `[sharpen] (${model}) — ${
         formatUsage(usage)
       } failed, ${outcome.status}: ${outcome.reason}`,
     );
@@ -109,6 +119,6 @@ serveFunction(async (req) => {
     transcript,
     raw: outcome.suggestions,
     usage,
-    source,
+    source: model,
   });
 });

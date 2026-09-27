@@ -1,11 +1,6 @@
 import { buildTokenUsage, type TokenUsage } from "../_shared/usage.ts";
 import type { RawSuggestion } from "./anchoring.ts";
 
-// Mirrors the three suggestions on STANDUP_RECORDING in
-// app/routes/speech/speechFixtures.ts — Deno functions can't import from
-// app/, so they're duplicated here. The mock doesn't read the transcript at
-// all; anchoring is what decides whether these phrases actually occur in
-// whatever the caller typed, exactly as it will for real model output.
 const MOCK_SUGGESTIONS: RawSuggestion[] = [
   {
     original: "really wanted to do",

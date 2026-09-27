@@ -1,11 +1,17 @@
+import type {
+  ChosenAlternatives,
+  SpeechSuggestion,
+  TranscriptSegment,
+} from "./speechTypes.ts";
+
 export interface SpeechRow {
   id: string;
   owner: string;
   title: string;
   transcript: string;
-  segments: unknown;
-  suggestions: unknown;
-  chosen_alternatives: unknown;
+  segments: TranscriptSegment[];
+  suggestions: SpeechSuggestion[];
+  chosen_alternatives: ChosenAlternatives;
   duration_seconds: number | null;
   word_count: number;
   reviewed_at: string | null;
@@ -16,9 +22,9 @@ export interface SpeechEntry {
   id: string;
   title: string;
   transcript: string;
-  segments: unknown;
-  suggestions: unknown;
-  chosenAlternatives: unknown;
+  segments: TranscriptSegment[];
+  suggestions: SpeechSuggestion[];
+  chosenAlternatives: ChosenAlternatives;
   durationSeconds: number | null;
   wordCount: number;
   reviewedAt: string | null;
