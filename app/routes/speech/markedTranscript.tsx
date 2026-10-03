@@ -25,7 +25,7 @@ export function MarkedTranscript({
   return (
     <Text {...text.proseSm}>
       {spans.map((span, index) => {
-        if (span.kind === "plain") {
+        if (span.type === "plain") {
           return (
             <Text key={index} span>
               {span.text}
@@ -33,7 +33,7 @@ export function MarkedTranscript({
           );
         }
         const { suggestionId } = span;
-        const colors = MARK_COLORS[span.kind];
+        const colors = MARK_COLORS[span.type];
         return (
           <Text
             key={index}

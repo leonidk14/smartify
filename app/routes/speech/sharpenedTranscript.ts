@@ -5,8 +5,8 @@ import type {
 } from "./speechTypes";
 
 export type TranscriptSpan =
-  | { kind: "plain"; text: string }
-  | { kind: "suggested" | "swapped"; text: string; suggestionId: string };
+  | { type: "plain"; text: string }
+  | { type: "suggested" | "swapped"; text: string; suggestionId: string };
 
 export interface KeepRow {
   suggestionId: string;
@@ -38,7 +38,7 @@ export function sharpenTranscript({
         ? undefined
         : suggestions.find(({ id }) => id === segment.suggestionId);
     if (suggestion === undefined) {
-      spans.push({ kind: "plain", text: segment.text });
+      spans.push({ type: "plain", text: segment.text });
       continue;
     }
 
@@ -49,7 +49,7 @@ export function sharpenTranscript({
         : suggestion.alternatives[chosenIndex];
     if (chosen === undefined) {
       spans.push({
-        kind: "suggested",
+        type: "suggested",
         text: segment.text,
         suggestionId: suggestion.id,
       });
@@ -57,7 +57,7 @@ export function sharpenTranscript({
     }
 
     spans.push({
-      kind: "swapped",
+      type: "swapped",
       text: chosen.phrase,
       suggestionId: suggestion.id,
     });
