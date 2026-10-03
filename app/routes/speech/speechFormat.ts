@@ -8,6 +8,10 @@ export function formatWordCount(count: number): string {
   return `${count} ${count === 1 ? "word" : "words"}`;
 }
 
+export function formatRecordingCount(count: number): string {
+  return `${count} ${count === 1 ? "recording" : "recordings"}`;
+}
+
 export function formatRecordingDate(createdAt: string): string {
   const date = new Date(createdAt);
   const now = new Date();

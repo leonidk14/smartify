@@ -25,6 +25,7 @@ import {
 import { text } from "../theme/typography";
 import { supabase } from "../lib/supabaseClient";
 import { readVocabulary } from "./wordSearch/vocabulary";
+import { invalidateSpeechEntries } from "./speech/speechApi";
 import { IS_SPEECH_ENABLED } from "../featureFlags";
 
 const TOP_LEVEL_PATHS: string[] = (IS_SPEECH_ENABLED as boolean)
@@ -96,6 +97,7 @@ export default function Layout() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_IN" || event === "SIGNED_OUT") {
+        invalidateSpeechEntries();
         void revalidator.revalidate();
       }
     });
