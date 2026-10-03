@@ -23,6 +23,7 @@ import {
   IconX,
 } from "@tabler/icons-react";
 import { text } from "../theme/typography";
+import { useAuth } from "../lib/authContext";
 import { supabase } from "../lib/supabaseClient";
 import { readVocabulary } from "./wordSearch/vocabulary";
 import { invalidateSpeechEntries } from "./speech/speechApi";
@@ -88,6 +89,7 @@ export default function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
   const revalidator = useRevalidator();
+  const { isSignedIn } = useAuth();
 
   useEffect(() => {
     const {
@@ -192,15 +194,19 @@ export default function Layout() {
                   </Group>
                 ),
               },
-              {
-                value: "/speech",
-                label: (
-                  <Group gap={7} justify="center" wrap="nowrap">
-                    <IconMicrophone size={16} />
-                    <span>Speech</span>
-                  </Group>
-                ),
-              },
+              ...(isSignedIn
+                ? [
+                    {
+                      value: "/speech",
+                      label: (
+                        <Group gap={7} justify="center" wrap="nowrap">
+                          <IconMicrophone size={16} />
+                          <span>Speech</span>
+                        </Group>
+                      ),
+                    },
+                  ]
+                : []),
               {
                 value: "/practice",
                 label: (
