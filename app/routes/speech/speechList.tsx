@@ -1,5 +1,15 @@
-import { Link } from "react-router";
-import { Box, Divider, Flex, Group, Stack, Text, Title } from "@mantine/core";
+import { Suspense } from "react";
+import { Await, Link } from "react-router";
+import {
+  Box,
+  Divider,
+  Flex,
+  Group,
+  Skeleton,
+  Stack,
+  Text,
+  Title,
+} from "@mantine/core";
 import {
   IconChevronRight,
   IconKeyboard,
@@ -9,13 +19,16 @@ import { text } from "../../theme/typography";
 import { MAX_DURATION_SECONDS } from "./speechConstants";
 import {
   formatDuration,
+  formatRecordingCount,
   formatRecordingDate,
   formatWordCount,
 } from "./speechFormat";
 import type { SpeechEntrySummary } from "./speechApi";
 
+const COUNT_LINE_PLACEHOLDER = " ";
+
 interface SpeechListProps {
-  recordings: SpeechEntrySummary[];
+  recordings: Promise<SpeechEntrySummary[]>;
 }
 
 interface CompactEntryButtonProps {
@@ -53,14 +66,88 @@ function CompactEntryButton({
   );
 }
 
+function RecordingsLoading() {
+  return (
+    <Stack gap={0}>
+      <Group flex={1} gap={12} py={11}>
+        <Skeleton height={24} radius="xl" />
+        <Skeleton height={12} mt={2} radius="xl" />
+      </Group>
+      <Divider />
+      <Group flex={1} gap={12} py={11}>
+        <Skeleton height={24} radius="xl" />
+        <Skeleton height={12} mt={2} radius="xl" />
+      </Group>
+      <Divider />
+      <Group flex={1} gap={12} py={11}>
+        <Skeleton height={24} radius="xl" />
+        <Skeleton height={12} mt={2} radius="xl" />
+      </Group>
+    </Stack>
+  );
+}
+
+function RecordingsLoadError() {
+  return (
+    <Text {...text.bodyXs} c="dimmed" ta="center" py={16}>
+      Couldn&apos;t load your recordings — check your connection.
+    </Text>
+  );
+}
+
+interface EarlierRecordingsProps {
+  recordings: SpeechEntrySummary[];
+}
+function EarlierRecordings({ recordings }: EarlierRecordingsProps) {
+  if (recordings.length === 0) {
+    return null;
+  }
+
+  return (
+    <Stack gap={0}>
+      {recordings.map((recording, index) => (
+        <Box key={recording.id}>
+          {index > 0 ? <Divider /> : null}
+          <Link
+            to={`/speech/${recording.id}`}
+            style={{
+              display: "block",
+              textDecoration: "none",
+              color: "inherit",
+            }}>
+            <Group align="center" wrap="nowrap" gap={12} py={11}>
+              <Box flex={1} miw={0}>
+                <Text {...text.displaySm}>{recording.title}</Text>
+                <Text {...text.meta} mt={2}>
+                  {formatRecordingDate(recording.createdAt)} ·{" "}
+                  {recording.durationSeconds !== null
+                    ? formatDuration(recording.durationSeconds)
+                    : formatWordCount(recording.wordCount)}
+                </Text>
+              </Box>
+              <IconChevronRight
+                size={15}
+                style={{ color: "rgba(0,0,0,.28)", flex: "none" }}
+              />
+            </Group>
+          </Link>
+        </Box>
+      ))}
+    </Stack>
+  );
+}
+
 export function SpeechList({ recordings }: SpeechListProps) {
   return (
     <Stack gap={18} p={20} pb={96}>
       <Box>
         <Title order={1}>Speech</Title>
         <Text {...text.meta} mt={5}>
-          {recordings.length}{" "}
-          {recordings.length === 1 ? "recording" : "recordings"}
+          <Suspense fallback={COUNT_LINE_PLACEHOLDER}>
+            <Await resolve={recordings} errorElement={COUNT_LINE_PLACEHOLDER}>
+              {(loaded) => formatRecordingCount(loaded.length)}
+            </Await>
+          </Suspense>
         </Text>
       </Box>
 
@@ -88,43 +175,16 @@ export function SpeechList({ recordings }: SpeechListProps) {
         </Group>
       </Box>
 
-      {recordings.length > 0 ? (
-        <Box>
-          <Text {...text.label} mb={8}>
-            EARLIER
-          </Text>
-          <Stack gap={0}>
-            {recordings.map((recording, index) => (
-              <Box key={recording.id}>
-                {index > 0 ? <Divider /> : null}
-                <Link
-                  to={`/speech/${recording.id}`}
-                  style={{
-                    display: "block",
-                    textDecoration: "none",
-                    color: "inherit",
-                  }}>
-                  <Group align="center" wrap="nowrap" gap={12} py={11}>
-                    <Box flex={1} miw={0}>
-                      <Text {...text.displaySm}>{recording.title}</Text>
-                      <Text {...text.meta} mt={2}>
-                        {formatRecordingDate(recording.createdAt)} ·{" "}
-                        {recording.durationSeconds !== null
-                          ? formatDuration(recording.durationSeconds)
-                          : formatWordCount(recording.wordCount)}
-                      </Text>
-                    </Box>
-                    <IconChevronRight
-                      size={15}
-                      style={{ color: "rgba(0,0,0,.28)", flex: "none" }}
-                    />
-                  </Group>
-                </Link>
-              </Box>
-            ))}
-          </Stack>
-        </Box>
-      ) : null}
+      <Box>
+        <Text {...text.label} mt={12}>
+          EARLIER
+        </Text>
+        <Suspense fallback={<RecordingsLoading />}>
+          <Await resolve={recordings} errorElement={<RecordingsLoadError />}>
+            {(loaded) => <EarlierRecordings recordings={loaded} />}
+          </Await>
+        </Suspense>
+      </Box>
     </Stack>
   );
 }

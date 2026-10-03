@@ -24,11 +24,34 @@ export type SpeechEntrySummary = Omit<
   "transcript" | "segments" | "suggestions" | "chosenAlternatives"
 >;
 
-export async function listSpeechEntries(): Promise<SpeechEntrySummary[]> {
+// TODO: use proper lib (swr/tanstack query) if there are more use cases for proper caching
+// of fetched data
+let cachedEntries: Promise<SpeechEntrySummary[]> | null = null;
+
+async function fetchSpeechEntries(): Promise<SpeechEntrySummary[]> {
   const { entries } = await postFunction<{ entries: SpeechEntrySummary[] }>(
     "speech-list",
   );
   return entries;
+}
+
+export function listSpeechEntries(): Promise<SpeechEntrySummary[]> {
+  if (cachedEntries !== null) {
+    return cachedEntries;
+  }
+
+  const entries = fetchSpeechEntries();
+  cachedEntries = entries;
+  entries.catch(() => {
+    if (cachedEntries === entries) {
+      cachedEntries = null;
+    }
+  });
+  return entries;
+}
+
+export function invalidateSpeechEntries(): void {
+  cachedEntries = null;
 }
 
 export async function saveSpeechEntry(
@@ -48,6 +71,7 @@ export async function saveSpeechEntry(
     {},
     signal,
   );
+  invalidateSpeechEntries();
   return entry;
 }
 
@@ -61,6 +85,7 @@ export async function finishSpeechReview(input: {
   chosenAlternatives: ChosenAlternatives;
 }): Promise<void> {
   await postFunction("speech-update", input);
+  invalidateSpeechEntries();
 }
 
 export interface SpeechAnalysis {

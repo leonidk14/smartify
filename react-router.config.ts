@@ -14,4 +14,5 @@ export default {
     // to dist/ and precaches nothing. Re-enable once the plugin supports it.
     v8_viteEnvironmentApi: false,
   },
+  prerender: ["/", "/speech", "/practice"],
 } satisfies Config;
