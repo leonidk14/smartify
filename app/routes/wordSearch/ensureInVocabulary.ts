@@ -7,17 +7,17 @@ import {
 } from "./vocabulary";
 
 export type EnsuredWord =
-  | { kind: "existing"; key: string; entry: VocabularyEntry }
+  | { status: "existing"; key: string; entry: VocabularyEntry }
   | {
-      kind: "saved";
+      status: "saved";
       key: string;
       display: string;
       entry: VocabularyEntry;
       lookup: LookupResult;
     }
-  | { kind: "notFound"; lookup: LookupResult };
+  | { status: "notFound"; lookup: LookupResult };
 
-function findDefinedEntry({
+function findDefinedEntryInStore({
   store,
   key,
 }: {
@@ -36,21 +36,21 @@ export async function ensureInVocabulary({
   store: VocabularyStore;
 }): Promise<EnsuredWord> {
   const wordKey = toKey(word);
-  const vocabularyEntry = findDefinedEntry({ store, key: wordKey });
+  const vocabularyEntry = findDefinedEntryInStore({ store, key: wordKey });
   if (vocabularyEntry !== undefined) {
-    return { kind: "existing", key: wordKey, entry: vocabularyEntry };
+    return { status: "existing", key: wordKey, entry: vocabularyEntry };
   }
 
   const lookup = await lookupWord(word);
   if (lookup.dictionary.groups.length === 0) {
-    return { kind: "notFound", lookup };
+    return { status: "notFound", lookup };
   }
 
   const display = (lookup.dictionary.normalized || word).trim().toLowerCase();
   const key = toKey(display);
-  const normalizedEntry = findDefinedEntry({ store, key });
+  const normalizedEntry = findDefinedEntryInStore({ store, key });
   if (normalizedEntry !== undefined) {
-    return { kind: "existing", key, entry: normalizedEntry };
+    return { status: "existing", key, entry: normalizedEntry };
   }
 
   const entry = await saveWord({
@@ -59,5 +59,5 @@ export async function ensureInVocabulary({
     typed: word,
     groups: lookup.dictionary.groups,
   });
-  return { kind: "saved", key, display, entry, lookup };
+  return { status: "saved", key, display, entry, lookup };
 }

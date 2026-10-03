@@ -30,6 +30,18 @@ interface SheetState {
   isOpen: boolean;
 }
 
+function withoutChosenAlternative({
+  chosenAlternatives,
+  suggestionId,
+}: {
+  chosenAlternatives: ChosenAlternatives;
+  suggestionId: string;
+}): ChosenAlternatives {
+  return Object.fromEntries(
+    Object.entries(chosenAlternatives).filter(([id]) => id !== suggestionId),
+  );
+}
+
 export function SpeechRecordingView({ recording }: SpeechRecordingViewProps) {
   const navigate = useNavigate();
   const [chosenAlternatives, setChosenAlternatives] =
@@ -96,9 +108,7 @@ export function SpeechRecordingView({ recording }: SpeechRecordingViewProps) {
     }
     const { suggestionId } = sheet;
     setChosenAlternatives((prev) =>
-      Object.fromEntries(
-        Object.entries(prev).filter(([id]) => id !== suggestionId),
-      ),
+      withoutChosenAlternative({ chosenAlternatives: prev, suggestionId }),
     );
     closeSheet();
   };

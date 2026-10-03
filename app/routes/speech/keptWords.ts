@@ -27,7 +27,7 @@ async function keepWord({
 }): Promise<KeepOutcome> {
   try {
     const ensured = await ensureInVocabulary({ word, store });
-    if (ensured.kind === "notFound") {
+    if (ensured.status === "notFound") {
       return "notFound";
     }
     await setPracticeLater({ word: ensured.key, shouldPracticeLater: true });

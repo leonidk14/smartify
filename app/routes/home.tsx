@@ -50,11 +50,11 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
   const { store } = await readVocabulary();
   const ensured = await ensureInVocabulary({ word: searchItem, store });
 
-  if (ensured.kind === "existing") {
+  if (ensured.status === "existing") {
     return toCachedResult(ensured.entry, ensured.key);
   }
 
-  if (ensured.kind === "notFound") {
+  if (ensured.status === "notFound") {
     return {
       ...ensured.lookup,
       originalSearchItem: searchItem,

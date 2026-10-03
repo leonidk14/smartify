@@ -26,11 +26,8 @@ import { text } from "../theme/typography";
 import { supabase } from "../lib/supabaseClient";
 import { readVocabulary } from "./wordSearch/vocabulary";
 import { invalidateSpeechEntries } from "./speech/speechApi";
-import { IS_SPEECH_ENABLED } from "../featureFlags";
 
-const TOP_LEVEL_PATHS: string[] = (IS_SPEECH_ENABLED as boolean)
-  ? ["/", "/speech", "/practice"]
-  : ["/", "/practice"];
+const TOP_LEVEL_PATHS = ["/", "/speech", "/practice"];
 
 const MODE_LABELS: Record<string, string> = {
   word: "Guess the word",
@@ -195,19 +192,15 @@ export default function Layout() {
                   </Group>
                 ),
               },
-              ...((IS_SPEECH_ENABLED as boolean)
-                ? [
-                    {
-                      value: "/speech",
-                      label: (
-                        <Group gap={7} justify="center" wrap="nowrap">
-                          <IconMicrophone size={16} />
-                          <span>Speech</span>
-                        </Group>
-                      ),
-                    },
-                  ]
-                : []),
+              {
+                value: "/speech",
+                label: (
+                  <Group gap={7} justify="center" wrap="nowrap">
+                    <IconMicrophone size={16} />
+                    <span>Speech</span>
+                  </Group>
+                ),
+              },
               {
                 value: "/practice",
                 label: (
