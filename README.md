@@ -19,8 +19,8 @@ The app is a PWA which allows you to look up and store new words and phrases in 
 - **Look up a word or idiom.** Results are grouped by different meanings and are presented with examples. Words and idioms are presented in canonical form and misspellings are caught and fixed.
 - **Real sentences for practice.** Claude generates various sentences for practice by rephrasing the target word or idiom in real-world examples. Up to three different sentences are cached per meaning and rotated least-used-first. Haiku searches for and generates them; Sonnet picks up where Haiku can't.
 - **Real-world-like evaluation.** Claude is asked to evaluate the usage of the word or phrase with a focus on smoothness and naturalness, similar to how a native speaker would perceive it; proper usage in the context is weighted more than a 1-to-1 match with the original.
-- **Sharpen your speech.** Record or type what you would like to say and let Claude suggest how you can make it sound better and more polished.
-- **One reminder a day.** For those words and idioms marked for practice, the user gets a daily push notification reminder. 20:00 Europe/Berlin, five words/idioms marked for practice. The push notification opens a practice session without revealing what is being practiced.
+- **Sharpen your speech.** User can record or type what what needs to be said and let Claude suggest how it can be improved to sound better and more polished.
+- **One reminder a day.** For those words and idioms marked for practice, the user gets a daily push notification reminder. 20:00 Europe/Berlin, five words/idioms marked for practice. The push notification opens a practice session without revealing what is being practiced, but the words/idiom can be revealed if needed.
 - **Auth-gated usage.** Anyone can see the default 5 words in the vocabulary and practice them by guessing. The rest of the app is auth-gated: only signed-in users can use the practice involving Claude and add new words. Any word a user adds is only visible to that user.
 
 ## How practice sentences work
