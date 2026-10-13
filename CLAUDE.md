@@ -411,7 +411,7 @@ is mock.
 
 ## README screenshots
 
-The three images in the README live in `docs/screenshots/*.jpg`. They are cropped
+The four images in the README live in `docs/screenshots/*.jpg`. They are cropped
 from full-resolution phone captures by `scripts/crop-screenshots.sh` — macOS
 `sips` only, no dependencies. The script strips the top system status bar and the
 bottom Android navigation bar while keeping the app's own UI, calibrated for
@@ -429,7 +429,7 @@ To regenerate (the capture step is the user's — I can't drive the phone):
 
 1. The user takes fresh full-resolution screenshots on the device and drops them
    into `docs/screenshots/raw/`, reusing the filenames the README references
-   (`home.jpg`, `lookup.jpg`, `practice-sentence.jpg`).
+   (`home.jpg`, `lookup.jpg`, `practice-sentence.jpg`, `sharpen.jpg`).
 2. Run `./scripts/crop-screenshots.sh` to write the cropped versions.
 3. If the visible content changed (word counts, the looked-up word, its senses),
    update the matching `alt` text in the README table so it still describes the

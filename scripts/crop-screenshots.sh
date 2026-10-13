@@ -8,7 +8,7 @@
 #   1. Drop full-resolution phone screenshots into docs/screenshots/raw/
 #      (this device: 1080x2340 portrait, 3-button navigation bar). Keep the
 #      filenames the README references — home.jpg, lookup.jpg,
-#      practice-sentence.jpg.
+#      practice-sentence.jpg, sharpen.jpg.
 #   2. Run:  ./scripts/crop-screenshots.sh
 #   3. Cropped versions are written to docs/screenshots/ (the paths the README
 #      uses). Re-running is safe: it always crops from raw/, never in place, so

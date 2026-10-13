@@ -4,26 +4,41 @@
 
 ## Short summary
 
-The app is a PWA which allows you to look up and store new words and phrases in English. The user can practice the words by rebuilding sentences and using them in real context, while Claude provides the initial task and the context itself, and evaluates the result. The user gets daily push notification reminders about the practice.
+The app is a PWA which allows you to look up and store new words and phrases in English. The user can practice the words by rebuilding sentences and using new words and idioms in real context, while Claude provides the initial task and the context itself, and evaluates the result. The user gets daily push notification reminders about the practice.
 
 ## Screenshots
 
-|                                                                  Your words                                                                   |                                                                                 Look up a word                                                                                 |                                                                        Rebuild a sentence                                                                         |
-| :-------------------------------------------------------------------------------------------------------------------------------------------: | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------: |
-| <img src="docs/screenshots/home.jpg" alt="The saved word list: 96 words, 14 due today, and a button to start a practice session" width="260"> | <img src="docs/screenshots/lookup.jpg" alt="A lookup for &quot;to get along&quot;: a phrasal verb with three senses, each with a definition and a quoted example" width="260"> | <img src="docs/screenshots/practice-sentence.jpg" alt="Sentence practice: a rephrased sentence above an empty field to rewrite it in your own words" width="260"> |
+|                                                                  Your words                                                                   |                                                                                 Look up a word                                                                                 |                                                                        Rebuild a sentence                                                                         |                                                                                                               Sharpen your speech                                                                                                                |
+| :-------------------------------------------------------------------------------------------------------------------------------------------: | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------: | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
+| <img src="docs/screenshots/home.jpg" alt="The saved word list: 96 words, 14 due today, and a button to start a practice session" width="260"> | <img src="docs/screenshots/lookup.jpg" alt="A lookup for &quot;to get along&quot;: a phrasal verb with three senses, each with a definition and a quoted example" width="260"> | <img src="docs/screenshots/practice-sentence.jpg" alt="Sentence practice: a rephrased sentence above an empty field to rewrite it in your own words" width="260"> | <img src="docs/screenshots/sharpen.jpg" alt="Sharpen: a spoken sentence with three phrases underlined, and a sheet suggesting &quot;had a packed schedule yesterday&quot; in place of &quot;was busy the whole day yesterday&quot;" width="260"> |
 
 *design was inspired and largely implemented by Claude Design
 
 ## List of features
 
-- **Look up a word or phrase.** Different meanings are grouped by part of speech and are presented with examples. Misspellings are caught and each word/phrase is presented in its canonical form.
-- **Keep the ones worth keeping.** Any word user wants to practice later can be marked by hitting the **Practice later** button. Such words are the ones selected for the daily practice reminders.
-- **Three practice modes.** The user can simply try to guess a word by one of its meanings, rebuild a simplified sentence using the word or phrase selected for practice, or do both one after another in one go.
-- **Real sentences for practice.** Up to three different sentences are cached per meaning and rotated
-  least-used-first. Haiku searches for and generates them; Sonnet picks up where Haiku can't.
-- **Real-world-like evaluation.** Claude is asked to evaluate the usage of the word or phrase with a focus on smoothness and naturalness, similar to how a native speaker would perceive it; proper usage in the context is weighed more than a 1-to-1 match with the original.
-- **One reminder a day.** 20:00 Europe/Berlin, five words marked for practice. The push notification opens a practice session without revealing what is being practiced.
+- **Look up a word or idiom.** Results are grouped by different meanings and are presented with examples. Words and idioms are presented in canonical form and misspellings are caught and fixed.
+- **Real sentences for practice.** Claude generates various sentences for practice by rephrasing the target word or idiom in real-world examples. Up to three different sentences are cached per meaning and rotated least-used-first. Haiku searches for and generates them; Sonnet picks up where Haiku can't.
+- **Real-world-like evaluation.** Claude is asked to evaluate the usage of the word or phrase with a focus on smoothness and naturalness, similar to how a native speaker would perceive it; proper usage in the context is weighted more than a 1-to-1 match with the original.
+- **Sharpen your speech.** Record or type what you would like to say and let Claude suggest how you can make it sound better and more polished.
+- **One reminder a day.** For those words and idioms marked for practice, the user gets a daily push notification reminder. 20:00 Europe/Berlin, five words/idioms marked for practice. The push notification opens a practice session without revealing what is being practiced.
 - **Auth-gated usage.** Anyone can see the default 5 words in the vocabulary and practice them by guessing. The rest of the app is auth-gated: only signed-in users can use the practice involving Claude and add new words. Any word a user adds is only visible to that user.
+
+## How practice sentences work
+
+The core of the app is practising a new word or phrase by building a sentence with it, with the
+help of Claude. The loop:
+
+```mermaid
+flowchart TD
+    A["Input: a word + the meaning to practise<br/>"] --> B{"Cached sentence<br/>for this meaning?"}
+    B -- yes --> D
+    B -- no --> C["Claude finds a real published quotation<br/>(Haiku, then Sonnet as fallback)<br/>— writes its own only if none exists"]
+    C --> D["Rephrase in plain words,<br/>target word swapped for a highlighted phrase"]
+    D --> E["User rebuilds the sentence<br/>using the target word"]
+    E --> F["Claude grades the word's fit<br/>— sense + naturalness, 0–10"]
+    F -- "below 9.5" --> G["Minimal correction,<br/>changed spans highlighted"]
+    F -- "9.5 or above" --> H["Clean — no correction needed"]
+```
 
 ## Decisions & priorities
 
@@ -44,8 +59,8 @@ Some decisions I made along the way:
   iterated on the skeleton Claude built when fine-tuning the features.
 - **The building process:** most of my time goes into defining the goal and
   reviewing/iterating on the plan Claude Code came up with. After that, a lot of time goes into
-  reviewing and fine-tuning the code changes. The app is still in the MVP stage and has only 1 user
-  (me), so I didn't invest time into covering it with tests thoroughly since the app and its
+  reviewing and fine-tuning the code changes. The app is still in the MVP stage and has only 2 users, 
+  so I didn't invest time into covering it with tests thoroughly since the app and its
   behaviour change quite a lot — what exists is a thin browser smoke suite over the critical paths,
   run in CI on every pull request, rather than broad coverage. At the moment the focus is on getting
   value from the app and solving the problem now, rather than on perfect production readiness.
@@ -53,23 +68,6 @@ Some decisions I made along the way:
   produce a sentence. Results are cached to avoid repeat calls: a word you've already looked up is
   served from your saved vocabulary instead of a fresh lookup, and each meaning keeps up to three
   sentences, so practising a word again rarely triggers a fresh model call.
-
-## How practice sentences work
-
-The core of the app is practising a new word or phrase by building a sentence with it, with the
-help of Claude. The loop:
-
-```mermaid
-flowchart TD
-    A["Input: a word + the meaning to practise<br/>"] --> B{"Cached sentence<br/>for this meaning?"}
-    B -- yes --> D
-    B -- no --> C["Claude finds a real published quotation<br/>(Haiku, then Sonnet as fallback)<br/>— writes its own only if none exists"]
-    C --> D["Rephrase in plain words,<br/>target word swapped for a highlighted phrase"]
-    D --> E["User rebuilds the sentence<br/>using the target word"]
-    E --> F["Claude grades the word's fit<br/>— sense + naturalness, 0–10"]
-    F -- "below 9.5" --> G["Minimal correction,<br/>changed spans highlighted"]
-    F -- "9.5 or above" --> H["Clean — no correction needed"]
-```
 
 ## Why I built this
 
