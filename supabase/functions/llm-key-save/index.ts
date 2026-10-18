@@ -7,8 +7,8 @@ import {
   jsonResponse,
 } from "../_shared/http.ts";
 import {
-  tryAccessAnthropic,
   readLlmAccessSummary,
+  tryAccessAnthropic,
 } from "../_shared/llmAccess.ts";
 import type { LlmErrorCode } from "../_shared/llmErrors.ts";
 import { encryptLlmKey } from "../_shared/llmKeyCrypto.ts";
@@ -59,7 +59,7 @@ serveFunction(async (req) => {
     );
   }
 
-  const anthropicResponse = await tryAccessAnthropic(apiKey)
+  const anthropicResponse = await tryAccessAnthropic(apiKey);
   if (!anthropicResponse) {
     return jsonResponse(
       { error: "Anthropic rejected this API key", code: REJECTED_CODE },
