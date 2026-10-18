@@ -1,8 +1,11 @@
-import Anthropic from "npm:@anthropic-ai/sdk@0.110.0";
 import { getRequestUser } from "../_shared/auth.ts";
-import { requireEnv } from "../_shared/env.ts";
 import { serveFunction } from "../_shared/handler.ts";
 import { errorResponse, jsonResponse } from "../_shared/http.ts";
+import {
+  billedSource,
+  type KeySource,
+  resolveLlmAccess,
+} from "../_shared/llmAccess.ts";
 import type { TokenUsage } from "../_shared/usage.ts";
 import { evaluateFresh, type SentenceEvaluation } from "./evaluation.ts";
 import { evaluateMock } from "./mock.ts";
@@ -19,16 +22,18 @@ function respond({
   evaluation,
   usage,
   source,
+  billedTo,
 }: {
   word: string;
   evaluation: SentenceEvaluation;
   usage: TokenUsage;
   source: string;
+  billedTo: KeySource;
 }): Response {
   console.log(
-    `[evaluate-sentence] "${word}" (${source}) — in:${usage.inputTokens} out:${usage.outputTokens} cost:${usage.totalCost}`,
+    `[evaluate-sentence] "${word}" (${source}, ${billedTo} key) — in:${usage.inputTokens} out:${usage.outputTokens} cost:${usage.totalCost}`,
   );
-  return jsonResponse({ evaluation, usage, source });
+  return jsonResponse({ evaluation, usage, source, billedTo });
 }
 
 // TODO(auth): scope to the authenticated user once auth exists.
@@ -72,19 +77,31 @@ serveFunction(async (req) => {
 
   const key = word.trim().toLowerCase();
 
-  if (Deno.env.get("EVALUATE_MODE") !== "real") {
+  const isMockMode = Deno.env.get("EVALUATE_MODE") !== "real" &&
+    Deno.env.get("EVALUATE_MODE") !== "haiku" &&
+    Deno.env.get("EVALUATE_MODE") !== "sonnet";
+  if (isMockMode) {
     const mock = await evaluateMock(key);
-    return respond({ word: key, ...mock, source: "mock" });
+    return respond({ word: key, ...mock, source: "mock", billedTo: "none" });
   }
 
-  const client = new Anthropic({ apiKey: requireEnv("ANTHROPIC_API_KEY") });
+  const access = await resolveLlmAccess({
+    userId: user.id,
+    functionName: "evaluate-sentence",
+  });
+
   const fresh = await evaluateFresh({
-    client,
+    access,
     word: key,
     meaning,
     original,
     userSentence,
   });
 
-  return respond({ word: key, ...fresh, source: "haiku" });
+  return respond({
+    word: key,
+    ...fresh,
+    source: "haiku",
+    billedTo: billedSource(access),
+  });
 });

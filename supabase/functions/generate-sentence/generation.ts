@@ -1,6 +1,9 @@
-import Anthropic from "npm:@anthropic-ai/sdk@0.110.0";
+import type Anthropic from "npm:@anthropic-ai/sdk@0.110.0";
 import {
-  buildTokenUsage,
+  type LlmAccess,
+  sendMessageAndRecordUsage,
+} from "../_shared/llmAccess.ts";
+import {
   type PricingModel,
   sumTokenUsage,
   type TokenUsage,
@@ -214,48 +217,45 @@ export function parseSimplificationResponse(text: string): {
 }
 
 async function runPrompt({
-  client,
+  access,
   pricing,
   system,
   format,
   userContent,
 }: {
-  client: Anthropic;
+  access: LlmAccess;
   pricing: PricingModel;
   system: string;
   format: typeof GENERATION_OUTPUT_FORMAT | typeof SIMPLIFICATION_OUTPUT_FORMAT;
   userContent: string;
 }): Promise<{ text: string; usage: TokenUsage }> {
   const { id, maxTokens } = GENERATION_MODELS[pricing];
-  const response = await client.messages.create({
-    model: id,
-    max_tokens: maxTokens,
-    system,
-    output_config: { format },
-    messages: [{ role: "user", content: userContent }],
+  const { message, usage } = await sendMessageAndRecordUsage({
+    access,
+    pricing,
+    params: {
+      model: id,
+      max_tokens: maxTokens,
+      system,
+      output_config: { format },
+      messages: [{ role: "user", content: userContent }],
+    },
   });
 
-  return {
-    text: extractText(response.content),
-    usage: buildTokenUsage({
-      inputTokens: response.usage.input_tokens,
-      outputTokens: response.usage.output_tokens,
-      model: pricing,
-    }),
-  };
+  return { text: extractText(message.content), usage };
 }
 
 async function runGeneration({
-  client,
+  access,
   pricing,
   userContent,
 }: {
-  client: Anthropic;
+  access: LlmAccess;
   pricing: PricingModel;
   userContent: string;
 }): Promise<SentenceGeneration> {
   const { text, usage } = await runPrompt({
-    client,
+    access,
     pricing,
     system: GENERATION_SYSTEM_PROMPT,
     format: GENERATION_OUTPUT_FORMAT,
@@ -266,13 +266,13 @@ async function runGeneration({
 }
 
 export async function generateFresh({
-  client,
+  access,
   word,
   meaning,
   meanings,
   model = "auto",
 }: {
-  client: Anthropic;
+  access: LlmAccess;
   word: string;
   meaning: string;
   meanings: string[];
@@ -284,14 +284,14 @@ export async function generateFresh({
 
   if (model === "sonnet") {
     const sonnet = await runGeneration({
-      client,
+      access,
       pricing: "sonnet",
       userContent,
     });
     return { ...sonnet, source: "sonnet" };
   }
 
-  const haiku = await runGeneration({ client, pricing: "haiku", userContent });
+  const haiku = await runGeneration({ access, pricing: "haiku", userContent });
 
   if (model === "haiku" || !haiku.sentence.error) {
     return { ...haiku, source: "haiku" };
@@ -303,7 +303,7 @@ export async function generateFresh({
   );
 
   const sonnet = await runGeneration({
-    client,
+    access,
     pricing: "sonnet",
     userContent,
   });
@@ -316,18 +316,18 @@ export async function generateFresh({
 }
 
 export async function simplifySentence({
-  client,
+  access,
   word,
   meaning,
   original,
 }: {
-  client: Anthropic;
+  access: LlmAccess;
   word: string;
   meaning: string;
   original: string;
 }): Promise<{ simplified: string; rephraseTarget: string; usage: TokenUsage }> {
   const { text, usage } = await runPrompt({
-    client,
+    access,
     pricing: "haiku",
     system: SIMPLIFICATION_SYSTEM_PROMPT,
     format: SIMPLIFICATION_OUTPUT_FORMAT,

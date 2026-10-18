@@ -1,5 +1,6 @@
 import { corsHeaders } from "./cors.ts";
 import { errorResponse, INTERNAL_ERROR } from "./http.ts";
+import { LlmAccessError, llmErrorResponse } from "./llmErrors.ts";
 
 function withCors(response: Response, cors: Record<string, string>): Response {
   const headers = new Headers(response.headers);
@@ -22,6 +23,11 @@ export function serveFunction(
     try {
       return withCors(await handler(req), cors);
     } catch (error) {
+      if (error instanceof LlmAccessError) {
+        console.warn(`[llm-access] refused: ${error.code}`);
+        return withCors(llmErrorResponse(error), cors);
+      }
+
       // Log the real cause to the function logs, but never return it: raw
       // PostgREST/SDK text leaks table and column names, and requireEnv's
       // message names the missing secret.

@@ -1,5 +1,9 @@
-import Anthropic from "npm:@anthropic-ai/sdk@0.110.0";
-import { buildTokenUsage, type TokenUsage } from "../_shared/usage.ts";
+import type Anthropic from "npm:@anthropic-ai/sdk@0.110.0";
+import {
+  type LlmAccess,
+  sendMessageAndRecordUsage,
+} from "../_shared/llmAccess.ts";
+import type { TokenUsage } from "../_shared/usage.ts";
 
 // Mirrors the client-side shape in app/routes/practice/sentenceTypes.ts, which
 // the feedback view renders from. Kept local because Deno cannot resolve the
@@ -131,37 +135,38 @@ export function parseEvaluationResponse(text: string): SentenceEvaluation {
 }
 
 export async function evaluateFresh({
-  client,
+  access,
   word,
   meaning,
   original,
   userSentence,
 }: {
-  client: Anthropic;
+  access: LlmAccess;
   word: string;
   meaning: string;
   original: string;
   userSentence: string;
 }): Promise<EvaluationResult> {
-  const response = await client.messages.create({
-    model: EVALUATION_MODEL,
-    max_tokens: EVALUATION_MAX_TOKENS,
-    system: EVALUATION_SYSTEM_PROMPT,
-    output_config: { format: EVALUATION_OUTPUT_FORMAT },
-    messages: [
-      {
-        role: "user",
-        content:
-          `Word: ${word}\nMeaning: ${meaning}\nOriginal: ${original}\nLearner sentence: ${userSentence}`,
-      },
-    ],
+  const { message, usage } = await sendMessageAndRecordUsage({
+    access,
+    pricing: "haiku",
+    params: {
+      model: EVALUATION_MODEL,
+      max_tokens: EVALUATION_MAX_TOKENS,
+      system: EVALUATION_SYSTEM_PROMPT,
+      output_config: { format: EVALUATION_OUTPUT_FORMAT },
+      messages: [
+        {
+          role: "user",
+          content:
+            `Word: ${word}\nMeaning: ${meaning}\nOriginal: ${original}\nLearner sentence: ${userSentence}`,
+        },
+      ],
+    },
   });
 
-  const evaluation = parseEvaluationResponse(extractText(response.content));
-  const usage = buildTokenUsage({
-    inputTokens: response.usage.input_tokens,
-    outputTokens: response.usage.output_tokens,
-  });
-
-  return { evaluation, usage };
+  return {
+    evaluation: parseEvaluationResponse(extractText(message.content)),
+    usage,
+  };
 }

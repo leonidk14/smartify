@@ -1,8 +1,11 @@
-import Anthropic from "npm:@anthropic-ai/sdk@0.110.0";
 import { getRequestUser } from "../_shared/auth.ts";
-import { requireEnv } from "../_shared/env.ts";
 import { serveFunction } from "../_shared/handler.ts";
 import { errorResponse, jsonResponse } from "../_shared/http.ts";
+import {
+  billedSource,
+  type KeySource,
+  resolveLlmAccess,
+} from "../_shared/llmAccess.ts";
 import { createUserClient } from "../_shared/supabase.ts";
 import { buildTokenUsage, type TokenUsage } from "../_shared/usage.ts";
 import { ensureOwnedWord } from "../_shared/vocabularyAccess.ts";
@@ -35,16 +38,18 @@ function respond({
   sentence,
   usage,
   source,
+  billedTo,
 }: {
   word: string;
   sentence: GeneratedSentence;
   usage: TokenUsage;
   source: string;
+  billedTo: KeySource;
 }): Response {
   console.log(
-    `[generate-sentence] "${word}" (${source}) — in:${usage.inputTokens} out:${usage.outputTokens} cost:${usage.totalCost}`,
+    `[generate-sentence] "${word}" (${source}, ${billedTo} key) — in:${usage.inputTokens} out:${usage.outputTokens} cost:${usage.totalCost}`,
   );
-  return jsonResponse({ sentence, usage, source });
+  return jsonResponse({ sentence, usage, source, billedTo });
 }
 
 serveFunction(async (req) => {
@@ -89,14 +94,18 @@ serveFunction(async (req) => {
   // to that single model. Any other value stays mock so the default never
   // spends tokens. Mock output is never persisted — return it directly.
   const generateMode = (Deno.env.get("GENERATE_MODE") ?? "").toLowerCase();
-  if (
-    generateMode !== "real" &&
+  const isMockMode = generateMode !== "real" &&
     generateMode !== "sonnet" &&
-    generateMode !== "haiku"
-  ) {
+    generateMode !== "haiku";
+  if (isMockMode) {
     const mock = await generateMock(key);
-    return respond({ word: key, ...mock, source: "mock" });
+    return respond({ word: key, ...mock, source: "mock", billedTo: "none" });
   }
+
+  const access = await resolveLlmAccess({
+    userId: user.id,
+    functionName: "generate-sentence",
+  });
 
   const generationModel: GenerationModel = generateMode === "sonnet"
     ? "sonnet"
@@ -104,7 +113,6 @@ serveFunction(async (req) => {
     ? "haiku"
     : "auto";
 
-  const client = new Anthropic({ apiKey: requireEnv("ANTHROPIC_API_KEY") });
   const supabase = createUserClient(req);
 
   // The sentence cache is written back into `groups`, so a caller practising a public
@@ -138,7 +146,7 @@ serveFunction(async (req) => {
 
   if (sentences.length < SENTENCES_IN_CACHE_SIZE) {
     const fresh = await generateFresh({
-      client,
+      access,
       word: key,
       meaning: meaningDefinition,
       meanings,
@@ -146,7 +154,11 @@ serveFunction(async (req) => {
     });
 
     if (fresh.sentence.error) {
-      return respond({ word: key, ...fresh });
+      return respond({
+        word: key,
+        ...fresh,
+        billedTo: billedSource(access),
+      });
     }
 
     const updatedGroups = addSentence({
@@ -156,7 +168,7 @@ serveFunction(async (req) => {
     });
     await writeUpdatedWordGroups(updatedGroups);
 
-    return respond({ word: key, ...fresh });
+    return respond({ word: key, ...fresh, billedTo: billedSource(access) });
   }
 
   const sentenceIndex = leastUsedIndex(sentences);
@@ -171,11 +183,12 @@ serveFunction(async (req) => {
       sentence: cached,
       usage: buildTokenUsage({ inputTokens: 0, outputTokens: 0 }),
       source: "cache",
+      billedTo: "none",
     });
   }
 
   const { simplified, rephraseTarget, usage } = await simplifySentence({
-    client,
+    access,
     word: key,
     meaning: meaningDefinition,
     original: cached.original,
@@ -195,5 +208,6 @@ serveFunction(async (req) => {
     sentence: { ...cached, simplified, rephraseTarget },
     usage,
     source: "cache+simplify",
+    billedTo: billedSource(access),
   });
 });

@@ -1,6 +1,4 @@
-import Anthropic from "npm:@anthropic-ai/sdk@0.110.0";
 import { getRequestUser } from "../_shared/auth.ts";
-import { requireEnv } from "../_shared/env.ts";
 import { serveFunction } from "../_shared/handler.ts";
 import {
   errorResponse,
@@ -8,6 +6,11 @@ import {
   isRecord,
   jsonResponse,
 } from "../_shared/http.ts";
+import {
+  billedSource,
+  type KeySource,
+  resolveLlmAccess,
+} from "../_shared/llmAccess.ts";
 import type { TokenUsage } from "../_shared/usage.ts";
 import { type AnalysisModel, analyzeTranscript } from "./analysis.ts";
 import { anchorSuggestions, type RawSuggestion } from "./anchoring.ts";
@@ -40,11 +43,13 @@ function anchorAndRespond({
   raw,
   usage,
   source,
+  billedTo,
 }: {
   transcript: string;
   raw: RawSuggestion[];
   usage: TokenUsage;
   source: string;
+  billedTo: KeySource;
 }): Response {
   const { segments, suggestions, droppedCount } = anchorSuggestions({
     transcript,
@@ -52,10 +57,12 @@ function anchorAndRespond({
   });
 
   console.log(
-    `[sharpen] (${source}) — ${formatUsage(usage)} dropped:${droppedCount}`,
+    `[sharpen] (${source}, ${billedTo} key) — ${
+      formatUsage(usage)
+    } dropped:${droppedCount}`,
   );
 
-  return jsonResponse({ segments, suggestions, usage, source });
+  return jsonResponse({ segments, suggestions, usage, source, billedTo });
 }
 
 serveFunction(async (req) => {
@@ -84,24 +91,32 @@ serveFunction(async (req) => {
   // "real" runs Haiku with a Sonnet retry; "haiku"/"sonnet" pin one model.
   // Any other value stays mock so the default never spends tokens.
   const sharpenMode = (Deno.env.get("SHARPEN_MODE") ?? "").toLowerCase();
-  if (
-    sharpenMode !== "real" &&
+  const isMockMode = sharpenMode !== "real" &&
     sharpenMode !== "haiku" &&
-    sharpenMode !== "sonnet"
-  ) {
+    sharpenMode !== "sonnet";
+  if (isMockMode) {
     const mock = await sharpenMock();
     return anchorAndRespond({
       transcript,
       raw: mock.suggestions,
       usage: mock.usage,
       source: "mock",
+      billedTo: "none",
     });
   }
 
-  const model: AnalysisModel = sharpenMode === "real" ? "auto" : sharpenMode;
-  const client = new Anthropic({ apiKey: requireEnv("ANTHROPIC_API_KEY") });
+  const access = await resolveLlmAccess({
+    userId: user.id,
+    functionName: "sharpen",
+  });
+
+  const model: AnalysisModel = sharpenMode === "sonnet"
+    ? "sonnet"
+    : sharpenMode === "haiku"
+    ? "haiku"
+    : "auto";
   const { outcome, usage, source } = await analyzeTranscript({
-    client,
+    access,
     transcript,
     model,
   });
@@ -120,5 +135,6 @@ serveFunction(async (req) => {
     raw: outcome.suggestions,
     usage,
     source,
+    billedTo: billedSource(access),
   });
 });

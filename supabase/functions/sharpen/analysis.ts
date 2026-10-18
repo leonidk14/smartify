@@ -1,6 +1,9 @@
-import Anthropic from "npm:@anthropic-ai/sdk@0.110.0";
+import type Anthropic from "npm:@anthropic-ai/sdk@0.110.0";
 import {
-  buildTokenUsage,
+  type LlmAccess,
+  sendMessageAndRecordUsage,
+} from "../_shared/llmAccess.ts";
+import {
   type PricingModel,
   sumTokenUsage,
   type TokenUsage,
@@ -111,47 +114,45 @@ function parseAnalysisResponse(text: string): AnalysisOutcome {
 }
 
 async function runAnalysis({
-  client,
+  access,
   pricing,
   userContent,
 }: {
-  client: Anthropic;
+  access: LlmAccess;
   pricing: PricingModel;
   userContent: string;
 }): Promise<{ outcome: AnalysisOutcome; usage: TokenUsage }> {
   const { id, maxTokens } = ANALYSIS_MODELS[pricing];
-  const response = await client.messages.create({
-    model: id,
-    max_tokens: maxTokens,
-    system: ANALYSIS_SYSTEM_PROMPT,
-    output_config: { format: ANALYSIS_OUTPUT_FORMAT },
-    messages: [{ role: "user", content: userContent }],
-  });
-
-  const usage = buildTokenUsage({
-    inputTokens: response.usage.input_tokens,
-    outputTokens: response.usage.output_tokens,
-    model: pricing,
+  const { message, usage } = await sendMessageAndRecordUsage({
+    access,
+    pricing,
+    params: {
+      model: id,
+      max_tokens: maxTokens,
+      system: ANALYSIS_SYSTEM_PROMPT,
+      output_config: { format: ANALYSIS_OUTPUT_FORMAT },
+      messages: [{ role: "user", content: userContent }],
+    },
   });
 
   // Structured output guarantees the schema only when the model finishes its
   // turn, which is why parseAnalysisResponse can trust the shape past this
   // check; a truncated or refused response can be cut off mid-object.
   if (
-    response.stop_reason === "max_tokens" ||
-    response.stop_reason === "refusal"
+    message.stop_reason === "max_tokens" ||
+    message.stop_reason === "refusal"
   ) {
     return {
       outcome: {
         status: "incomplete",
-        reason: `${pricing} stopped on ${response.stop_reason}`,
+        reason: `${pricing} stopped on ${message.stop_reason}`,
       },
       usage,
     };
   }
 
   // Sonnet 5 thinks by default, so thinking blocks come before the text block.
-  const textBlock = response.content.find(
+  const textBlock = message.content.find(
     (block): block is Anthropic.Messages.TextBlock => block.type === "text",
   );
   if (!textBlock) {
@@ -165,11 +166,11 @@ async function runAnalysis({
 }
 
 export async function analyzeTranscript({
-  client,
+  access,
   transcript,
   model,
 }: {
-  client: Anthropic;
+  access: LlmAccess;
   transcript: string;
   model: AnalysisModel;
 }): Promise<Analysis> {
@@ -177,14 +178,14 @@ export async function analyzeTranscript({
 
   if (model === "sonnet") {
     const sonnet = await runAnalysis({
-      client,
+      access,
       pricing: "sonnet",
       userContent,
     });
     return { ...sonnet, source: "sonnet" };
   }
 
-  const haiku = await runAnalysis({ client, pricing: "haiku", userContent });
+  const haiku = await runAnalysis({ access, pricing: "haiku", userContent });
 
   if (model === "haiku" || haiku.outcome.status !== "reported-error") {
     return { ...haiku, source: "haiku" };
@@ -194,7 +195,7 @@ export async function analyzeTranscript({
     `[sharpen] Haiku could not analyse the transcript, retrying with Sonnet: ${haiku.outcome.reason}`,
   );
 
-  const sonnet = await runAnalysis({ client, pricing: "sonnet", userContent });
+  const sonnet = await runAnalysis({ access, pricing: "sonnet", userContent });
 
   return {
     outcome: sonnet.outcome,

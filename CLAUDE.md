@@ -182,14 +182,14 @@ a substitute: run both locally before reporting work as done.
 
 ### Edge function deploys
 
-A job `deploy-functions`, runs `supabase functions deploy` for all fourteen functions
+A job `deploy-functions`, runs `supabase functions deploy` for all seventeen functions
 on every push to `main`, gated on `needs: [checks, tests]`. It also accepts a manual
 `workflow_dispatch` run — the retry path when a deploy fails on a transient error, so you
 never need an empty commit. Pull requests never reach it (`github.ref` is pinned to
 `refs/heads/main`).
 
 Deploying every function rather than only the changed ones is deliberate: a change under
-`_shared/` affects all fourteen, and a redeploy is idempotent, so "what is deployed equals
+`_shared/` affects all seventeen, and a redeploy is idempotent, so "what is deployed equals
 what is on `main`" holds unconditionally. It exists because the frontend already
 auto-deploys via Vercel — manual function deploys let the two halves drift.
 
@@ -378,9 +378,12 @@ adjacent `supabase/functions/deno.lock`.) Commit the updated lockfile.
 
 ### LLM mode toggles (mock vs. real)
 
-Every function that calls Anthropic is gated behind its own `*_MODE` secret,
-checked as `Deno.env.get("<NAME>_MODE") !== "real"` → return mock. Unset or any
-other value means mock, so the default never spends tokens:
+Every function that calls Anthropic is gated behind its own `*_MODE` secret, read
+into `isMockMode` and checked before anything else. Unset or any unrecognised value
+means mock **for every caller**, whoever would have paid, so the default never
+spends tokens — the admin's or a user's own. Only past that check does the function
+resolve who pays (see "Bring-your-own-key" below), which also means mock mode makes
+no database reads:
 
 | Function            | Secret          | Mock data                                      |
 | ------------------- | --------------- | ---------------------------------------------- |

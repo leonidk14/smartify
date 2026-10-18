@@ -1,9 +1,11 @@
-import Anthropic from "npm:@anthropic-ai/sdk@0.110.0";
 import { getRequestUser } from "../_shared/auth.ts";
-import { requireEnv } from "../_shared/env.ts";
 import { serveFunction } from "../_shared/handler.ts";
 import { errorResponse, jsonResponse } from "../_shared/http.ts";
-import { buildTokenUsage } from "../_shared/usage.ts";
+import {
+  billedSource,
+  resolveLlmAccess,
+  sendMessageAndRecordUsage,
+} from "../_shared/llmAccess.ts";
 import {
   DICTIONARY_OUTPUT_FORMAT,
   DICTIONARY_SYSTEM_PROMPT,
@@ -32,33 +34,41 @@ serveFunction(async (req) => {
     return errorResponse("Expected /lookup/<word-slug>");
   }
 
-  if (Deno.env.get("LOOKUP_MODE") !== "real") {
-    return jsonResponse(lookupMock(word));
+  const isMockMode = Deno.env.get("LOOKUP_MODE") !== "real" &&
+    Deno.env.get("LOOKUP_MODE") !== "haiku" &&
+    Deno.env.get("LOOKUP_MODE") !== "sonnet";
+  if (isMockMode) {
+    return jsonResponse({ ...lookupMock(word), billedTo: "none" });
   }
 
-  const client = new Anthropic({ apiKey: requireEnv("ANTHROPIC_API_KEY") });
-  const response = await client.messages.create({
-    model: "claude-haiku-4-5",
-    max_tokens: 1024,
-    system: DICTIONARY_SYSTEM_PROMPT,
-    output_config: { format: DICTIONARY_OUTPUT_FORMAT },
-    messages: [{ role: "user", content: `Define: ${word}` }],
+  const access = await resolveLlmAccess({
+    userId: user.id,
+    functionName: "lookup",
   });
 
-  const raw = response.content[0];
+  const { message, usage } = await sendMessageAndRecordUsage({
+    access,
+    pricing: "haiku",
+    params: {
+      model: "claude-haiku-4-5",
+      max_tokens: 1024,
+      system: DICTIONARY_SYSTEM_PROMPT,
+      output_config: { format: DICTIONARY_OUTPUT_FORMAT },
+      messages: [{ role: "user", content: `Define: ${word}` }],
+    },
+  });
+
+  const raw = message.content[0];
   if (raw.type !== "text") {
     throw new Error("Unexpected response type from API");
   }
 
   const dictionary = parseDictionaryResponse(raw.text);
-  const usage = buildTokenUsage({
-    inputTokens: response.usage.input_tokens,
-    outputTokens: response.usage.output_tokens,
-  });
+  const billedTo = billedSource(access);
 
   console.log(
-    `[lookup] "${word}" — in:${usage.inputTokens} out:${usage.outputTokens} cost:${usage.totalCost}`,
+    `[lookup] "${word}" (${billedTo} key) — in:${usage.inputTokens} out:${usage.outputTokens} cost:${usage.totalCost}`,
   );
 
-  return jsonResponse({ dictionary, usage });
+  return jsonResponse({ dictionary, usage, billedTo });
 });
