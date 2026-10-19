@@ -21,5 +21,11 @@ export default [
     route("practice/summary", "routes/practiceSummary.tsx"),
     route("practice/:word", "routes/practiceWord.tsx"),
     route("practice/:word/sentence", "routes/practiceSentence.tsx"),
+    route("account", "routes/account.tsx", [
+      index("routes/accountIndex.tsx"),
+      route("data", "routes/accountData.tsx"),
+      route("key", "routes/accountKey.tsx"),
+      route("key/replace", "routes/accountKeyReplace.tsx"),
+    ]),
   ]),
 ] satisfies RouteConfig;

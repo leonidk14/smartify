@@ -23,8 +23,10 @@ import {
   IconX,
 } from "@tabler/icons-react";
 import { text } from "../theme/typography";
+import { AnimatedAppMark } from "../lib/animatedAppMark";
 import { useAuth } from "../lib/authContext";
 import { supabase } from "../lib/supabaseClient";
+import { useIsNavigatingTo } from "../lib/useIsNavigatingTo";
 import { readVocabulary } from "./wordSearch/vocabulary";
 import { invalidateSpeechEntries } from "./speech/speechApi";
 
@@ -128,6 +130,10 @@ export default function Layout() {
 
   const isSpeechTypeScreen = location.pathname === "/speech/type";
 
+  // The account loader awaits its edge function, so without this the previous
+  // screen stays up with no feedback until the call returns.
+  const isOpeningAccount = useIsNavigatingTo("/account");
+
   return (
     <Flex direction="column" style={{ minHeight: "100vh" }}>
       {isSelectScreen ? (
@@ -220,6 +226,12 @@ export default function Layout() {
           />
         </Box>
       )}
+
+      {isOpeningAccount ? (
+        <Box pos="fixed" inset={0} style={{ zIndex: 100 }}>
+          <AnimatedAppMark caption="Loading your account" />
+        </Box>
+      ) : null}
     </Flex>
   );
 }

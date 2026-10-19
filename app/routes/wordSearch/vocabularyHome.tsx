@@ -5,7 +5,6 @@ import {
   Box,
   Button,
   Group,
-  Menu,
   Paper,
   Stack,
   Text,
@@ -15,7 +14,7 @@ import {
   UnstyledButton,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { IconCloudOff, IconLogout, IconPlus } from "@tabler/icons-react";
+import { IconCloudOff, IconPlus } from "@tabler/icons-react";
 import { type VocabularyEntry } from "./vocabulary";
 import { DeleteWordDrawer } from "./deleteWordDrawer";
 import { VocabularyRow } from "./vocabularyRow";
@@ -44,7 +43,7 @@ export const VocabularyHome = ({
   isFromOfflineCopy,
   onOpenLookup,
 }: VocabularyHomeProps) => {
-  const { isSignedIn, user, signOut, openSignIn } = useAuth();
+  const { isSignedIn, user, openSignIn } = useAuth();
 
   const deleteFetcher = useFetcher<{ success: boolean }>();
   const [wordToDelete, setWordToDelete] = useState<{
@@ -63,11 +62,6 @@ export const VocabularyHome = ({
     );
     notifications.show({ message: `Deleted “${wordToDelete.display}”` });
     setWordToDelete(null);
-  };
-
-  const handleSignOut = async () => {
-    await signOut();
-    notifications.show({ message: "Signed out" });
   };
 
   const wordCountLabel = `${total} ${total === 1 ? "word" : "words"}`;
@@ -100,29 +94,18 @@ export const VocabularyHome = ({
             </Tooltip>
           ) : null}
           {isSignedIn ? (
-            <Menu position="bottom-end" width={200}>
-              <Menu.Target>
-                <Avatar
-                  radius="xl"
-                  size={34}
-                  aria-label="Account"
-                  style={{
-                    background: "var(--color-text)",
-                    color: "#fff",
-                    cursor: "pointer",
-                  }}>
-                  {initialsFromEmail(user?.email)}
-                </Avatar>
-              </Menu.Target>
-              <Menu.Dropdown>
-                <Menu.Label>{user?.email}</Menu.Label>
-                <Menu.Item
-                  leftSection={<IconLogout size={16} />}
-                  onClick={() => void handleSignOut()}>
-                  Sign out
-                </Menu.Item>
-              </Menu.Dropdown>
-            </Menu>
+            <Avatar
+              component={Link}
+              to="/account"
+              radius="xl"
+              size={34}
+              aria-label="Account"
+              style={{
+                background: "var(--color-text)",
+                color: "#fff",
+              }}>
+              {initialsFromEmail(user?.email)}
+            </Avatar>
           ) : (
             <Button size="sm" radius="xl" onClick={() => openSignIn()}>
               Sign in
