@@ -5,11 +5,13 @@ import {
   Box,
   Button,
   CloseButton,
+  Divider,
   Group,
   Loader,
   Stack,
   Text,
   TextInput,
+  UnstyledButton,
 } from "@mantine/core";
 import { text, textCss } from "../../theme/typography";
 import { ActionBar } from "../practice/actionBar";
@@ -33,34 +35,9 @@ function Step({ number, children }: StepProps) {
   );
 }
 
-interface KeyFormProps {
-  isReplacing: boolean;
-}
-
-export function KeyForm({ isReplacing }: KeyFormProps) {
-  const navigate = useNavigate();
-  const fetcher = useFetcher<KeySaveFailure | null>();
-  const [value, setValue] = useState("");
-
-  const isChecking = fetcher.state !== "idle";
-  const failure = fetcher.data?.failure;
-  const hasValue = value.trim() !== "";
-
-  const handleClear = () => {
-    setValue("");
-    fetcher.reset();
-  };
-
-  const handleSave = () => {
-    void fetcher.submit({ key: value }, { method: "post" });
-  };
-
-  const handleCancel = () => {
-    void navigate("/account/key", { replace: true });
-  };
-
+export function KeyIntro() {
   return (
-    <Stack gap={16} pb={240}>
+    <>
       <Box>
         <Text {...text.displayMd}>Use your own Claude key</Text>
         <Text {...text.bodyXs} c="dimmed" mt={6}>
@@ -85,6 +62,45 @@ export function KeyForm({ isReplacing }: KeyFormProps) {
         <Step number={2}>API keys → Create key, then copy it</Step>
         <Step number={3}>Paste it below</Step>
       </Stack>
+    </>
+  );
+}
+
+interface KeyFormProps {
+  isReplacing: boolean;
+  header: React.ReactNode;
+  onRequestSharedKey?: () => void;
+}
+
+export function KeyForm({
+  isReplacing,
+  header,
+  onRequestSharedKey,
+}: KeyFormProps) {
+  const navigate = useNavigate();
+  const fetcher = useFetcher<KeySaveFailure | null>();
+  const [value, setValue] = useState("");
+
+  const isChecking = fetcher.state !== "idle";
+  const failure = fetcher.data?.failure;
+  const hasValue = value.trim() !== "";
+
+  const handleClear = () => {
+    setValue("");
+    fetcher.reset();
+  };
+
+  const handleSave = () => {
+    void fetcher.submit({ key: value }, { method: "post" });
+  };
+
+  const handleCancel = () => {
+    void navigate("/account/key", { replace: true });
+  };
+
+  return (
+    <Stack gap={16} pb={onRequestSharedKey === undefined ? 240 : 300}>
+      {header}
 
       <Box>
         <TextInput
@@ -141,6 +157,22 @@ export function KeyForm({ isReplacing }: KeyFormProps) {
             </Button>
           ) : null}
           <KeyStorageNote />
+          {onRequestSharedKey !== undefined ? (
+            <>
+              <Divider />
+              <UnstyledButton
+                {...text.bodyXs}
+                {...text.emphasis}
+                c="dimmed"
+                ta="center"
+                td="underline"
+                p={4}
+                disabled={isChecking}
+                onClick={onRequestSharedKey}>
+                No key? Ask the admin to use the shared one
+              </UnstyledButton>
+            </>
+          ) : null}
         </Stack>
       </ActionBar>
     </Stack>

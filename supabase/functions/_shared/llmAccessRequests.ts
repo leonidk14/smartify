@@ -27,6 +27,7 @@ export async function readLatestAdminKeyRequest({
     .select("*")
     .eq("user_id", userId)
     .order("created_at", { ascending: false })
+    .limit(1)
     .returns<StoredLlmAccessRequest[]>();
 
   if (error) {

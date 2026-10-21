@@ -4,18 +4,9 @@ import { IconArrowUpRight } from "@tabler/icons-react";
 import { text } from "../../theme/typography";
 import { ActionBar } from "../practice/actionBar";
 import { ANTHROPIC_BILLING_URL, ANTHROPIC_KEYS_URL } from "./anthropicConsole";
+import { formatShortDate } from "./formatDate";
 import { KeyStorageNote } from "./keyStorageNote";
 import type { SavedLlmKey } from "./llmAccessApi";
-
-function formatSavedDate(savedAt: string): string {
-  const date = new Date(savedAt);
-  const isThisYear = date.getFullYear() === new Date().getFullYear();
-  return date.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    ...(isThisYear ? {} : { year: "numeric" }),
-  });
-}
 
 const REPLACE_PATH = "/account/key/replace";
 
@@ -60,7 +51,7 @@ export function SavedKeyCard({ savedKey, onRemove }: SavedKeyCardProps) {
           ) : (
             <>
               <Text {...text.label}>
-                Added {formatSavedDate(savedKey.savedAt)}
+                Added {formatShortDate(savedKey.savedAt)}
               </Text>
               <Group gap={8} grow>
                 <Button

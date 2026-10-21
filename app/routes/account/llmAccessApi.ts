@@ -10,9 +10,19 @@ export interface SavedLlmKey {
   savedAt: string;
 }
 
+export interface AdminKeyRequest {
+  status: "pending" | "approved" | "declined";
+  note: string | null;
+  email: string;
+  sentAt: string;
+  resolvedAt: string | null;
+  reason: string | null;
+}
+
 export interface LlmAccessSummary {
   keySource: KeySource;
   key: SavedLlmKey | null;
+  adminKeyRequest: AdminKeyRequest | null;
 }
 
 const KEY_REJECTED_CODE = "key_rejected";
@@ -27,6 +37,14 @@ export function saveLlmKey(key: string): Promise<LlmAccessSummary> {
 
 export function removeLlmKey(): Promise<LlmAccessSummary> {
   return postFunction<LlmAccessSummary>("llm-key-delete");
+}
+
+export function sendAdminKeyRequest(note: string): Promise<LlmAccessSummary> {
+  return postFunction<LlmAccessSummary>("llm-request-send", { note });
+}
+
+export function cancelAdminKeyRequest(): Promise<LlmAccessSummary> {
+  return postFunction<LlmAccessSummary>("llm-request-cancel");
 }
 
 function isKeyRejectedResponse(data: unknown): boolean {

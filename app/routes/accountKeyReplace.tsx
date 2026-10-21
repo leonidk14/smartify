@@ -1,5 +1,5 @@
 import { replace } from "react-router";
-import { KeyForm } from "./account/keyForm";
+import { KeyForm, KeyIntro } from "./account/keyForm";
 import { saveKeyFromForm } from "./account/keyActions";
 import type { Route } from "./+types/accountKeyReplace";
 
@@ -9,5 +9,5 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 }
 
 export default function AccountKeyReplaceRoute() {
-  return <KeyForm isReplacing />;
+  return <KeyForm isReplacing header={<KeyIntro />} />;
 }
