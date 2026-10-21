@@ -1,6 +1,11 @@
 import Anthropic from "npm:@anthropic-ai/sdk@0.110.0";
 import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
 import { requireEnv } from "./env.ts";
+import {
+  type LlmAccessRequestStatus,
+  readLatestAdminKeyRequest,
+  type StoredLlmAccessRequest,
+} from "./llmAccessRequests.ts";
 import { LlmAccessError, type LlmErrorCode } from "./llmErrors.ts";
 import { decryptLlmKey, LlmKeyDecryptionError } from "./llmKeyCrypto.ts";
 import { createAdminClient } from "./supabase.ts";
@@ -42,6 +47,15 @@ export type LlmAccess =
   | BillableAccess
   | (AccessContext & { source: "blocked"; code: LlmErrorCode });
 
+export interface LlmAccessRequestSummary {
+  status: LlmAccessRequestStatus;
+  note: string | null;
+  email: string;
+  sentAt: string;
+  resolvedAt: string | null;
+  reason: string | null;
+}
+
 export interface LlmAccessSummary {
   keySource: KeySource;
   key: {
@@ -49,6 +63,7 @@ export interface LlmAccessSummary {
     status: StoredLlmKey["status"];
     savedAt: string;
   } | null;
+  adminKeyRequest: LlmAccessRequestSummary | null;
 }
 
 type ResolvedKeySource =
@@ -129,13 +144,32 @@ export async function resolveLlmAccess({
   return { ...context, source: "own", key: resolvedKeySource.key };
 }
 
+function summarizeRequest(
+  request: StoredLlmAccessRequest,
+): LlmAccessRequestSummary {
+  return {
+    status: request.status,
+    note: request.note,
+    email: request.email,
+    sentAt: request.created_at,
+    resolvedAt: request.resolved_at,
+    reason: request.decision_reason,
+  };
+}
+
 export async function readLlmAccessSummary(
   userId: string,
 ): Promise<LlmAccessSummary> {
-  const resolved = await readKeySource(userId);
+  const [resolved, latestRequest] = await Promise.all([
+    readKeySource(userId),
+    readLatestAdminKeyRequest({ supabase: createAdminClient(), userId }),
+  ]);
+  const adminKeyRequest = latestRequest === null
+    ? null
+    : summarizeRequest(latestRequest);
 
   if (resolved.source !== "own") {
-    return { keySource: resolved.source, key: null };
+    return { keySource: resolved.source, key: null, adminKeyRequest };
   }
   return {
     keySource: "own",
@@ -144,6 +178,7 @@ export async function readLlmAccessSummary(
       status: resolved.key.status,
       savedAt: resolved.key.created_at,
     },
+    adminKeyRequest: adminKeyRequest,
   };
 }
 

@@ -19,6 +19,7 @@ PLAN_NOTES.md
 app/theme/colors.md
 app/theme/typography.md
 docs/features/*
+docs/database-access-patterns.md
 
 dev-dist/
 dist/

@@ -10,6 +10,7 @@ import {
   readLlmAccessSummary,
   tryAccessAnthropic,
 } from "../_shared/llmAccess.ts";
+import { deletePendingAdminKeyRequest } from "../_shared/llmAccessRequests.ts";
 import type { LlmErrorCode } from "../_shared/llmErrors.ts";
 import { encryptLlmKey } from "../_shared/llmKeyCrypto.ts";
 import { createAdminClient } from "../_shared/supabase.ts";
@@ -99,6 +100,8 @@ serveFunction(async (req) => {
     console.error(grantError);
     return errorResponse(INTERNAL_ERROR, 500);
   }
+
+  await deletePendingAdminKeyRequest({ supabase, userId: user.id });
 
   const accessSummary = await readLlmAccessSummary(user.id);
 

@@ -182,14 +182,14 @@ a substitute: run both locally before reporting work as done.
 
 ### Edge function deploys
 
-A job `deploy-functions`, runs `supabase functions deploy` for all seventeen functions
+A job `deploy-functions`, runs `supabase functions deploy` for all nineteen functions
 on every push to `main`, gated on `needs: [checks, tests]`. It also accepts a manual
 `workflow_dispatch` run — the retry path when a deploy fails on a transient error, so you
 never need an empty commit. Pull requests never reach it (`github.ref` is pinned to
 `refs/heads/main`).
 
 Deploying every function rather than only the changed ones is deliberate: a change under
-`_shared/` affects all seventeen, and a redeploy is idempotent, so "what is deployed equals
+`_shared/` affects all nineteen, and a redeploy is idempotent, so "what is deployed equals
 what is on `main`" holds unconditionally. It exists because the frontend already
 auto-deploys via Vercel — manual function deploys let the two halves drift.
 
@@ -328,6 +328,11 @@ client bundle and is not a credential.
 JWT, so it stays on `createAdminClient()` and spells the visibility rule out
 explicitly, per subscriber.
 
+Which pattern a **new** table gets — RLS-first like `vocabulary`, or service-role
+only like the `llm_*` tables — is decided by who writes its columns; the reasoning
+and a checklist are in
+[docs/database-access-patterns.md](docs/database-access-patterns.md).
+
 Seed data:
 
 - **Local seed file:** [data/vocabulary.json](data/vocabulary.json) — a full
@@ -411,6 +416,21 @@ analyses with Haiku and retries once on Sonnet only when Haiku reports an error
 itself (the response's `source` is then `haiku+sonnet`, with both calls' usage
 summed), `haiku` and `sonnet` pin that one model, and any other value (or unset)
 is mock.
+
+### Shared-key requests
+
+A user without a working key can ask to run on the admin's key
+(`llm-request-send`, optional note; `llm-request-cancel` withdraws it). Requests
+live in `llm_access_requests`, which is service-role only like the other `llm_*`
+tables, and every query on it goes through
+[supabase/functions/\_shared/llmAccessRequests.ts](supabase/functions/_shared/llmAccessRequests.ts),
+whose helpers all take the `userId` they scope by — do not query the table inline.
+
+- **A request is history, never access.** `keySource` in the summary stays the
+  only authority on who pays; only a row in `llm_admin_grants` spends the admin's
+  key. Never make a pending request count as access.
+- `llm-key-save` deletes a pending request along with the grant, so approving it
+  later cannot reintroduce the admin-key fallback that saving a key removes.
 
 ## README screenshots
 
