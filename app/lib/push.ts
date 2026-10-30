@@ -2,7 +2,7 @@ import { notifications } from "@mantine/notifications";
 import { postFunction, isSupabaseConfigured } from "./supabaseFunctions";
 
 const BANNER_DISMISSED_KEY = "pushBannerDismissedAt";
-const BANNER_DISMISS_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 1 week
+const BANNER_DISMISS_TTL_MS = 3 * 24 * 60 * 60 * 1000; // 3 days
 
 export function isPushSupported(): boolean {
   return (
@@ -13,16 +13,19 @@ export function isPushSupported(): boolean {
   );
 }
 
+// sessionStorage, not localStorage: localStorage can outlive a PWA uninstall, and the
+// banner is the only way to reach the permission prompt, so a dismissal must not
+// carry over to a reinstalled app.
 export function isBannerDismissed(): boolean {
   try {
-    const dismissedAt = Number(localStorage.getItem(BANNER_DISMISSED_KEY));
+    const dismissedAt = Number(sessionStorage.getItem(BANNER_DISMISSED_KEY));
     if (!dismissedAt) {
       return false;
     }
     if (Date.now() - dismissedAt < BANNER_DISMISS_TTL_MS) {
       return true;
     }
-    localStorage.removeItem(BANNER_DISMISSED_KEY);
+    sessionStorage.removeItem(BANNER_DISMISSED_KEY);
     return false;
   } catch {
     return false;
@@ -31,9 +34,9 @@ export function isBannerDismissed(): boolean {
 
 export function dismissBanner(): void {
   try {
-    localStorage.setItem(BANNER_DISMISSED_KEY, String(Date.now()));
+    sessionStorage.setItem(BANNER_DISMISSED_KEY, String(Date.now()));
   } catch {
-    // localStorage unavailable (private mode / disabled) — nothing to persist.
+    // sessionStorage unavailable (private mode / disabled) — nothing to persist.
   }
 }
 
@@ -88,7 +91,6 @@ export async function subscribeToPush(): Promise<void> {
 
     await postFunction("subscribe", subscription.toJSON());
 
-    dismissBanner();
     notifications.show({ message: "Reminders on" });
   } catch (error) {
     console.error("Failed to subscribe to push notifications:", error);
