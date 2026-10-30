@@ -70,41 +70,41 @@ export const NotificationBanner = () => {
             We’ll nudge you when words are due and drop you straight into a
             session.
           </Text>
-          <Button
-            color="dark.9"
-            radius={11}
-            h={38}
-            px={16}
-            mt={11}
-            {...text.uiLabel}
-            loading={isBusy}
-            onClick={() => void handleEnable()}>
-            Turn on reminders
-          </Button>
-          <Group gap={16} align="center" mt={11} wrap="nowrap">
-            <Text
-              {...text.metaLg}
-              component="button"
-              c="rgba(0,0,0,.4)"
-              bg="transparent"
-              bd="none"
-              p={0}
-              onClick={handleDismiss}
-              style={{ cursor: "pointer" }}>
+          <Group gap={8} mt={11}>
+            <Button
+              color="dark.9"
+              radius={11}
+              h={38}
+              px={16}
+              {...text.uiLabel}
+              loading={isBusy}
+              onClick={() => void handleEnable()}>
+              Turn on
+            </Button>
+            <Button
+              variant="outline"
+              color="dark.9"
+              radius={11}
+              h={38}
+              px={14}
+              {...text.uiLabel}
+              onClick={handleDismiss}>
               Not now
-            </Text>
-            <Text
-              {...text.metaLg}
-              component="button"
-              c="rgba(0,0,0,.4)"
-              bg="transparent"
-              bd="none"
-              p={0}
-              onClick={handleRefuse}
-              style={{ cursor: "pointer" }}>
-              Don’t ask again
-            </Text>
+            </Button>
           </Group>
+          <Text
+            {...text.metaLg}
+            component="button"
+            display="block"
+            c="rgba(0,0,0,.4)"
+            bg="transparent"
+            bd="none"
+            p={0}
+            mt={10}
+            onClick={handleRefuse}
+            style={{ cursor: "pointer" }}>
+            Don’t ask again
+          </Text>
         </Box>
       </Group>
     </Paper>
