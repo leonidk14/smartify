@@ -3,6 +3,7 @@ import { postFunction, isSupabaseConfigured } from "./supabaseFunctions";
 
 const BANNER_DISMISSED_KEY = "pushBannerDismissedAt";
 const BANNER_DISMISS_TTL_MS = 3 * 24 * 60 * 60 * 1000; // 3 days
+const BANNER_REFUSED_KEY = "pushBannerRefusedAt";
 
 export function isPushSupported(): boolean {
   return (
@@ -13,9 +14,8 @@ export function isPushSupported(): boolean {
   );
 }
 
-// sessionStorage, not localStorage: localStorage can outlive a PWA uninstall, and the
-// banner is the only way to reach the permission prompt, so a dismissal must not
-// carry over to a reinstalled app.
+// sessionStorage, not localStorage: localStorage can outlive a PWA uninstall, and a
+// dismissal must not carry over to a reinstalled app.
 export function isBannerDismissed(): boolean {
   try {
     const dismissedAt = Number(sessionStorage.getItem(BANNER_DISMISSED_KEY));
@@ -37,6 +37,54 @@ export function dismissBanner(): void {
     sessionStorage.setItem(BANNER_DISMISSED_KEY, String(Date.now()));
   } catch {
     // sessionStorage unavailable (private mode / disabled) — nothing to persist.
+  }
+}
+
+// localStorage on purpose, unlike the dismissal: "Don't ask again" is an explicit
+// decision, so it should outlast closing the app.
+export function isBannerRefused(): boolean {
+  try {
+    return localStorage.getItem(BANNER_REFUSED_KEY) !== null;
+  } catch {
+    return false;
+  }
+}
+
+export function refuseBanner(): void {
+  try {
+    localStorage.setItem(BANNER_REFUSED_KEY, String(Date.now()));
+  } catch {
+    // localStorage unavailable (private mode / disabled) — nothing to persist.
+  }
+}
+
+function clearBannerRefusal(): void {
+  try {
+    localStorage.removeItem(BANNER_REFUSED_KEY);
+  } catch {
+    // localStorage unavailable (private mode / disabled) — nothing to clear.
+  }
+}
+
+export type ReminderStatus = "on" | "off" | "blocked" | "unsupported";
+
+export async function getReminderStatus(): Promise<ReminderStatus> {
+  if (!isPushSupported()) {
+    return "unsupported";
+  }
+  if (Notification.permission === "denied") {
+    return "blocked";
+  }
+  if (Notification.permission === "default") {
+    return "off";
+  }
+
+  try {
+    const registration = await navigator.serviceWorker.getRegistration();
+    const subscription = await registration?.pushManager.getSubscription();
+    return subscription ? "on" : "off";
+  } catch {
+    return "off";
   }
 }
 
@@ -98,5 +146,15 @@ export async function subscribeToPush(): Promise<void> {
       color: "red",
       message: "Couldn’t turn on reminders. Please try again.",
     });
+  }
+}
+
+// Clears any earlier "Don't ask again": granting is the newer decision, and a stale
+// refusal would hide the banner if the permission later resets, as on a reinstall.
+export async function enableReminders(): Promise<void> {
+  const permission = await Notification.requestPermission();
+  if (permission === "granted") {
+    clearBannerRefusal();
+    await subscribeToPush();
   }
 }

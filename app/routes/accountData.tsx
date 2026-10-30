@@ -4,6 +4,7 @@ import { notifications } from "@mantine/notifications";
 import { IconLogout } from "@tabler/icons-react";
 import { useAuth } from "../lib/authContext";
 import { text } from "../theme/typography";
+import { RemindersSetting } from "./account/remindersSetting";
 
 export default function AccountDataRoute() {
   const { user, signOut } = useAuth();
@@ -23,6 +24,7 @@ export default function AccountDataRoute() {
           {user?.email}
         </Text>
       </Box>
+      <RemindersSetting />
       <Button
         variant="outline"
         color="dark"
