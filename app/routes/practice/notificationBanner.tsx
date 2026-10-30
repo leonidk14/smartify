@@ -4,9 +4,11 @@ import { IconBell } from "@tabler/icons-react";
 import { useAuth } from "../../lib/authContext";
 import {
   dismissBanner,
+  enableReminders,
   isBannerDismissed,
+  isBannerRefused,
   isPushSupported,
-  subscribeToPush,
+  refuseBanner,
 } from "../../lib/push";
 import { text } from "../../theme/typography";
 
@@ -19,7 +21,8 @@ export const NotificationBanner = () => {
       // won't re-prompt — the browser returns "denied" immediately with no dialog
       // -> makes no sense to put it as "!== granted".
       Notification.permission === "default" &&
-      !isBannerDismissed(),
+      !isBannerDismissed() &&
+      !isBannerRefused(),
   );
   const [isBusy, setIsBusy] = useState(false);
 
@@ -30,10 +33,7 @@ export const NotificationBanner = () => {
   const handleEnable = async () => {
     setIsBusy(true);
     try {
-      const permission = await Notification.requestPermission();
-      if (permission === "granted") {
-        await subscribeToPush();
-      }
+      await enableReminders();
       setIsVisible(false);
     } finally {
       setIsBusy(false);
@@ -42,6 +42,11 @@ export const NotificationBanner = () => {
 
   const handleDismiss = () => {
     dismissBanner();
+    setIsVisible(false);
+  };
+
+  const handleRefuse = () => {
+    refuseBanner();
     setIsVisible(false);
   };
 
@@ -65,17 +70,18 @@ export const NotificationBanner = () => {
             We’ll nudge you when words are due and drop you straight into a
             session.
           </Text>
-          <Group gap={12} align="center" mt={11} wrap="nowrap">
-            <Button
-              color="dark.9"
-              radius={11}
-              h={38}
-              px={16}
-              {...text.uiLabel}
-              loading={isBusy}
-              onClick={() => void handleEnable()}>
-              Turn on reminders
-            </Button>
+          <Button
+            color="dark.9"
+            radius={11}
+            h={38}
+            px={16}
+            mt={11}
+            {...text.uiLabel}
+            loading={isBusy}
+            onClick={() => void handleEnable()}>
+            Turn on reminders
+          </Button>
+          <Group gap={16} align="center" mt={11} wrap="nowrap">
             <Text
               {...text.metaLg}
               component="button"
@@ -86,6 +92,17 @@ export const NotificationBanner = () => {
               onClick={handleDismiss}
               style={{ cursor: "pointer" }}>
               Not now
+            </Text>
+            <Text
+              {...text.metaLg}
+              component="button"
+              c="rgba(0,0,0,.4)"
+              bg="transparent"
+              bd="none"
+              p={0}
+              onClick={handleRefuse}
+              style={{ cursor: "pointer" }}>
+              Don’t ask again
             </Text>
           </Group>
         </Box>
