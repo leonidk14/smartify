@@ -1,12 +1,8 @@
 import webpush from "npm:web-push@3";
-import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
+import type { SupabaseClient, User } from "npm:@supabase/supabase-js@2";
 import { requireEnv } from "../_shared/env.ts";
 import { serveFunction } from "../_shared/handler.ts";
-import {
-  errorResponse,
-  INTERNAL_ERROR,
-  jsonResponse,
-} from "../_shared/http.ts";
+import { errorResponse, jsonResponse } from "../_shared/http.ts";
 import { createAdminClient } from "../_shared/supabase.ts";
 import { preferOwnRows } from "../_shared/vocabularyAccess.ts";
 
@@ -32,7 +28,13 @@ interface Delivery {
 
 type PracticeMode = "word" | "sentence" | "both";
 
+interface Recipient {
+  email: string;
+  userId: string;
+}
+
 interface ReminderOptions {
+  emails: string[] | null;
   words: string[] | null;
   count: number;
   title: string;
@@ -68,11 +70,19 @@ function parseOptions(raw: unknown): ReminderOptions | { error: string } {
     return { error: "Expected a JSON object body" };
   }
 
-  const { words, count, title, body, mode, force } = raw as Record<
+  const { emails, words, count, title, body, mode, force } = raw as Record<
     string,
     unknown
   >;
 
+  if (
+    emails !== undefined &&
+    (!isNonEmptyStringArray(emails) || emails.length === 0)
+  ) {
+    return {
+      error: "Expected emails to be a non-empty array of non-empty strings",
+    };
+  }
   if (words !== undefined && !isNonEmptyStringArray(words)) {
     return { error: "Expected words to be an array of non-empty strings" };
   }
@@ -96,13 +106,78 @@ function parseOptions(raw: unknown): ReminderOptions | { error: string } {
   }
 
   return {
+    emails: emails === undefined
+      ? null
+      : [...new Set(emails.map((email) => email.trim().toLowerCase()))],
     words: words?.map((word) => word.trim().toLowerCase()) ?? null,
     count: count ?? DEFAULT_COUNT,
     title: title ?? DEFAULT_TITLE,
     body: body ?? null,
     mode: mode ?? "both",
-    isForced: force ?? false,
+    isForced: (force ?? false) || emails !== undefined,
   };
+}
+
+async function listAllUsers(supabase: SupabaseClient): Promise<User[]> {
+  const users: User[] = [];
+  let page: number | null = 1;
+  while (page !== null) {
+    const { data, error } = await supabase.auth.admin.listUsers({
+      page,
+      perPage: 1000,
+    });
+    if (error) {
+      throw error;
+    }
+    users.push(...data.users);
+    page = data.nextPage;
+  }
+  return users;
+}
+
+async function resolveRecipients({
+  supabase,
+  emails,
+}: {
+  supabase: SupabaseClient;
+  emails: string[];
+}): Promise<{ recipients: Recipient[]; unknownEmails: string[] }> {
+  const userIdByEmail = new Map(
+    (await listAllUsers(supabase)).flatMap((user) =>
+      user.email === undefined ? [] : [[user.email.toLowerCase(), user.id]]
+    ),
+  );
+
+  return {
+    recipients: emails.flatMap((email) => {
+      const userId = userIdByEmail.get(email);
+      return userId === undefined ? [] : [{ email, userId }];
+    }),
+    unknownEmails: emails.filter((email) => !userIdByEmail.has(email)),
+  };
+}
+
+async function readSubscriptions({
+  supabase,
+  userIds,
+}: {
+  supabase: SupabaseClient;
+  userIds: string[] | null;
+}): Promise<Subscription[]> {
+  const query = supabase
+    .from("push_subscriptions")
+    .select("endpoint, p256dh, auth, user_id");
+
+  const { data, error } =
+    await (userIds === null ? query : query.in("user_id", userIds)).returns<
+      Subscription[]
+    >();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data ?? [];
 }
 
 function currentHourIn(timeZone: string): number {
@@ -199,9 +274,13 @@ function buildPayload({
 // holding the bundled anon key could push arbitrary text to every subscriber
 // (`force` also skips the hour gate below).
 //
+// `emails` narrows the send to those accounts' subscriptions and implies `force`. A
+// single unknown address rejects the whole request before anything is pushed, since
+// a notification cannot be recalled — a typo must not silently shrink the audience.
+//
 // Words are picked per subscriber so a reminder never names someone else's private
 // word. The `words` override is exempt: it is an operator tool behind the secret,
-// and goes to every subscriber verbatim.
+// and goes to every targeted subscriber verbatim.
 serveFunction(async (req) => {
   if (req.method !== "POST") {
     return errorResponse("Method not allowed", 405);
@@ -236,20 +315,33 @@ serveFunction(async (req) => {
 
   const supabase = createAdminClient();
 
-  const { data: subscriptions, error } = await supabase
-    .from("push_subscriptions")
-    .select("endpoint, p256dh, auth, user_id")
-    .returns<Subscription[]>();
+  const targeting = options.emails === null
+    ? null
+    : await resolveRecipients({ supabase, emails: options.emails });
 
-  if (error) {
-    console.error(error);
-    return errorResponse(INTERNAL_ERROR, 500);
+  if (targeting !== null && targeting.unknownEmails.length > 0) {
+    return errorResponse(
+      `No account for: ${targeting.unknownEmails.join(", ")}`,
+    );
   }
+
+  const subscriptions = await readSubscriptions({
+    supabase,
+    userIds: targeting?.recipients.map((recipient) => recipient.userId) ??
+      null,
+  });
+
+  const subscribedUserIds = new Set(subscriptions.map((sub) => sub.user_id));
+  const targetingReport = targeting === null ? {} : {
+    notSent: targeting.recipients
+      .filter((recipient) => !subscribedUserIds.has(recipient.userId))
+      .map((recipient) => recipient.email),
+  };
 
   const expiredEndpoints: string[] = [];
   const deliveries: Delivery[] = [];
 
-  for (const [userId, userSubscriptions] of groupByUser(subscriptions ?? [])) {
+  for (const [userId, userSubscriptions] of groupByUser(subscriptions)) {
     const words = options.words ??
       (await readWordsForUser({ supabase, userId, count: options.count }));
 
@@ -302,15 +394,20 @@ serveFunction(async (req) => {
   }
 
   if (deliveries.length === 0) {
-    return jsonResponse({ skipped: true, reason: "No words to practice" });
+    return jsonResponse({
+      skipped: true,
+      reason: "No words to practice",
+      ...targetingReport,
+    });
   }
 
   return jsonResponse({
-    total: subscriptions?.length ?? 0,
+    total: subscriptions.length,
     sent: deliveries.reduce((count, delivery) => count + delivery.sent, 0),
     pruned: expiredEndpoints.length,
     deliveries,
     mode: options.mode,
     title: options.title,
+    ...targetingReport,
   });
 });
