@@ -275,6 +275,10 @@ function buildPayload({
 // Words are picked per subscriber so a reminder never names someone else's private
 // word. The `words` override is exempt: it is an operator tool behind the secret,
 // and goes to every targeted subscriber verbatim.
+//
+// Cron fires at both 18:00 and 19:00 UTC so that one call lands on 20:00 Berlin in
+// either DST season; the other is routine, not a fault, so it answers 204 rather than
+// a 4xx that would log a daily error and bury real ones such as a drifted secret.
 serveFunction(async (req) => {
   if (req.method !== "POST") {
     return errorResponse("Method not allowed", 405);
@@ -294,11 +298,7 @@ serveFunction(async (req) => {
 
   const hour = currentHourIn(REMINDER_TIMEZONE);
   if (!options.isForced && hour !== REMINDER_HOUR) {
-    return jsonResponse({
-      skipped: true,
-      reason:
-        `${hour}:00 in ${REMINDER_TIMEZONE}, reminders go out at ${REMINDER_HOUR}:00`,
-    });
+    return new Response(null, { status: 204 });
   }
 
   webpush.setVapidDetails(
