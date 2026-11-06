@@ -1,5 +1,5 @@
 import webpush from "npm:web-push@3";
-import type { SupabaseClient, User } from "npm:@supabase/supabase-js@2";
+import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
 import { requireEnv } from "../_shared/env.ts";
 import { serveFunction } from "../_shared/handler.ts";
 import { errorResponse, jsonResponse } from "../_shared/http.ts";
@@ -27,6 +27,11 @@ interface Delivery {
 }
 
 type PracticeMode = "word" | "sentence" | "both";
+
+interface UserIdRow {
+  email: string;
+  user_id: string;
+}
 
 interface Recipient {
   email: string;
@@ -118,23 +123,6 @@ function parseOptions(raw: unknown): ReminderOptions | { error: string } {
   };
 }
 
-async function listAllUsers(supabase: SupabaseClient): Promise<User[]> {
-  const users: User[] = [];
-  let page: number | null = 1;
-  while (page !== null) {
-    const { data, error } = await supabase.auth.admin.listUsers({
-      page,
-      perPage: 1000,
-    });
-    if (error) {
-      throw error;
-    }
-    users.push(...data.users);
-    page = data.nextPage;
-  }
-  return users;
-}
-
 async function resolveRecipients({
   supabase,
   emails,
@@ -142,18 +130,24 @@ async function resolveRecipients({
   supabase: SupabaseClient;
   emails: string[];
 }): Promise<{ recipients: Recipient[]; unknownEmails: string[] }> {
-  const userIdByEmail = new Map(
-    (await listAllUsers(supabase)).flatMap((user) =>
-      user.email === undefined ? [] : [[user.email.toLowerCase(), user.id]]
-    ),
+  const { data, error } = await supabase.rpc("user_ids_by_email", { emails });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  const rows: UserIdRow[] = data ?? [];
+  const recipients = rows.map((row) => ({
+    email: row.email,
+    userId: row.user_id,
+  }));
+  const resolvedEmails = new Set(
+    recipients.map((recipient) => recipient.email),
   );
 
   return {
-    recipients: emails.flatMap((email) => {
-      const userId = userIdByEmail.get(email);
-      return userId === undefined ? [] : [{ email, userId }];
-    }),
-    unknownEmails: emails.filter((email) => !userIdByEmail.has(email)),
+    recipients,
+    unknownEmails: emails.filter((email) => !resolvedEmails.has(email)),
   };
 }
 
